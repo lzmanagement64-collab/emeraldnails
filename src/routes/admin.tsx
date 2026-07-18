@@ -32,13 +32,15 @@ const STATUS_COLOR: Record<Status, string> = {
   absent: "bg-neutral-200 text-neutral-700",
 };
 
+type Booking = Omit<BookingPayload, "status"> & { status: Status };
+
 function AdminPage() {
-  const [bookings, setBookings] = useState<(BookingPayload & { status: Status })[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [tab, setTab] = useState<"upcoming" | "all">("upcoming");
 
   useEffect(() => {
-    const local = loadLocalBookings() as (BookingPayload & { status: Status })[];
-    setBookings(local);
+    const local = loadLocalBookings() as unknown as Booking[];
+    setBookings(local.map((b) => ({ ...b, status: b.status ?? "pending" })));
   }, []);
 
   const now = new Date();
