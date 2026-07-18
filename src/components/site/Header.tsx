@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { business } from "@/config/business";
 import { cn } from "@/lib/utils";
-import logoAsset from "@/assets/IMG_1972.png.asset.json";
+import logoAsset from "@/assets/emerald-logo.png.asset.json";
 
 const logo = logoAsset as { url: string };
 
