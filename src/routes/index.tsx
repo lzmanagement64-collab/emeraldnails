@@ -1,24 +1,193 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowUpRight, Sparkles, Sprout, HeartHandshake } from "lucide-react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { Section } from "@/components/site/Section";
+import { ServiceCard } from "@/components/site/ServiceCard";
+import { services } from "@/data/services";
+import { testimonials } from "@/data/testimonials";
+import { galleryItems } from "@/data/gallery";
+import { business } from "@/config/business";
+
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { property: "og:url", content: "/" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [{ rel: "canonical", href: "/" }],
+  }),
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const featured = services.slice(0, 3);
+  const heroGallery = galleryItems.slice(0, 4);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <>
+      {/* HERO */}
+      <section className="border-b border-border">
+        <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-24 md:grid-cols-[1.1fr_1fr] md:items-center">
+          <div className="reveal">
+            <p className="eyebrow mb-6">Prothésiste ongulaire · {business.city}</p>
+            <h1 className="font-display text-[2.75rem] leading-[1.05] text-ink sm:text-6xl">
+              Des ongles élégants,<br />
+              <span className="italic">soignés et personnalisés</span> selon votre style.
+            </h1>
+            <p className="mt-6 max-w-md text-base text-taupe sm:text-lg">
+              Chaque prestation est réalisée avec précision, écoute et attention.
+              Un studio confidentiel où la beauté naturelle de l'ongle passe avant tout.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/reservation"
+                className="rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain transition-opacity hover:opacity-90"
+              >
+                Prendre rendez-vous
+              </Link>
+              <Link
+                to="/prestations"
+                className="rounded-sm border border-border px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-ink transition-colors hover:bg-linen"
+              >
+                Voir les prestations
+              </Link>
+            </div>
+          </div>
+
+          <div className="reveal relative">
+            <div
+              className="aspect-[4/5] w-full rounded-sm border border-border"
+              style={{ background: heroGallery[0]?.placeholder }}
+            />
+            <div className="absolute -bottom-6 -left-6 hidden max-w-[220px] rounded-sm border border-border bg-card p-5 shadow-[0_30px_60px_-30px_rgba(28,25,23,0.4)] md:block">
+              <p className="eyebrow mb-2">Depuis 6 ans</p>
+              <p className="font-display text-lg leading-tight text-ink">
+                L'art d'un ongle soigné, sans compromis.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* VALEURS */}
+      <Section eyebrow="La signature">
+        <div className="grid gap-6 md:grid-cols-3">
+          {[
+            {
+              icon: Sparkles,
+              title: "Précision",
+              text: "Manucure russe, ligne parfaite au ras de la cuticule, finesse extrême.",
+            },
+            {
+              icon: Sprout,
+              title: "Hygiène irréprochable",
+              text: "Instruments stérilisés en autoclave, matériel à usage unique.",
+            },
+            {
+              icon: HeartHandshake,
+              title: "Écoute réelle",
+              text: "Un échange avant chaque prestation pour proposer ce qui vous va vraiment.",
+            },
+          ].map((v) => (
+            <div key={v.title} className="rounded-sm border border-border bg-card p-6">
+              <v.icon className="mb-5 size-5 text-bordeaux" />
+              <h3 className="font-display text-xl text-ink">{v.title}</h3>
+              <p className="mt-2 text-sm text-taupe">{v.text}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* PRESTATIONS APERÇU */}
+      <Section eyebrow="Prestations" title="Une sélection de soins">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {featured.map((s) => (
+            <ServiceCard key={s.id} service={s} />
+          ))}
+        </div>
+        <div className="mt-10">
+          <Link
+            to="/prestations"
+            className="inline-flex items-center gap-2 border-b border-ink pb-1 font-mono text-[11px] uppercase tracking-widest"
+          >
+            Toutes les prestations <ArrowUpRight className="size-3.5" />
+          </Link>
+        </div>
+      </Section>
+
+      {/* GALERIE APERÇU */}
+      <Section eyebrow="Portfolio" title="Réalisations récentes" className="bg-linen/40">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {heroGallery.map((g) => (
+            <div
+              key={g.id}
+              className="aspect-square rounded-sm border border-border"
+              style={{ background: g.placeholder }}
+              aria-label={g.title}
+            />
+          ))}
+        </div>
+        <div className="mt-10">
+          <Link
+            to="/galerie"
+            className="inline-flex items-center gap-2 border-b border-ink pb-1 font-mono text-[11px] uppercase tracking-widest"
+          >
+            Voir la galerie <ArrowUpRight className="size-3.5" />
+          </Link>
+        </div>
+      </Section>
+
+      {/* DÉROULEMENT */}
+      <Section eyebrow="Le rendez-vous" title="Comment ça se passe">
+        <ol className="grid gap-8 md:grid-cols-4">
+          {[
+            { n: "01", t: "Échange", d: "On discute forme, longueur, couleur et inspiration." },
+            { n: "02", t: "Préparation", d: "Manucure russe et préparation minutieuse de l'ongle." },
+            { n: "03", t: "Pose", d: "Réalisation soignée dans une ambiance calme." },
+            { n: "04", t: "Finition", d: "Soin des cuticules, huile nourrissante et conseils." },
+          ].map((step) => (
+            <li key={step.n} className="border-t border-border pt-5">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-bordeaux">{step.n}</p>
+              <h3 className="mt-3 font-display text-xl text-ink">{step.t}</h3>
+              <p className="mt-2 text-sm text-taupe">{step.d}</p>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      {/* TÉMOIGNAGES */}
+      <Section eyebrow="Avis" title="Ce qu'elles en disent" className="bg-ink text-porcelain">
+        <div className="grid gap-8 md:grid-cols-2">
+          {testimonials.slice(0, 2).map((t) => (
+            <blockquote key={t.id} className="border-t border-porcelain/20 pt-6">
+              <p className="mb-2 text-bordeaux">{"★".repeat(t.rating)}</p>
+              <p className="font-display text-xl italic leading-relaxed">« {t.text} »</p>
+              <footer className="mt-4 font-mono text-[10px] uppercase tracking-widest text-porcelain/60">
+                {t.firstName} — {t.service}
+              </footer>
+            </blockquote>
+          ))}
+        </div>
+      </Section>
+
+      {/* CTA FINAL */}
+      <Section>
+        <div className="rounded-sm border border-border bg-linen/60 px-6 py-14 text-center sm:px-12">
+          <p className="eyebrow mb-4">Réservation</p>
+          <h2 className="mx-auto max-w-xl font-display text-3xl leading-tight sm:text-4xl">
+            Prête à réserver votre créneau ?
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-taupe">
+            Un parcours simple en quelques étapes. Vous recevrez une confirmation par email.
+          </p>
+          <Link
+            to="/reservation"
+            className="mt-8 inline-block rounded-sm bg-ink px-8 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
+          >
+            Prendre rendez-vous
+          </Link>
+        </div>
+      </Section>
+    </>
   );
 }
