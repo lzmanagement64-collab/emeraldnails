@@ -1,8 +1,14 @@
-import img1 from "@/assets/IMG_1974.png.asset.json";
-import img2 from "@/assets/IMG_1973.png.asset.json";
-import img3 from "@/assets/IMG_1975.png.asset.json";
-import img4 from "@/assets/IMG_1979.png.asset.json";
-import img5 from "@/assets/IMG_1980.png.asset.json";
+import img1Asset from "@/assets/IMG_1974.png.asset.json";
+import img2Asset from "@/assets/IMG_1973.png.asset.json";
+import img3Asset from "@/assets/IMG_1975.png.asset.json";
+import img4Asset from "@/assets/IMG_1979.png.asset.json";
+import img5Asset from "@/assets/IMG_1980.png.asset.json";
+
+const img1 = img1Asset as { url: string };
+const img2 = img2Asset as { url: string };
+const img3 = img3Asset as { url: string };
+const img4 = img4Asset as { url: string };
+const img5 = img5Asset as { url: string };
 
 export type GalleryCategory =
   | "tout"

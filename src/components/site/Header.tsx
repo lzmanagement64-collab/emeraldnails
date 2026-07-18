@@ -3,6 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { business } from "@/config/business";
 import { cn } from "@/lib/utils";
+import logoAsset from "@/assets/IMG_1972.png.asset.json";
+
+const logo = logoAsset as { url: string };
 
 const links = [
   { to: "/", label: "Accueil" },
@@ -18,8 +21,15 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link to="/" className="font-display text-lg italic tracking-tight sm:text-xl">
-          {business.name}
+        <Link to="/" className="flex items-center gap-3">
+          <img
+            src={logo.url}
+            alt="Emerald Beauty"
+            className="size-10 rounded-full object-cover ring-1 ring-border"
+          />
+          <span className="font-display text-lg italic tracking-tight text-ink sm:text-xl">
+            {business.name}
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
