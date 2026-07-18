@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
-  Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -11,87 +11,59 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Header } from "@/components/site/Header";
+import { Footer } from "@/components/site/Footer";
+import { MobileBar } from "@/components/site/MobileBar";
+import { Toaster } from "@/components/ui/sonner";
+import { business } from "@/config/business";
 
-function NotFoundComponent() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
-  const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Go home
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
+const SITE_TITLE = `${business.name} — Prothésiste ongulaire à ${business.city}`;
+const SITE_DESCRIPTION = `${business.name}, studio d'onglerie à ${business.city}. Pose gel, semi-permanent, gainage et nail art. Réservation en ligne.`;
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: SITE_TITLE },
+      { name: "description", content: SITE_DESCRIPTION },
+      { name: "author", content: business.name },
+      { name: "theme-color", content: "#faf9f6" },
+      { property: "og:title", content: SITE_TITLE },
+      { property: "og:description", content: SITE_DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: business.name },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Lora:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BeautySalon",
+          name: business.name,
+          description: SITE_DESCRIPTION,
+          telephone: business.phone,
+          email: business.email,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: business.address,
+            addressLocality: business.city,
+            addressCountry: "FR",
+          },
+          sameAs: [business.instagramUrl],
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -102,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <HeadContent />
       </head>
@@ -116,11 +88,73 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAdmin = pathname.startsWith("/admin");
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="flex min-h-screen flex-col">
+        {!isAdmin && <Header />}
+        <main className="flex-1 pb-24 md:pb-0">
+          <Outlet />
+        </main>
+        {!isAdmin && <Footer />}
+        {!isAdmin && <MobileBar />}
+      </div>
+      <Toaster position="top-center" />
     </QueryClientProvider>
+  );
+}
+
+function NotFoundComponent() {
+  return (
+    <div className="grid min-h-[70vh] place-items-center px-6 text-center">
+      <div className="max-w-md">
+        <p className="eyebrow mb-4">404</p>
+        <h1 className="mb-3 font-display text-4xl">Cette page n'existe pas</h1>
+        <p className="text-taupe">Retournez à l'accueil pour poursuivre votre visite.</p>
+        <a
+          href="/"
+          className="mt-6 inline-block rounded-sm bg-ink px-6 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain"
+        >
+          Accueil
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  console.error(error);
+  const router = useRouter();
+  useEffect(() => {
+    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+  }, [error]);
+
+  return (
+    <div className="grid min-h-[70vh] place-items-center px-6 text-center">
+      <div className="max-w-md">
+        <p className="eyebrow mb-4">Erreur</p>
+        <h1 className="mb-3 font-display text-3xl">Une erreur est survenue</h1>
+        <p className="text-taupe">Merci de réessayer dans un instant.</p>
+        <div className="mt-6 flex justify-center gap-2">
+          <button
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="rounded-sm bg-ink px-5 py-2.5 font-mono text-[11px] uppercase tracking-widest text-porcelain"
+          >
+            Réessayer
+          </button>
+          <a
+            href="/"
+            className="rounded-sm border border-border px-5 py-2.5 font-mono text-[11px] uppercase tracking-widest text-ink"
+          >
+            Accueil
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
