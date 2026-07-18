@@ -21,9 +21,10 @@ export const Route = createFileRoute("/prestations")({
 });
 
 const groups = [
-  { id: "mains", label: "Mains" },
-  { id: "retouche", label: "Entretien & réparations" },
-  { id: "pieds", label: "Pieds" },
+  { id: "naturels", label: "Ongles naturels" },
+  { id: "gel", label: "Extension gel" },
+  { id: "gelx", label: "Gel-X" },
+  { id: "nailart", label: "Nail art" },
 ] as const;
 
 function PrestationsPage() {
