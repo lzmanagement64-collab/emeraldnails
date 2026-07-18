@@ -53,19 +53,19 @@
 :root {
   --radius: 0.5rem;
 
-  /* Neutres ivoire / crème */
-  --porcelain: oklch(0.982 0.008 90);
-  --linen: oklch(0.955 0.014 88);
-  --nacre: oklch(0.9 0.018 85);
-  --ink: oklch(0.16 0.02 155);
-  --taupe: oklch(0.42 0.014 90);
+  /* Neutres ivoire / crème (fond hors-logo) */
+  --porcelain: oklch(0.965 0.012 90);
+  --linen: oklch(0.94 0.016 88);
+  --nacre: oklch(0.88 0.02 85);
+  /* Vert sapin très profond du logo Emerald Beauty */
+  --ink: oklch(0.22 0.05 155);
+  --taupe: oklch(0.42 0.03 150);
 
-  /* Vert émeraude profond du logo */
-  --emerald-deep: oklch(0.24 0.06 158);
-  /* Bordeaux conservé comme accent secondaire (compat) */
-  --bordeaux: oklch(0.42 0.09 25);
-  /* Doré chaud */
-  --gold: oklch(0.78 0.11 88);
+  --emerald-deep: oklch(0.22 0.05 155);
+  /* Rose poudré repris du script "Beauty" du logo */
+  --bordeaux: oklch(0.62 0.09 20);
+  /* Doré discret */
+  --gold: oklch(0.78 0.09 88);
 
   --background: var(--porcelain);
   --foreground: var(--ink);

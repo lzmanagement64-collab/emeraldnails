@@ -1,3 +1,9 @@
+import img1 from "@/assets/IMG_1974.png.asset.json";
+import img2 from "@/assets/IMG_1973.png.asset.json";
+import img3 from "@/assets/IMG_1975.png.asset.json";
+import img4 from "@/assets/IMG_1979.png.asset.json";
+import img5 from "@/assets/IMG_1980.png.asset.json";
+
 export type GalleryCategory =
   | "tout"
   | "nude"
@@ -21,19 +27,51 @@ export type GalleryItem = {
   id: string;
   categories: GalleryCategory[];
   title: string;
-  // Emplacement image. À remplacer par un vrai fichier dans /public/gallery/ ou une URL.
-  placeholder: string;
+  image: string;
   ratio: "square" | "portrait" | "wide";
+  /** Fallback dégradé (utilisé si l'image n'est pas disponible). */
+  placeholder: string;
 };
 
-// Palette de dégradés doux — sert d'aperçu élégant tant que les vraies photos ne sont pas fournies.
 export const galleryItems: GalleryItem[] = [
-  { id: "1", categories: ["nude", "court"], title: "Nude porcelaine", placeholder: "linear-gradient(135deg, #f2eee8, #e8dfd3)", ratio: "portrait" },
-  { id: "2", categories: ["french", "court"], title: "French moderne", placeholder: "linear-gradient(135deg, #faf9f6, #d9d1c7)", ratio: "square" },
-  { id: "3", categories: ["nail-art", "long"], title: "Traits fins dorés", placeholder: "linear-gradient(135deg, #ede6d8, #c9bfae)", ratio: "square" },
-  { id: "4", categories: ["couleur", "long"], title: "Bordeaux mat", placeholder: "linear-gradient(135deg, #7a3b34, #4a2321)", ratio: "wide" },
-  { id: "5", categories: ["nude", "long"], title: "Amande milky", placeholder: "linear-gradient(135deg, #f5efe6, #e2d8c9)", ratio: "portrait" },
-  { id: "6", categories: ["nail-art", "court"], title: "Micro-lignes", placeholder: "linear-gradient(135deg, #eee7dc, #b8ac97)", ratio: "square" },
-  { id: "7", categories: ["couleur", "court"], title: "Terracotta sourd", placeholder: "linear-gradient(135deg, #c48b6b, #8b5a44)", ratio: "square" },
-  { id: "8", categories: ["french", "long"], title: "French inversée", placeholder: "linear-gradient(135deg, #faf9f6, #ded4c4)", ratio: "wide" },
+  {
+    id: "1",
+    categories: ["nude", "long", "nail-art"],
+    title: "Nude nacré · fleur 3D",
+    image: img1.url,
+    ratio: "portrait",
+    placeholder: "linear-gradient(135deg, #f2eee8, #e8dfd3)",
+  },
+  {
+    id: "2",
+    categories: ["nude", "long", "nail-art"],
+    title: "Rose milky · relief floral",
+    image: img2.url,
+    ratio: "square",
+    placeholder: "linear-gradient(135deg, #faf9f6, #e6d1d4)",
+  },
+  {
+    id: "3",
+    categories: ["couleur", "nail-art", "court"],
+    title: "Vert sauge · touches dorées",
+    image: img3.url,
+    ratio: "square",
+    placeholder: "linear-gradient(135deg, #a8bfa0, #4a6741)",
+  },
+  {
+    id: "4",
+    categories: ["nude", "long"],
+    title: "Pose gel Milky",
+    image: img4.url,
+    ratio: "portrait",
+    placeholder: "linear-gradient(135deg, #f5efe6, #e2d8c9)",
+  },
+  {
+    id: "5",
+    categories: ["french", "nail-art", "long"],
+    title: "French lilas · floral violet",
+    image: img5.url,
+    ratio: "wide",
+    placeholder: "linear-gradient(135deg, #d8c6e2, #a377c4)",
+  },
 ];
