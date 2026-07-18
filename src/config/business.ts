@@ -1,47 +1,46 @@
 // ============================================================
-// Configuration centrale de l'entreprise.
-// Modifie ce fichier pour personnaliser l'ensemble du site.
+// Configuration centrale — Emerald Beauty (Lons, 64140)
+// Direction artistique inspirée du logo : vert émeraude profond,
+// crème/ivoire et touche dorée.
 // ============================================================
 
 export const business = {
-  name: "Atelier Porcelaine",
-  tagline: "L'art de l'ongle, en pleine lumière.",
+  name: "Emerald Beauty",
+  tagline: "L'art de sublimer chaque instant.",
   shortDescription:
-    "Studio confidentiel dédié au soin et à la beauté naturelle de l'ongle.",
-  founder: "Camille",
-  city: "Paris",
-  address: "12 rue de la Paix, 75002 Paris",
-  phone: "+33 6 12 34 56 78",
-  phoneDisplay: "06 12 34 56 78",
-  email: "bonjour@atelier-porcelaine.fr",
-  instagram: "@atelier.porcelaine",
-  instagramUrl: "https://instagram.com/",
-  googleBusinessUrl: "https://www.google.com/maps",
+    "Studio d'ongles à Lons — extension gel, Gel X et nail art signés Maria.",
+  founder: "Maria",
+  city: "Lons",
+  address: "7 Imp. d'Ossau, 64140 Lons",
+  phone: "+33 6 00 00 00 00",
+  phoneDisplay: "06 00 00 00 00",
+  email: "contact@emerald-beauty.fr",
+  instagram: "@emerald.beauty64",
+  instagramUrl: "https://instagram.com/emerald.beauty64",
+  googleBusinessUrl: "https://www.google.com/maps/search/?api=1&query=7+Imp.+d%27Ossau+64140+Lons",
   hours: [
     { day: "Lundi", value: "Fermé" },
-    { day: "Mardi", value: "10h – 19h" },
-    { day: "Mercredi", value: "10h – 19h" },
-    { day: "Jeudi", value: "10h – 20h" },
-    { day: "Vendredi", value: "10h – 20h" },
-    { day: "Samedi", value: "9h30 – 18h" },
+    { day: "Mardi", value: "10h – 22h" },
+    { day: "Mercredi", value: "10h – 22h" },
+    { day: "Jeudi", value: "10h – 22h" },
+    { day: "Vendredi", value: "10h – 17h15" },
+    { day: "Samedi", value: "10h – 22h" },
     { day: "Dimanche", value: "Fermé" },
   ],
-  // Planning
   weekdayHours: {
-    // 0 = dimanche ... 6 = samedi
     0: null,
     1: null,
-    2: { start: "10:00", end: "19:00" },
-    3: { start: "10:00", end: "19:00" },
-    4: { start: "10:00", end: "20:00" },
-    5: { start: "10:00", end: "20:00" },
-    6: { start: "09:30", end: "18:00" },
+    2: { start: "10:00", end: "22:00" },
+    3: { start: "10:00", end: "22:00" },
+    4: { start: "10:00", end: "22:00" },
+    5: { start: "10:00", end: "17:15" },
+    6: { start: "10:00", end: "22:00" },
   } as Record<number, { start: string; end: string } | null>,
   bookingRules: {
-    minLeadHours: 24, // délai minimum avant réservation
-    maxAdvanceDays: 60, // horizon max
-    slotStepMinutes: 30, // pas de créneau
-    bufferMinutes: 15, // pause entre 2 clientes
+    minLeadHours: 24,
+    maxAdvanceDays: 60,
+    slotStepMinutes: 30,
+    bufferMinutes: 15,
   },
 } as const;
 
