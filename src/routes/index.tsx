@@ -55,12 +55,15 @@ function Index() {
           </div>
 
           <div className="reveal relative">
-            <div
-              className="aspect-[4/5] w-full rounded-sm border border-border"
-              style={{ background: heroGallery[0]?.placeholder }}
-            />
-            <div className="absolute -bottom-6 -left-6 hidden max-w-[220px] rounded-sm border border-border bg-card p-5 shadow-[0_30px_60px_-30px_rgba(28,25,23,0.4)] md:block">
-              <p className="eyebrow mb-2">Depuis 6 ans</p>
+            <div className="aspect-[4/5] w-full overflow-hidden rounded-sm border border-border bg-linen">
+              <img
+                src={heroGallery[0]?.image}
+                alt={heroGallery[0]?.title ?? "Réalisation Emerald Beauty"}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="absolute -bottom-6 -left-6 hidden max-w-[220px] rounded-sm border border-border bg-card p-5 shadow-[0_30px_60px_-30px_rgba(13,46,31,0.35)] md:block">
+              <p className="eyebrow mb-2">Studio à {business.city}</p>
               <p className="font-display text-lg leading-tight text-ink">
                 L'art d'un ongle soigné, sans compromis.
               </p>
@@ -121,10 +124,15 @@ function Index() {
           {heroGallery.map((g) => (
             <div
               key={g.id}
-              className="aspect-square rounded-sm border border-border"
-              style={{ background: g.placeholder }}
-              aria-label={g.title}
-            />
+              className="aspect-square overflow-hidden rounded-sm border border-border bg-linen"
+            >
+              <img
+                src={g.image}
+                alt={g.title}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+            </div>
           ))}
         </div>
         <div className="mt-10">

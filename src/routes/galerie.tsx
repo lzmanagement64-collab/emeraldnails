@@ -69,7 +69,13 @@ function GaleriePage() {
               style={{ background: g.placeholder }}
               aria-label={`Voir ${g.title}`}
             >
-              <span className="absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-ink/70 to-transparent p-3 text-left font-mono text-[10px] uppercase tracking-widest text-porcelain opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+              <img
+                src={g.image}
+                alt={g.title}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              />
+              <span className="absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-ink/80 to-transparent p-3 text-left font-mono text-[10px] uppercase tracking-widest text-porcelain opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
                 {g.title}
               </span>
             </button>
@@ -94,9 +100,10 @@ function GaleriePage() {
             >
               <X className="size-4" />
             </button>
-            <div
-              className="aspect-[4/5] w-full rounded-sm"
-              style={{ background: open.placeholder }}
+            <img
+              src={open.image}
+              alt={open.title}
+              className="aspect-[4/5] w-full rounded-sm object-cover"
             />
             <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-porcelain">
               {open.title}
