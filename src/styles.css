@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   Design system — "Atelier Porcelaine"
-   Palette : porcelaine, lin écru, encre, taupe, bordeaux mat
+   Design system — "Emerald Beauty"
+   Palette : vert émeraude profond, crème ivoire, doré, encre
    Typos   : Playfair Display (display) · Lora (body) · JetBrains Mono (UI)
    ============================================================ */
 
@@ -42,6 +42,8 @@
   --color-taupe: var(--taupe);
   --color-bordeaux: var(--bordeaux);
   --color-nacre: var(--nacre);
+  --color-emerald-deep: var(--emerald-deep);
+  --color-gold: var(--gold);
 
   --font-display: "Playfair Display", ui-serif, Georgia, serif;
   --font-body: "Lora", ui-serif, Georgia, serif;
@@ -51,12 +53,19 @@
 :root {
   --radius: 0.5rem;
 
-  --porcelain: oklch(0.976 0.006 85);
-  --linen: oklch(0.945 0.012 80);
-  --ink: oklch(0.18 0.008 60);
-  --taupe: oklch(0.42 0.012 55);
+  /* Neutres ivoire / crème */
+  --porcelain: oklch(0.982 0.008 90);
+  --linen: oklch(0.955 0.014 88);
+  --nacre: oklch(0.9 0.018 85);
+  --ink: oklch(0.16 0.02 155);
+  --taupe: oklch(0.42 0.014 90);
+
+  /* Vert émeraude profond du logo */
+  --emerald-deep: oklch(0.24 0.06 158);
+  /* Bordeaux conservé comme accent secondaire (compat) */
   --bordeaux: oklch(0.42 0.09 25);
-  --nacre: oklch(0.88 0.015 75);
+  /* Doré chaud */
+  --gold: oklch(0.78 0.11 88);
 
   --background: var(--porcelain);
   --foreground: var(--ink);
@@ -64,39 +73,39 @@
   --card-foreground: var(--ink);
   --popover: oklch(1 0 0);
   --popover-foreground: var(--ink);
-  --primary: var(--ink);
+  --primary: var(--emerald-deep);
   --primary-foreground: var(--porcelain);
   --secondary: var(--linen);
-  --secondary-foreground: var(--ink);
+  --secondary-foreground: var(--emerald-deep);
   --muted: var(--linen);
   --muted-foreground: var(--taupe);
-  --accent: var(--bordeaux);
-  --accent-foreground: var(--porcelain);
+  --accent: var(--gold);
+  --accent-foreground: var(--emerald-deep);
   --destructive: oklch(0.55 0.19 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.18 0.008 60 / 0.12);
-  --input: oklch(0.18 0.008 60 / 0.14);
-  --ring: var(--bordeaux);
+  --border: oklch(0.24 0.06 158 / 0.14);
+  --input: oklch(0.24 0.06 158 / 0.16);
+  --ring: var(--emerald-deep);
 }
 
 .dark {
-  --background: var(--ink);
+  --background: var(--emerald-deep);
   --foreground: var(--porcelain);
-  --card: oklch(0.22 0.008 60);
+  --card: oklch(0.28 0.05 158);
   --card-foreground: var(--porcelain);
-  --popover: oklch(0.22 0.008 60);
+  --popover: oklch(0.28 0.05 158);
   --popover-foreground: var(--porcelain);
   --primary: var(--porcelain);
-  --primary-foreground: var(--ink);
-  --secondary: oklch(0.26 0.008 60);
+  --primary-foreground: var(--emerald-deep);
+  --secondary: oklch(0.32 0.05 158);
   --secondary-foreground: var(--porcelain);
-  --muted: oklch(0.26 0.008 60);
-  --muted-foreground: oklch(0.72 0.012 70);
-  --accent: var(--bordeaux);
-  --accent-foreground: var(--porcelain);
-  --border: oklch(1 0 0 / 0.12);
-  --input: oklch(1 0 0 / 0.16);
-  --ring: var(--bordeaux);
+  --muted: oklch(0.32 0.05 158);
+  --muted-foreground: oklch(0.78 0.02 90);
+  --accent: var(--gold);
+  --accent-foreground: var(--emerald-deep);
+  --border: oklch(1 0 0 / 0.14);
+  --input: oklch(1 0 0 / 0.18);
+  --ring: var(--gold);
 }
 
 @layer base {
