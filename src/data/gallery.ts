@@ -1,7 +1,7 @@
 import img1Asset from "@/assets/IMG_1974.png.asset.json";
 import img2Asset from "@/assets/IMG_1973.png.asset.json";
 import img3Asset from "@/assets/IMG_1975.png.asset.json";
-import img4Asset from "@/assets/IMG_1979.png.asset.json";
+import img4Asset from "@/assets/IMG_1974.png.asset.json";
 import img5Asset from "@/assets/IMG_1980.png.asset.json";
 
 const img1 = img1Asset as { url: string };
