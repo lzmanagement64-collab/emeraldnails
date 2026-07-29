@@ -15,6 +15,7 @@ import { Route as PrestationsRouteImport } from './routes/prestations'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as GalerieRouteImport } from './routes/galerie'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as ConditionsRouteImport } from './routes/conditions'
@@ -51,6 +52,11 @@ const GalerieRoute = GalerieRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfirmationRoute = ConfirmationRouteImport.update({
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/confirmation': typeof ConfirmationRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/confirmation': typeof ConfirmationRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/confirmation': typeof ConfirmationRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/conditions'
     | '/confidentialite'
     | '/confirmation'
+    | '/contact'
     | '/faq'
     | '/galerie'
     | '/mentions-legales'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/conditions'
     | '/confidentialite'
     | '/confirmation'
+    | '/contact'
     | '/faq'
     | '/galerie'
     | '/mentions-legales'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/conditions'
     | '/confidentialite'
     | '/confirmation'
+    | '/contact'
     | '/faq'
     | '/galerie'
     | '/mentions-legales'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   ConditionsRoute: typeof ConditionsRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
   ConfirmationRoute: typeof ConfirmationRoute
+  ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   GalerieRoute: typeof GalerieRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confirmation': {
@@ -303,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConditionsRoute: ConditionsRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
   ConfirmationRoute: ConfirmationRoute,
+  ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   GalerieRoute: GalerieRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
