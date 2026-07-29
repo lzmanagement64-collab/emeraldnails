@@ -166,42 +166,54 @@ export async function fetchAvailability(params: {
 
 // ---------------------------------------------------------------
 // Soumission d'une réservation
+// 1. Enregistrement sécurisé en base (validation serveur)
+// 2. Notification n8n si le webhook est configuré
 // ---------------------------------------------------------------
 export async function submitBooking(payload: BookingPayload): Promise<{
   ok: boolean;
   demoMode: boolean;
   error?: string;
 }> {
-  if (!BOOKING_WEBHOOK) {
-    // Mode démo — on log et on stocke localement pour l'espace admin
-    if (typeof window !== "undefined") {
-      const key = "atelier-porcelaine.bookings";
-      const existing = JSON.parse(localStorage.getItem(key) ?? "[]");
-      existing.unshift(payload);
-      localStorage.setItem(key, JSON.stringify(existing.slice(0, 50)));
-    }
-    console.info("[booking] démo — payload prêt pour n8n :", payload);
-    return { ok: true, demoMode: true };
-  }
-
   try {
-    const res = await fetch(BOOKING_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    const { createBooking } = await import("@/lib/booking.functions");
+    await createBooking({
+      data: {
+        firstName: payload.customer.firstName,
+        lastName: payload.customer.lastName,
+        email: payload.customer.email,
+        phone: payload.customer.phone,
+        instagram: payload.customer.instagram ?? "",
+        customerType: payload.customer.customerType,
+        city: "",
+        serviceId: payload.service.id,
+        serviceName: payload.service.name,
+        options: payload.options,
+        appointmentDate: payload.appointment.date,
+        startTime: payload.appointment.startTime,
+        endTime: payload.appointment.endTime,
+        durationMinutes: payload.service.durationMinutes,
+        totalAmount: payload.estimatedTotal,
+        depositAmount: payload.depositAmount,
+        remainingBalance: payload.remainingBalance,
+        preferences: payload.preferences,
+      },
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return { ok: true, demoMode: false };
   } catch (e) {
     return { ok: false, demoMode: false, error: (e as Error).message };
   }
+
+  if (BOOKING_WEBHOOK) {
+    try {
+      await fetch(BOOKING_WEBHOOK, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      console.warn("[booking] webhook n8n injoignable", e);
+    }
+  }
+
+  return { ok: true, demoMode: false };
 }
 
-export function loadLocalBookings(): BookingPayload[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("atelier-porcelaine.bookings") ?? "[]");
-  } catch {
-    return [];
-  }
-}
