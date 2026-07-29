@@ -204,9 +204,22 @@ function Index() {
       </Section>
 
       {/* TÉMOIGNAGES */}
-      <Section eyebrow="Avis" title="Ce qu'elles en disent" className="bg-ink text-porcelain">
+      <Section
+        eyebrow="Avis"
+        title="Ce qu'elles en disent"
+        description={`${reviewsSummary.ratingValue}/5 sur ${reviewsSummary.reviewCount} avis clientes vérifiés (${reviewsSummary.source}).`}
+        className="bg-ink text-porcelain"
+      >
+        <ul className="mb-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {reviewsSummary.breakdown.map((b) => (
+            <li key={b.label} className="border-t border-porcelain/20 pt-4">
+              <p className="font-display text-2xl">{b.value.toString().replace(".", ",")}<span className="text-porcelain/50 text-base"> /5</span></p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-porcelain/60">{b.label}</p>
+            </li>
+          ))}
+        </ul>
         <div className="grid gap-8 md:grid-cols-2">
-          {testimonials.slice(0, 2).map((t) => (
+          {testimonials.slice(0, 4).map((t) => (
             <blockquote key={t.id} className="border-t border-porcelain/20 pt-6">
               <p className="mb-2 text-bordeaux">{"★".repeat(t.rating)}</p>
               <p className="font-display text-xl italic leading-relaxed">« {t.text} »</p>
@@ -217,6 +230,7 @@ function Index() {
           ))}
         </div>
       </Section>
+
 
       {/* ZONES DESSERVIES — SEO LOCAL */}
       <Section
