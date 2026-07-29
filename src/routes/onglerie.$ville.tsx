@@ -47,7 +47,7 @@ export const Route = createFileRoute("/onglerie/$ville")({
               addressCountry: "FR",
             },
             areaServed: { "@type": "City", name: area.city },
-            aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "60" },
+            aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "10" },
           }),
         },
         {

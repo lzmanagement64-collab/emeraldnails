@@ -50,7 +50,7 @@ export const Route = createFileRoute("/")({
           aggregateRating: {
             "@type": "AggregateRating",
             ratingValue: "4.8",
-            reviewCount: "60",
+            reviewCount: "10",
           },
         }),
       },
