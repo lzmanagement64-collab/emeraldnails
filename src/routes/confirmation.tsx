@@ -25,7 +25,7 @@ export const Route = createFileRoute("/confirmation")({
 });
 
 function Confirmation() {
-  const { service, date, time, name } = Route.useSearch();
+  const { service, date, time, name, session_id } = Route.useSearch();
 
   const prettyDate = date
     ? new Date(date).toLocaleDateString("fr-FR", {
