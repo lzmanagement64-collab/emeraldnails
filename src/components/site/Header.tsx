@@ -13,7 +13,9 @@ const links = [
   { to: "/galerie", label: "Galerie" },
   { to: "/a-propos", label: "L'atelier" },
   { to: "/faq", label: "FAQ" },
+  { to: "/contact", label: "Contact" },
 ];
+
 
 export function Header() {
   const [open, setOpen] = useState(false);
