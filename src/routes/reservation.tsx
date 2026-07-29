@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -675,7 +675,7 @@ function Field({
   className,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
@@ -721,74 +721,111 @@ function InspirationStep({
     onImages([...images, ...list]);
   };
 
+  const SHAPES = ["Amande", "Ballerine", "Carré", "Carré arrondi", "Ovale", "Stiletto"];
+  const LENGTHS = ["Naturelle", "Courte", "Moyenne", "Longue", "Extra longue"];
+  const PALETTE = ["Nude", "French", "Milky", "Vert émeraude", "Bordeaux", "Bleu", "Rose poudré", "Noir"];
+
+  const toggleColor = (c: string) => {
+    const curr = preferences.colors.split(",").map((s) => s.trim()).filter(Boolean);
+    const next = curr.includes(c) ? curr.filter((x) => x !== c) : [...curr, c];
+    update("colors", next.join(", "));
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Forme souhaitée">
-          <select
-            className="input"
-            value={preferences.shape}
-            onChange={(e) => update("shape", e.target.value)}
-          >
-            <option value="">Au choix</option>
-            <option>Amande</option>
-            <option>Ballerine</option>
-            <option>Carré</option>
-            <option>Carré arrondi</option>
-            <option>Ovale</option>
-            <option>Stiletto</option>
-          </select>
-        </Field>
-        <Field label="Longueur">
-          <select
-            className="input"
-            value={preferences.length}
-            onChange={(e) => update("length", e.target.value)}
-          >
-            <option value="">Au choix</option>
-            <option>Naturelle</option>
-            <option>Courte</option>
-            <option>Moyenne</option>
-            <option>Longue</option>
-            <option>Extra longue</option>
-          </select>
+      {/* Forme & longueur */}
+      <div className="rounded-sm border border-border bg-card p-5 sm:p-6">
+        <p className="eyebrow mb-4">Forme &amp; longueur</p>
+        <div className="space-y-5">
+          <div>
+            <p className="mb-2 text-sm text-taupe">Forme souhaitée</p>
+            <div className="flex flex-wrap gap-2">
+              <Chip active={!preferences.shape} onClick={() => update("shape", "")}>Au choix</Chip>
+              {SHAPES.map((s) => (
+                <Chip key={s} active={preferences.shape === s} onClick={() => update("shape", s)}>
+                  {s}
+                </Chip>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-sm text-taupe">Longueur</p>
+            <div className="flex flex-wrap gap-2">
+              <Chip active={!preferences.length} onClick={() => update("length", "")}>Au choix</Chip>
+              {LENGTHS.map((l) => (
+                <Chip key={l} active={preferences.length === l} onClick={() => update("length", l)}>
+                  {l}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Couleurs & design */}
+      <div className="rounded-sm border border-border bg-card p-5 sm:p-6">
+        <p className="eyebrow mb-4">Couleurs &amp; design</p>
+        <div className="space-y-5">
+          <div>
+            <p className="mb-2 text-sm text-taupe">Sélection rapide</p>
+            <div className="flex flex-wrap gap-2">
+              {PALETTE.map((c) => (
+                <Chip
+                  key={c}
+                  active={preferences.colors.split(",").map((s) => s.trim()).includes(c)}
+                  onClick={() => toggleColor(c)}
+                >
+                  {c}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <Field label="Précisions couleurs">
+            <input
+              className="input"
+              maxLength={120}
+              value={preferences.colors}
+              onChange={(e) => update("colors", e.target.value)}
+              placeholder="Nude, bordeaux, terracotta…"
+            />
+          </Field>
+
+          <Field label="Type de nail art / description">
+            <textarea
+              rows={3}
+              maxLength={500}
+              className="input min-h-24 resize-none"
+              value={preferences.designDescription}
+              onChange={(e) => update("designDescription", e.target.value)}
+              placeholder="Minimaliste, quelques doigts en couleur, french inversée…"
+            />
+            <p className="mt-1 text-right text-[11px] text-taupe">
+              {preferences.designDescription.length}/500
+            </p>
+          </Field>
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div className="rounded-sm border border-border bg-card p-5 sm:p-6">
+        <p className="eyebrow mb-4">À savoir avant la pose</p>
+        <Field label="Notes / préférence">
+          <textarea
+            rows={2}
+            maxLength={500}
+            className="input min-h-20 resize-none"
+            value={preferences.notes}
+            onChange={(e) => update("notes", e.target.value)}
+            placeholder="Ongle fragile, allergie, sensibilité particulière…"
+          />
         </Field>
       </div>
 
-      <Field label="Couleurs souhaitées">
-        <input
-          className="input"
-          maxLength={120}
-          value={preferences.colors}
-          onChange={(e) => update("colors", e.target.value)}
-          placeholder="Nude, bordeaux, terracotta…"
-        />
-      </Field>
-
-      <Field label="Type de nail art / description">
-        <textarea
-          rows={3}
-          maxLength={500}
-          className="input min-h-24 resize-none"
-          value={preferences.designDescription}
-          onChange={(e) => update("designDescription", e.target.value)}
-          placeholder="Minimaliste, quelques doigts en couleur, french inversée…"
-        />
-      </Field>
-
-      <Field label="Notes / préférence">
-        <textarea
-          rows={2}
-          maxLength={500}
-          className="input min-h-20 resize-none"
-          value={preferences.notes}
-          onChange={(e) => update("notes", e.target.value)}
-          placeholder="Ongle fragile, allergie, sensibilité particulière…"
-        />
-      </Field>
-
-      <div>
-        <p className="eyebrow mb-3">Images d'inspiration (max 4, 5 Mo)</p>
+      {/* Inspirations */}
+      <div className="rounded-sm border border-border bg-card p-5 sm:p-6">
+        <p className="eyebrow mb-1">Images d'inspiration</p>
+        <p className="mb-4 text-sm text-taupe">4 photos maximum, 5 Mo par image.</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {images.map((img, i) => (
             <div key={i} className="relative aspect-square overflow-hidden rounded-sm border border-border">
@@ -819,6 +856,32 @@ function InspirationStep({
         </div>
       </div>
     </div>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "rounded-full border px-4 py-2 text-sm transition-colors",
+        active
+          ? "border-ink bg-ink text-porcelain"
+          : "border-border bg-background text-taupe hover:border-ink/40 hover:text-ink",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
