@@ -2,11 +2,19 @@ import lilasFleursAsset from "@/assets/nails-lilas-fleurs.png.asset.json";
 import lilasMilkyAsset from "@/assets/nails-lilas-milky.png.asset.json";
 import vertLeopardAsset from "@/assets/nails-vert-leopard.png.asset.json";
 import whiteFlowerAsset from "@/assets/nails-white-flower.png.asset.json";
+import blueFloral1Asset from "@/assets/IMG_2238.jpg.asset.json";
+import blueFloral2Asset from "@/assets/IMG_2239.jpg.asset.json";
+import blueFlower3dAsset from "@/assets/IMG_2240.jpg.asset.json";
+import pinkOrangeAsset from "@/assets/IMG_2241.jpg.asset.json";
 
 const lilasFleurs = lilasFleursAsset as { url: string };
 const lilasMilky = lilasMilkyAsset as { url: string };
 const vertLeopard = vertLeopardAsset as { url: string };
 const whiteFlower = whiteFlowerAsset as { url: string };
+const blueFloral1 = blueFloral1Asset as { url: string };
+const blueFloral2 = blueFloral2Asset as { url: string };
+const blueFlower3d = blueFlower3dAsset as { url: string };
+const pinkOrange = pinkOrangeAsset as { url: string };
 
 export type GalleryCategory =
   | "tout"
