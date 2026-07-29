@@ -108,7 +108,7 @@ function AreaPage() {
               {area.travelTime} depuis {area.city}. Stationnement gratuit devant le studio.
             </p>
             <ul className="flex flex-wrap gap-2">
-              {area.landmarks.map((l) => (
+              {area.landmarks.map((l: string) => (
                 <li key={l} className="rounded-full border border-border px-3 py-1 text-xs">
                   {l}
                 </li>
