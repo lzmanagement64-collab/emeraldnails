@@ -9,6 +9,8 @@ const schema = z.object({
   date: z.string().optional(),
   time: z.string().optional(),
   name: z.string().optional(),
+  booking: z.string().optional(),
+  session_id: z.string().optional(),
 });
 
 export const Route = createFileRoute("/confirmation")({
