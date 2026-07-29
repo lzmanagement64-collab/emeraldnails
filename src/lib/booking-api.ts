@@ -50,6 +50,9 @@ export type BookingPayload = {
   };
   inspirationImages: string[];
   estimatedTotal: number;
+  depositRate: number;
+  depositAmount: number;
+  remainingBalance: number;
   consent: true;
   source: "website";
 };
@@ -67,6 +70,11 @@ export const totalDuration = (service: Service, options: ServiceOption[]) =>
 
 export const totalPrice = (service: Service, options: ServiceOption[]) =>
   service.basePrice + options.reduce((s, o) => s + o.price, 0);
+
+// Acompte de 20 % demandé à la réservation (arrondi à l'euro supérieur)
+export const depositRate = business.bookingRules.depositRate;
+export const depositAmount = (total: number) => Math.ceil(total * depositRate);
+export const formatEuro = (v: number) => `${v} €`;
 
 export const addMinutes = (time: string, minutes: number) => {
   const [h, m] = time.split(":").map(Number);
