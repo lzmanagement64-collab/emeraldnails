@@ -12,7 +12,7 @@ export const Route = createFileRoute("/faq")({
   component: FaqPage,
   head: () => ({
     meta: [
-      { title: "Questions fréquentes — Atelier Porcelaine" },
+      { title: "Questions fréquentes — Emerald Beauty" },
       { name: "description", content: "Durée d'une pose, préparation, remplissage, annulation, moyens de paiement..." },
       { property: "og:title", content: "Questions fréquentes" },
       { property: "og:url", content: "/faq" },

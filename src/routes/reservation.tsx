@@ -32,7 +32,7 @@ export const Route = createFileRoute("/reservation")({
   component: ReservationPage,
   head: () => ({
     meta: [
-      { title: "Prendre rendez-vous — Atelier Porcelaine" },
+      { title: "Prendre rendez-vous — Emerald Beauty" },
       { name: "description", content: "Réservez votre créneau en quelques étapes." },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Prendre rendez-vous" },

@@ -16,7 +16,7 @@ export const Route = createFileRoute("/confirmation")({
   component: Confirmation,
   head: () => ({
     meta: [
-      { title: "Demande envoyée — Atelier Porcelaine" },
+      { title: "Demande envoyée — Emerald Beauty" },
       { name: "robots", content: "noindex" },
     ],
   }),

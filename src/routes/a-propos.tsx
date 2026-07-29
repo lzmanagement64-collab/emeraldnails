@@ -6,7 +6,7 @@ export const Route = createFileRoute("/a-propos")({
   component: AProposPage,
   head: () => ({
     meta: [
-      { title: "L'atelier — Atelier Porcelaine" },
+      { title: "L'atelier — Emerald Beauty" },
       {
         name: "description",
         content: `Découvrez l'univers et l'approche de ${business.founder}, prothésiste ongulaire à ${business.city}.`,
