@@ -16,6 +16,10 @@ export const faq = [
     a: "Le remplissage entretient une pose existante toutes les 3 à 4 semaines. Au-delà de 5 semaines, prévoyez une dépose complète.",
   },
   {
+    q: "Faut-il verser un acompte ?",
+    a: "Oui, un acompte de 20 % du montant de la prestation est demandé pour confirmer le rendez-vous. Il est déduit du total le jour de la prestation.",
+  },
+  {
     q: "Quelles sont les conditions d'annulation ?",
     a: "Toute annulation doit être effectuée au moins 24h à l'avance. Passé ce délai, un dédommagement pourra être demandé.",
   },
