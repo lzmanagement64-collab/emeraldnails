@@ -1,10 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { business } from "@/config/business";
+import { areas } from "@/data/areas";
 
 export function Footer() {
   return (
     <footer className="border-t border-border bg-linen/40">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
+
         <div className="space-y-3">
           <p className="font-display text-2xl italic">{business.name}</p>
           <p className="max-w-xs text-sm text-taupe">{business.shortDescription}</p>
