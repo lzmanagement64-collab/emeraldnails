@@ -1,17 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
+import { areas } from "@/data/areas";
+import { SITE_URL } from "@/config/business";
 
-const BASE_URL = "";
+const BASE_URL = SITE_URL;
 
-const entries = [
-  { path: "/", changefreq: "weekly" as const, priority: "1.0" },
-  { path: "/prestations", changefreq: "monthly" as const, priority: "0.9" },
-  { path: "/galerie", changefreq: "weekly" as const, priority: "0.8" },
-  { path: "/a-propos", changefreq: "monthly" as const, priority: "0.7" },
-  { path: "/faq", changefreq: "monthly" as const, priority: "0.6" },
-  { path: "/mentions-legales", changefreq: "yearly" as const, priority: "0.2" },
-  { path: "/confidentialite", changefreq: "yearly" as const, priority: "0.2" },
-  { path: "/conditions", changefreq: "yearly" as const, priority: "0.2" },
+type Entry = {
+  path: string;
+  changefreq: "daily" | "weekly" | "monthly" | "yearly";
+  priority: string;
+};
+
+const entries: Entry[] = [
+  { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/prestations", changefreq: "monthly", priority: "0.9" },
+  { path: "/reservation", changefreq: "weekly", priority: "0.9" },
+  { path: "/galerie", changefreq: "weekly", priority: "0.8" },
+  ...areas.map<Entry>((a) => ({
+    path: `/onglerie/${a.slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  })),
+  { path: "/a-propos", changefreq: "monthly", priority: "0.7" },
+  { path: "/contact", changefreq: "monthly", priority: "0.7" },
+  { path: "/ouvrir-un-salon", changefreq: "monthly", priority: "0.7" },
+  { path: "/faq", changefreq: "monthly", priority: "0.6" },
+  { path: "/securite", changefreq: "yearly", priority: "0.3" },
+  { path: "/mentions-legales", changefreq: "yearly", priority: "0.2" },
+  { path: "/confidentialite", changefreq: "yearly", priority: "0.2" },
+  { path: "/conditions", changefreq: "yearly", priority: "0.2" },
 ];
 
 export const Route = createFileRoute("/sitemap.xml")({

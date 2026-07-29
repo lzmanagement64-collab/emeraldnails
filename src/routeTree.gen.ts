@@ -10,21 +10,31 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SecuriteRouteImport } from './routes/securite'
 import { Route as ReservationRouteImport } from './routes/reservation'
 import { Route as PrestationsRouteImport } from './routes/prestations'
+import { Route as OuvrirUnSalonRouteImport } from './routes/ouvrir-un-salon'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as GalerieRouteImport } from './routes/galerie'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as ConditionsRouteImport } from './routes/conditions'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OnglerieVilleRouteImport } from './routes/onglerie.$ville'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecuriteRoute = SecuriteRouteImport.update({
+  id: '/securite',
+  path: '/securite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReservationRoute = ReservationRouteImport.update({
@@ -35,6 +45,11 @@ const ReservationRoute = ReservationRouteImport.update({
 const PrestationsRoute = PrestationsRouteImport.update({
   id: '/prestations',
   path: '/prestations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OuvrirUnSalonRoute = OuvrirUnSalonRouteImport.update({
+  id: '/ouvrir-un-salon',
+  path: '/ouvrir-un-salon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
@@ -52,6 +67,11 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfirmationRoute = ConfirmationRouteImport.update({
   id: '/confirmation',
   path: '/confirmation',
@@ -65,6 +85,11 @@ const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
 const ConditionsRoute = ConditionsRouteImport.update({
   id: '/conditions',
   path: '/conditions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -82,49 +107,69 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnglerieVilleRoute = OnglerieVilleRouteImport.update({
+  id: '/onglerie/$ville',
+  path: '/onglerie/$ville',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/confirmation': typeof ConfirmationRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/onglerie/$ville': typeof OnglerieVilleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/confirmation': typeof ConfirmationRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/onglerie/$ville': typeof OnglerieVilleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/confirmation': typeof ConfirmationRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/onglerie/$ville': typeof OnglerieVilleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,58 +177,78 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/auth'
     | '/conditions'
     | '/confidentialite'
     | '/confirmation'
+    | '/contact'
     | '/faq'
     | '/galerie'
     | '/mentions-legales'
+    | '/ouvrir-un-salon'
     | '/prestations'
     | '/reservation'
+    | '/securite'
     | '/sitemap.xml'
+    | '/onglerie/$ville'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/auth'
     | '/conditions'
     | '/confidentialite'
     | '/confirmation'
+    | '/contact'
     | '/faq'
     | '/galerie'
     | '/mentions-legales'
+    | '/ouvrir-un-salon'
     | '/prestations'
     | '/reservation'
+    | '/securite'
     | '/sitemap.xml'
+    | '/onglerie/$ville'
   id:
     | '__root__'
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/auth'
     | '/conditions'
     | '/confidentialite'
     | '/confirmation'
+    | '/contact'
     | '/faq'
     | '/galerie'
     | '/mentions-legales'
+    | '/ouvrir-un-salon'
     | '/prestations'
     | '/reservation'
+    | '/securite'
     | '/sitemap.xml'
+    | '/onglerie/$ville'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AProposRoute: typeof AProposRoute
   AdminRoute: typeof AdminRoute
+  AuthRoute: typeof AuthRoute
   ConditionsRoute: typeof ConditionsRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
   ConfirmationRoute: typeof ConfirmationRoute
+  ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   GalerieRoute: typeof GalerieRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
+  OuvrirUnSalonRoute: typeof OuvrirUnSalonRoute
   PrestationsRoute: typeof PrestationsRoute
   ReservationRoute: typeof ReservationRoute
+  SecuriteRoute: typeof SecuriteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  OnglerieVilleRoute: typeof OnglerieVilleRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -193,6 +258,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/securite': {
+      id: '/securite'
+      path: '/securite'
+      fullPath: '/securite'
+      preLoaderRoute: typeof SecuriteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reservation': {
@@ -207,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/prestations'
       fullPath: '/prestations'
       preLoaderRoute: typeof PrestationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ouvrir-un-salon': {
+      id: '/ouvrir-un-salon'
+      path: '/ouvrir-un-salon'
+      fullPath: '/ouvrir-un-salon'
+      preLoaderRoute: typeof OuvrirUnSalonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mentions-legales': {
@@ -230,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/confirmation': {
       id: '/confirmation'
       path: '/confirmation'
@@ -249,6 +335,13 @@ declare module '@tanstack/react-router' {
       path: '/conditions'
       fullPath: '/conditions'
       preLoaderRoute: typeof ConditionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -272,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onglerie/$ville': {
+      id: '/onglerie/$ville'
+      path: '/onglerie/$ville'
+      fullPath: '/onglerie/$ville'
+      preLoaderRoute: typeof OnglerieVilleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -279,15 +379,20 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AProposRoute: AProposRoute,
   AdminRoute: AdminRoute,
+  AuthRoute: AuthRoute,
   ConditionsRoute: ConditionsRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
   ConfirmationRoute: ConfirmationRoute,
+  ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   GalerieRoute: GalerieRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
+  OuvrirUnSalonRoute: OuvrirUnSalonRoute,
   PrestationsRoute: PrestationsRoute,
   ReservationRoute: ReservationRoute,
+  SecuriteRoute: SecuriteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  OnglerieVilleRoute: OnglerieVilleRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

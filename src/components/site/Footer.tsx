@@ -1,10 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { business } from "@/config/business";
+import { areas } from "@/data/areas";
 
 export function Footer() {
   return (
     <footer className="border-t border-border bg-linen/40">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
+
         <div className="space-y-3">
           <p className="font-display text-2xl italic">{business.name}</p>
           <p className="max-w-xs text-sm text-taupe">{business.shortDescription}</p>
@@ -44,16 +46,40 @@ export function Footer() {
             ))}
           </ul>
         </div>
+
+        <div className="space-y-3 text-sm">
+          <p className="eyebrow">Zones desservies</p>
+          <ul className="space-y-1.5 text-taupe">
+            {areas.map((a) => (
+              <li key={a.slug}>
+                <Link
+                  to="/onglerie/$ville"
+                  params={{ ville: a.slug }}
+                  className="underline-offset-4 hover:text-ink hover:underline"
+                >
+                  Prothésiste ongulaire {a.city}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link to="/ouvrir-un-salon" className="underline-offset-4 hover:text-ink hover:underline">
+                Ouvrir un salon
+              </Link>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <div className="border-t border-border">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-3 px-4 py-6 font-mono text-[10px] uppercase tracking-widest text-taupe sm:flex-row sm:px-6">
           <p>© {new Date().getFullYear()} {business.name}. Tous droits réservés.</p>
           <div className="flex flex-wrap gap-5">
+            <Link to="/securite">Sécurité</Link>
             <Link to="/mentions-legales">Mentions légales</Link>
             <Link to="/confidentialite">Confidentialité</Link>
             <Link to="/conditions">Conditions</Link>
           </div>
+
         </div>
       </div>
     </footer>

@@ -6,18 +6,58 @@ import { ServiceCard } from "@/components/site/ServiceCard";
 import { services } from "@/data/services";
 import { testimonials } from "@/data/testimonials";
 import { galleryItems } from "@/data/gallery";
-import { business } from "@/config/business";
+import { areas } from "@/data/areas";
+import { business, SITE_URL } from "@/config/business";
+
+const TITLE = "Prothésiste ongulaire Pau & Lons (64) — Pose gel, Gel X & nail art | Emerald Beauty";
+const DESC =
+  "Studio d'onglerie à Lons près de Pau : extension gel, Gel X, semi-permanent et nail art par Maria. Noté 4,8/5. Réservation en ligne 24/7, acompte 20 %.";
 
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { property: "og:url", content: "/" },
+      { title: TITLE },
+      { name: "description", content: DESC },
+      { property: "og:title", content: TITLE },
+      { property: "og:description", content: DESC },
+      { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BeautySalon",
+          name: business.name,
+          description: DESC,
+          url: SITE_URL,
+          telephone: business.phone,
+          email: business.email,
+          priceRange: "€€",
+          image: `${SITE_URL}/favicon.ico`,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "7 Imp. d'Ossau",
+            addressLocality: "Lons",
+            postalCode: "64140",
+            addressRegion: "Nouvelle-Aquitaine",
+            addressCountry: "FR",
+          },
+          areaServed: business.serviceArea.map((c) => ({ "@type": "City", name: c })),
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: "4.8",
+            reviewCount: "60",
+          },
+        }),
+      },
+    ],
   }),
 });
+
 
 function Index() {
   const featured = services.slice(0, 3);
@@ -178,7 +218,41 @@ function Index() {
         </div>
       </Section>
 
+      {/* ZONES DESSERVIES — SEO LOCAL */}
+      <Section
+        eyebrow="Secteur 64"
+        title="Un studio pensé pour toute l'agglomération paloise"
+        description="Emerald Beauty reçoit les clientes de Pau et des communes voisines à Lons, avec stationnement gratuit et créneaux jusqu'à 22h en semaine."
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {areas.map((a) => (
+            <Link
+              key={a.slug}
+              to="/onglerie/$ville"
+              params={{ ville: a.slug }}
+              className="group rounded-sm border border-border bg-card p-6 transition-colors hover:border-ink"
+            >
+              <p className="font-display text-xl text-ink">{a.city}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-taupe">
+                {a.postalCode} · {a.travelTime}
+              </p>
+              <p className="mt-3 inline-flex items-center gap-1 text-sm text-taupe group-hover:text-ink">
+                Voir la page <ArrowUpRight className="size-3.5" />
+              </p>
+            </Link>
+          ))}
+        </div>
+        <p className="mt-8 text-sm text-taupe">
+          Vous êtes prothésiste et souhaitez ouvrir un studio dans le 64 ?{" "}
+          <Link to="/ouvrir-un-salon" className="text-ink underline underline-offset-4">
+            Découvrez le projet d'expansion Emerald Beauty
+          </Link>
+          .
+        </p>
+      </Section>
+
       {/* CTA FINAL */}
+
       <Section>
         <div className="rounded-sm border border-border bg-linen/60 px-6 py-14 text-center sm:px-12">
           <p className="eyebrow mb-4">Réservation</p>
