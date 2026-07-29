@@ -1,39 +1,66 @@
-// Témoignages d'exemple à remplacer par des avis réels.
+// Avis réels — fiche Planity Emerald Beauty (Lons).
+// Note globale 4,8/5 sur 10 avis clients vérifiés.
+
 export type Testimonial = {
   id: string;
   firstName: string;
   rating: number;
   text: string;
   service: string;
+  date: string; // ISO — utilisé pour le JSON-LD Review
 };
+
+export const reviewsSummary = {
+  ratingValue: 4.8,
+  reviewCount: 10,
+  source: "Planity",
+  breakdown: [
+    { label: "Accueil", value: 4.9 },
+    { label: "Propreté", value: 4.7 },
+    { label: "Cadre & ambiance", value: 4.7 },
+    { label: "Qualité de la prestation", value: 4.9 },
+  ],
+} as const;
 
 export const testimonials: Testimonial[] = [
   {
     id: "t1",
-    firstName: "Élodie",
+    firstName: "Cliente vérifiée",
     rating: 5,
-    text: "Une attention aux détails incroyable. L'hygiène est irréprochable et le résultat toujours parfait.",
-    service: "Pose complète gel",
+    text: "La meilleure, bisous.",
+    service: "Avis Planity",
+    date: "2026-07-18",
   },
   {
     id: "t2",
-    firstName: "Clémence",
+    firstName: "Cliente vérifiée",
     rating: 5,
-    text: "Le travail sur les cuticules est d'une précision chirurgicale. Je ne vais plus ailleurs.",
-    service: "Semi-permanent",
+    text: "J'ai passé un très bon moment, mes ongles sont incroyables. Encore merci !",
+    service: "Avis Planity",
+    date: "2026-07-08",
   },
   {
     id: "t3",
-    firstName: "Marion",
+    firstName: "Cliente vérifiée",
     rating: 5,
-    text: "Un vrai moment pour soi. Camille est à l'écoute et propose des idées qui me correspondent.",
-    service: "Gainage",
+    text: "Professionnel incroyable, travail de très bonne qualité, très gentille et toujours à l'écoute.",
+    service: "Avis Planity",
+    date: "2026-06-06",
   },
   {
     id: "t4",
-    firstName: "Sarah",
+    firstName: "Cliente vérifiée",
     rating: 5,
-    text: "Tenue impeccable trois semaines plus tard. Le studio est calme et lumineux.",
-    service: "Remplissage",
+    text: "La meilleure ❤️",
+    service: "Avis Planity",
+    date: "2026-05-01",
+  },
+  {
+    id: "t5",
+    firstName: "Cliente vérifiée",
+    rating: 5,
+    text: "Très bien, c'est un 10/10 sur tous les aspects !",
+    service: "Avis Planity",
+    date: "2026-03-16",
   },
 ];
