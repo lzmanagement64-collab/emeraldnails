@@ -6,18 +6,58 @@ import { ServiceCard } from "@/components/site/ServiceCard";
 import { services } from "@/data/services";
 import { testimonials } from "@/data/testimonials";
 import { galleryItems } from "@/data/gallery";
-import { business } from "@/config/business";
+import { areas } from "@/data/areas";
+import { business, SITE_URL } from "@/config/business";
+
+const TITLE = "Prothésiste ongulaire Pau & Lons (64) — Pose gel, Gel X & nail art | Emerald Beauty";
+const DESC =
+  "Studio d'onglerie à Lons près de Pau : extension gel, Gel X, semi-permanent et nail art par Maria. Noté 4,8/5. Réservation en ligne 24/7, acompte 20 %.";
 
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { property: "og:url", content: "/" },
+      { title: TITLE },
+      { name: "description", content: DESC },
+      { property: "og:title", content: TITLE },
+      { property: "og:description", content: DESC },
+      { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BeautySalon",
+          name: business.name,
+          description: DESC,
+          url: SITE_URL,
+          telephone: business.phone,
+          email: business.email,
+          priceRange: "€€",
+          image: `${SITE_URL}/favicon.ico`,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "7 Imp. d'Ossau",
+            addressLocality: "Lons",
+            postalCode: "64140",
+            addressRegion: "Nouvelle-Aquitaine",
+            addressCountry: "FR",
+          },
+          areaServed: business.serviceArea.map((c) => ({ "@type": "City", name: c })),
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: "4.8",
+            reviewCount: "60",
+          },
+        }),
+      },
+    ],
   }),
 });
+
 
 function Index() {
   const featured = services.slice(0, 3);
