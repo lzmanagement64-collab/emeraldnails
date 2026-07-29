@@ -7,7 +7,7 @@ export const Route = createFileRoute("/prestations")({
   component: PrestationsPage,
   head: () => ({
     meta: [
-      { title: "Prestations & tarifs — Atelier Porcelaine" },
+      { title: "Prestations & tarifs — Emerald Beauty" },
       {
         name: "description",
         content:
@@ -34,6 +34,10 @@ function PrestationsPage() {
         <p className="max-w-2xl text-taupe">
           Les tarifs affichés sont indicatifs. Le prix final peut varier selon la complexité
           du nail art ou la longueur souhaitée. Chaque prestation inclut la manucure russe.
+        </p>
+        <p className="mt-4 max-w-2xl rounded-sm border border-border bg-card p-4 text-sm text-taupe">
+          Un acompte de 20 % est demandé à la réservation pour confirmer le créneau. Il est
+          déduit du montant total le jour du rendez-vous.
         </p>
       </Section>
 

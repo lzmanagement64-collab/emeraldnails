@@ -14,6 +14,8 @@ import {
   submitBooking,
   totalDuration,
   totalPrice,
+  depositAmount,
+  depositRate,
   type Availability,
   type BookingPayload,
 } from "@/lib/booking-api";
@@ -30,7 +32,7 @@ export const Route = createFileRoute("/reservation")({
   component: ReservationPage,
   head: () => ({
     meta: [
-      { title: "Prendre rendez-vous — Atelier Porcelaine" },
+      { title: "Prendre rendez-vous — Emerald Beauty" },
       { name: "description", content: "Réservez votre créneau en quelques étapes." },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Prendre rendez-vous" },
@@ -110,6 +112,7 @@ function ReservationPage() {
 
   const duration = service ? totalDuration(service, selectedOptions) : 0;
   const price = service ? totalPrice(service, selectedOptions) : 0;
+  const deposit = depositAmount(price);
 
   const canContinue = useMemo(() => {
     switch (stepIdx) {
@@ -172,6 +175,9 @@ function ReservationPage() {
       preferences,
       inspirationImages: inspirationImages.map((i) => i.dataUrl),
       estimatedTotal: price,
+      depositRate,
+      depositAmount: deposit,
+      remainingBalance: price - deposit,
       consent: true,
       source: "website",
     };
@@ -261,6 +267,7 @@ function ReservationPage() {
             time={selectedTime}
             duration={duration}
             price={price}
+            deposit={deposit}
             customer={customer}
             preferences={preferences}
             consent={consent}
@@ -825,6 +832,7 @@ function RecapStep({
   time,
   duration,
   price,
+  deposit,
   customer,
   preferences,
   consent,
@@ -836,6 +844,7 @@ function RecapStep({
   time: string;
   duration: number;
   price: number;
+  deposit: number;
   customer: Customer;
   preferences: Preferences;
   consent: boolean;
@@ -861,7 +870,17 @@ function RecapStep({
           <Row label="Horaire" value={`${time} – ${endTime}`} />
           <Row label="Durée estimée" value={formatDuration(duration)} />
           <Row label="Prix estimé" value={`${price} €`} highlight />
+          <Row label={`Acompte (${Math.round(depositRate * 100)} %)`} value={`${deposit} €`} highlight />
+          <Row label="Solde sur place" value={`${price - deposit} €`} />
         </dl>
+      </div>
+
+      <div className="rounded-sm border border-border bg-linen/40 p-5 text-sm text-taupe">
+        <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-ink">Acompte</p>
+        <p>
+          Un acompte de {Math.round(depositRate * 100)} % ({deposit} €) est demandé pour confirmer
+          le rendez-vous. Il est déduit du montant total le jour de la prestation.
+        </p>
       </div>
 
       <div className="rounded-sm border border-border bg-card p-6">

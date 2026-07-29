@@ -41,6 +41,7 @@ export const business = {
     maxAdvanceDays: 60,
     slotStepMinutes: 30,
     bufferMinutes: 15,
+    depositRate: 0.2,
   },
 } as const;
 

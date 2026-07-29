@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { Service } from "@/data/services";
+import { depositAmount } from "@/lib/booking-api";
 
 export function ServiceCard({ service }: { service: Service }) {
   return (
@@ -10,6 +11,9 @@ export function ServiceCard({ service }: { service: Service }) {
           <span className="font-mono text-sm text-bordeaux">{service.basePrice} €</span>
         </div>
         <p className="text-sm text-taupe">{service.description}</p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-bordeaux">
+          Acompte {depositAmount(service.basePrice)} € à la réservation
+        </p>
       </div>
       <div className="flex items-center justify-between border-t border-border pt-4">
         <span className="font-mono text-[10px] uppercase tracking-widest text-taupe">

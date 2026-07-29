@@ -10,7 +10,7 @@ export const Route = createFileRoute("/galerie")({
   component: GaleriePage,
   head: () => ({
     meta: [
-      { title: "Galerie — Atelier Porcelaine" },
+      { title: "Galerie — Emerald Beauty" },
       { name: "description", content: "Nail art, french, nude, ongles longs et courts. Nos dernières réalisations." },
       { property: "og:title", content: "Galerie" },
       { property: "og:url", content: "/galerie" },

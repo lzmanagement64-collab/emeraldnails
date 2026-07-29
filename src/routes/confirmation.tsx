@@ -16,7 +16,7 @@ export const Route = createFileRoute("/confirmation")({
   component: Confirmation,
   head: () => ({
     meta: [
-      { title: "Demande envoyée — Atelier Porcelaine" },
+      { title: "Demande envoyée — Emerald Beauty" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -46,7 +46,8 @@ function Confirmation() {
         </h1>
         <p className="mx-auto mt-4 max-w-md text-taupe">
           Votre demande de rendez-vous a bien été transmise. Vous recevrez une confirmation
-          par email dès validation, sous quelques heures.
+          par email dès validation, sous quelques heures. Un acompte de 20 % vous sera demandé
+          pour confirmer définitivement le créneau.
         </p>
 
         {(service || prettyDate || time) && (
