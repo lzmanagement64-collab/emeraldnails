@@ -186,6 +186,10 @@ function ReservationPage() {
     setSubmitting(false);
 
     if (result.ok) {
+      if (result.bookingId) {
+        navigate({ to: "/paiement", search: { booking: result.bookingId } });
+        return;
+      }
       const params = new URLSearchParams({
         service: service.name,
         date: payload.appointment.date,

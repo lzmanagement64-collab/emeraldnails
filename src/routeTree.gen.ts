@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SecuriteRouteImport } from './routes/securite'
 import { Route as ReservationRouteImport } from './routes/reservation'
 import { Route as PrestationsRouteImport } from './routes/prestations'
+import { Route as PaiementRouteImport } from './routes/paiement'
 import { Route as OuvrirUnSalonRouteImport } from './routes/ouvrir-un-salon'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as GalerieRouteImport } from './routes/galerie'
@@ -26,6 +27,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnglerieVilleRouteImport } from './routes/onglerie.$ville'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -45,6 +47,11 @@ const ReservationRoute = ReservationRouteImport.update({
 const PrestationsRoute = PrestationsRouteImport.update({
   id: '/prestations',
   path: '/prestations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementRoute = PaiementRouteImport.update({
+  id: '/paiement',
+  path: '/paiement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OuvrirUnSalonRoute = OuvrirUnSalonRouteImport.update({
@@ -112,6 +119,12 @@ const OnglerieVilleRoute = OnglerieVilleRouteImport.update({
   path: '/onglerie/$ville',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -126,11 +139,13 @@ export interface FileRoutesByFullPath {
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
+  '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -145,11 +160,13 @@ export interface FileRoutesByTo {
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
+  '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -165,11 +182,13 @@ export interface FileRoutesById {
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
+  '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -186,11 +205,13 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/mentions-legales'
     | '/ouvrir-un-salon'
+    | '/paiement'
     | '/prestations'
     | '/reservation'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -205,11 +226,13 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/mentions-legales'
     | '/ouvrir-un-salon'
+    | '/paiement'
     | '/prestations'
     | '/reservation'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -224,11 +247,13 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/mentions-legales'
     | '/ouvrir-un-salon'
+    | '/paiement'
     | '/prestations'
     | '/reservation'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -244,11 +269,13 @@ export interface RootRouteChildren {
   GalerieRoute: typeof GalerieRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   OuvrirUnSalonRoute: typeof OuvrirUnSalonRoute
+  PaiementRoute: typeof PaiementRoute
   PrestationsRoute: typeof PrestationsRoute
   ReservationRoute: typeof ReservationRoute
   SecuriteRoute: typeof SecuriteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   OnglerieVilleRoute: typeof OnglerieVilleRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -279,6 +306,13 @@ declare module '@tanstack/react-router' {
       path: '/prestations'
       fullPath: '/prestations'
       preLoaderRoute: typeof PrestationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement': {
+      id: '/paiement'
+      path: '/paiement'
+      fullPath: '/paiement'
+      preLoaderRoute: typeof PaiementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ouvrir-un-salon': {
@@ -372,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnglerieVilleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -388,22 +429,14 @@ const rootRouteChildren: RootRouteChildren = {
   GalerieRoute: GalerieRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   OuvrirUnSalonRoute: OuvrirUnSalonRoute,
+  PaiementRoute: PaiementRoute,
   PrestationsRoute: PrestationsRoute,
   ReservationRoute: ReservationRoute,
   SecuriteRoute: SecuriteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   OnglerieVilleRoute: OnglerieVilleRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
