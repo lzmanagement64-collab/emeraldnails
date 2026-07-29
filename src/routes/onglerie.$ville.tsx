@@ -81,7 +81,7 @@ function AreaPage() {
       >
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
           <div className="space-y-5 text-sm leading-relaxed text-taupe">
-            {area.paragraphs.map((p) => (
+            {area.paragraphs.map((p: string) => (
               <p key={p.slice(0, 30)}>{p}</p>
             ))}
 
@@ -92,10 +92,11 @@ function AreaPage() {
               {services.slice(0, 8).map((s) => (
                 <li key={s.id} className="flex justify-between gap-4 border-b border-border py-2">
                   <span className="text-ink">{s.name}</span>
-                  <span>{s.price} €</span>
+                  <span>{s.basePrice} €</span>
                 </li>
               ))}
             </ul>
+
             <p>
               Toutes les prestations se réservent en ligne avec un acompte de 20 % qui sécurise
               votre créneau et se déduit du montant final.
