@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SecuriteRouteImport } from './routes/securite'
 import { Route as ReservationRouteImport } from './routes/reservation'
 import { Route as PrestationsRouteImport } from './routes/prestations'
+import { Route as PaiementRouteImport } from './routes/paiement'
 import { Route as OuvrirUnSalonRouteImport } from './routes/ouvrir-un-salon'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as GalerieRouteImport } from './routes/galerie'
@@ -46,6 +47,11 @@ const ReservationRoute = ReservationRouteImport.update({
 const PrestationsRoute = PrestationsRouteImport.update({
   id: '/prestations',
   path: '/prestations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementRoute = PaiementRouteImport.update({
+  id: '/paiement',
+  path: '/paiement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OuvrirUnSalonRoute = OuvrirUnSalonRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
+  '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/securite': typeof SecuriteRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
+  '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/securite': typeof SecuriteRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/galerie': typeof GalerieRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/ouvrir-un-salon': typeof OuvrirUnSalonRoute
+  '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/securite': typeof SecuriteRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/mentions-legales'
     | '/ouvrir-un-salon'
+    | '/paiement'
     | '/prestations'
     | '/reservation'
     | '/securite'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/mentions-legales'
     | '/ouvrir-un-salon'
+    | '/paiement'
     | '/prestations'
     | '/reservation'
     | '/securite'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/mentions-legales'
     | '/ouvrir-un-salon'
+    | '/paiement'
     | '/prestations'
     | '/reservation'
     | '/securite'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   GalerieRoute: typeof GalerieRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   OuvrirUnSalonRoute: typeof OuvrirUnSalonRoute
+  PaiementRoute: typeof PaiementRoute
   PrestationsRoute: typeof PrestationsRoute
   ReservationRoute: typeof ReservationRoute
   SecuriteRoute: typeof SecuriteRoute
@@ -293,6 +306,13 @@ declare module '@tanstack/react-router' {
       path: '/prestations'
       fullPath: '/prestations'
       preLoaderRoute: typeof PrestationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement': {
+      id: '/paiement'
+      path: '/paiement'
+      fullPath: '/paiement'
+      preLoaderRoute: typeof PaiementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ouvrir-un-salon': {
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   GalerieRoute: GalerieRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   OuvrirUnSalonRoute: OuvrirUnSalonRoute,
+  PaiementRoute: PaiementRoute,
   PrestationsRoute: PrestationsRoute,
   ReservationRoute: ReservationRoute,
   SecuriteRoute: SecuriteRoute,
