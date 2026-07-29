@@ -4,7 +4,7 @@ import { ArrowUpRight, Sparkles, Sprout, HeartHandshake } from "lucide-react";
 import { Section } from "@/components/site/Section";
 import { ServiceCard } from "@/components/site/ServiceCard";
 import { services } from "@/data/services";
-import { testimonials } from "@/data/testimonials";
+import { testimonials, reviewsSummary } from "@/data/testimonials";
 import { galleryItems } from "@/data/gallery";
 import { areas } from "@/data/areas";
 import { business, SITE_URL } from "@/config/business";
