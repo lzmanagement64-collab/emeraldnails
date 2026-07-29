@@ -2,11 +2,19 @@ import lilasFleursAsset from "@/assets/nails-lilas-fleurs.png.asset.json";
 import lilasMilkyAsset from "@/assets/nails-lilas-milky.png.asset.json";
 import vertLeopardAsset from "@/assets/nails-vert-leopard.png.asset.json";
 import whiteFlowerAsset from "@/assets/nails-white-flower.png.asset.json";
+import blueFloral1Asset from "@/assets/IMG_2238.jpg.asset.json";
+import blueFloral2Asset from "@/assets/IMG_2239.jpg.asset.json";
+import blueFlower3dAsset from "@/assets/IMG_2240.jpg.asset.json";
+import pinkOrangeAsset from "@/assets/IMG_2241.jpg.asset.json";
 
 const lilasFleurs = lilasFleursAsset as { url: string };
 const lilasMilky = lilasMilkyAsset as { url: string };
 const vertLeopard = vertLeopardAsset as { url: string };
 const whiteFlower = whiteFlowerAsset as { url: string };
+const blueFloral1 = blueFloral1Asset as { url: string };
+const blueFloral2 = blueFloral2Asset as { url: string };
+const blueFlower3d = blueFlower3dAsset as { url: string };
+const pinkOrange = pinkOrangeAsset as { url: string };
 
 export type GalleryCategory =
   | "tout"
@@ -76,5 +84,37 @@ export const galleryItems: GalleryItem[] = [
     image: lilasFleurs.url,
     ratio: "wide",
     placeholder: "linear-gradient(135deg, #d8c6e2, #a377c4)",
+  },
+  {
+    id: "6",
+    categories: ["french", "nail-art", "long"],
+    title: "French blanche · fleurs bleues peintes",
+    image: blueFloral1.url,
+    ratio: "portrait",
+    placeholder: "linear-gradient(135deg, #eef3ff, #3b5fe0)",
+  },
+  {
+    id: "7",
+    categories: ["french", "nail-art", "long"],
+    title: "Carré long · floral bleu dégradé",
+    image: blueFloral2.url,
+    ratio: "square",
+    placeholder: "linear-gradient(135deg, #f2f6ff, #5b7ef0)",
+  },
+  {
+    id: "8",
+    categories: ["couleur", "nail-art", "long"],
+    title: "Bleu roi · fleurs 3D & pois jaunes",
+    image: blueFlower3d.url,
+    ratio: "wide",
+    placeholder: "linear-gradient(135deg, #f6efd8, #2438c8)",
+  },
+  {
+    id: "9",
+    categories: ["couleur", "nail-art", "long"],
+    title: "Rose & orange · étoiles XL",
+    image: pinkOrange.url,
+    ratio: "portrait",
+    placeholder: "linear-gradient(135deg, #ffc7e2, #ff6a1f)",
   },
 ];
