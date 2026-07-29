@@ -218,7 +218,41 @@ function Index() {
         </div>
       </Section>
 
+      {/* ZONES DESSERVIES — SEO LOCAL */}
+      <Section
+        eyebrow="Secteur 64"
+        title="Un studio pensé pour toute l'agglomération paloise"
+        description="Emerald Beauty reçoit les clientes de Pau et des communes voisines à Lons, avec stationnement gratuit et créneaux jusqu'à 22h en semaine."
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {areas.map((a) => (
+            <Link
+              key={a.slug}
+              to="/onglerie/$ville"
+              params={{ ville: a.slug }}
+              className="group rounded-sm border border-border bg-card p-6 transition-colors hover:border-ink"
+            >
+              <p className="font-display text-xl text-ink">{a.city}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-taupe">
+                {a.postalCode} · {a.travelTime}
+              </p>
+              <p className="mt-3 inline-flex items-center gap-1 text-sm text-taupe group-hover:text-ink">
+                Voir la page <ArrowUpRight className="size-3.5" />
+              </p>
+            </Link>
+          ))}
+        </div>
+        <p className="mt-8 text-sm text-taupe">
+          Vous êtes prothésiste et souhaitez ouvrir un studio dans le 64 ?{" "}
+          <Link to="/ouvrir-un-salon" className="text-ink underline underline-offset-4">
+            Découvrez le projet d'expansion Emerald Beauty
+          </Link>
+          .
+        </p>
+      </Section>
+
       {/* CTA FINAL */}
+
       <Section>
         <div className="rounded-sm border border-border bg-linen/60 px-6 py-14 text-center sm:px-12">
           <p className="eyebrow mb-4">Réservation</p>
