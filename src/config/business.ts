@@ -4,7 +4,10 @@
 // crème/ivoire et touche dorée.
 // ============================================================
 
+export const SITE_URL = "https://velvet-digits-booker.lovable.app";
+
 export const business = {
+  siteUrl: SITE_URL,
   name: "Emerald Beauty",
   tagline: "L'art de sublimer chaque instant.",
   shortDescription:
@@ -12,8 +15,8 @@ export const business = {
   founder: "Maria",
   city: "Lons",
   address: "7 Imp. d'Ossau, 64140 Lons",
-  phone: "+33 6 00 00 00 00",
-  phoneDisplay: "06 00 00 00 00",
+  phone: "+33617255424",
+  phoneDisplay: "06 17 25 54 24",
   email: "contact@emerald-beauty.fr",
   instagram: "@emerald.beauty64",
   instagramUrl: "https://instagram.com/emerald.beauty64",
@@ -43,6 +46,7 @@ export const business = {
     bufferMinutes: 15,
     depositRate: 0.2,
   },
+  serviceArea: ["Pau", "Lons", "Billère", "Jurançon", "Lescar", "Bizanos", "Idron", "Gan"],
 } as const;
 
 export type Business = typeof business;
