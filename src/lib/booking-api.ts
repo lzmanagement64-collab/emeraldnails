@@ -172,11 +172,13 @@ export async function fetchAvailability(params: {
 export async function submitBooking(payload: BookingPayload): Promise<{
   ok: boolean;
   demoMode: boolean;
+  bookingId?: string;
   error?: string;
 }> {
+  let bookingId: string | undefined;
   try {
     const { createBooking } = await import("@/lib/booking.functions");
-    await createBooking({
+    const created = await createBooking({
       data: {
         firstName: payload.customer.firstName,
         lastName: payload.customer.lastName,
@@ -198,6 +200,7 @@ export async function submitBooking(payload: BookingPayload): Promise<{
         preferences: payload.preferences,
       },
     });
+    bookingId = created?.id;
   } catch (e) {
     return { ok: false, demoMode: false, error: (e as Error).message };
   }
@@ -207,13 +210,13 @@ export async function submitBooking(payload: BookingPayload): Promise<{
       await fetch(BOOKING_WEBHOOK, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, bookingId }),
       });
     } catch (e) {
       console.warn("[booking] webhook n8n injoignable", e);
     }
   }
 
-  return { ok: true, demoMode: false };
+  return { ok: true, demoMode: false, bookingId };
 }
 
