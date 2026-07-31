@@ -78,7 +78,7 @@ function AuthPage() {
               id="password"
               type="password"
               required
-              autoComplete="current-password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm"
@@ -89,9 +89,17 @@ function AuthPage() {
             disabled={loading}
             className="w-full rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
           >
-            {loading ? "Connexion…" : "Se connecter"}
+            {loading ? "Un instant…" : mode === "signup" ? "Créer le compte" : "Se connecter"}
           </button>
         </form>
+        <button
+          type="button"
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          className="mt-4 w-full text-xs text-taupe underline"
+        >
+          {mode === "signin" ? "Créer un compte" : "J'ai déjà un compte"}
+        </button>
+
         <p className="mt-6 text-xs text-taupe">
           Accès réservé. Les tentatives de connexion sont journalisées et les données clientes
           restent chiffrées et inaccessibles sans autorisation.
