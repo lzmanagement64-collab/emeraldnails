@@ -288,6 +288,7 @@ function ReservationPage() {
         {stepIdx === 4 && service && selectedDate && selectedTime && (
           <RecapStep
             service={service}
+            servicesList={selectedServices}
             options={selectedOptions}
             date={selectedDate}
             time={selectedTime}
