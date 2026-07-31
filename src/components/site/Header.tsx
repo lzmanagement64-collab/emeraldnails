@@ -47,7 +47,7 @@ export function Header() {
             </Link>
           ))}
           <Link
-            to="/reservation"
+            to="/reserver"
             className="rounded-sm bg-ink px-5 py-2.5 font-mono text-[11px] uppercase tracking-widest text-porcelain transition-opacity hover:opacity-90"
           >
             Prendre rendez-vous
@@ -86,7 +86,7 @@ export function Header() {
               </Link>
             ))}
             <Link
-              to="/reservation"
+              to="/reserver"
               onClick={() => setOpen(false)}
               className="mt-2 rounded-sm bg-ink px-4 py-3 text-center font-mono text-[11px] uppercase tracking-widest text-porcelain"
             >
