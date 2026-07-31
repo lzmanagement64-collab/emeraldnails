@@ -108,12 +108,25 @@ function ReservationPage() {
   useEffect(() => {
     if (search.service && !service) {
       const found = services.find((s) => s.id === search.service);
-      if (found) setService(found);
+      if (found) setSelectedServices([found]);
     }
   }, [search.service, service]);
 
-  const duration = service ? totalDuration(service, selectedOptions) : 0;
-  const price = service ? totalPrice(service, selectedOptions) : 0;
+  const toggleService = (s: Service) => {
+    setSelectedServices((curr) =>
+      curr.find((c) => c.id === s.id)
+        ? curr.filter((c) => c.id !== s.id)
+        : [...curr, s],
+    );
+    setSelectedTime(null);
+  };
+
+  const duration =
+    selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0) +
+    selectedOptions.reduce((sum, o) => sum + o.durationMinutes, 0);
+  const price =
+    selectedServices.reduce((sum, s) => sum + s.basePrice, 0) +
+    selectedOptions.reduce((sum, o) => sum + o.price, 0);
   const deposit = depositAmount(price);
 
   const canContinue = useMemo(() => {
