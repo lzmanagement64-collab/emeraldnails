@@ -235,13 +235,9 @@ function ReservationPage() {
       <div className="mx-auto grid max-w-3xl gap-8">
         {stepIdx === 0 && (
           <ServiceStep
-            service={service}
+            selected={selectedServices}
             options={selectedOptions}
-            onSelect={(s) => {
-              setService(s);
-              setSelectedOptions([]);
-              setSelectedTime(null);
-            }}
+            onToggleService={toggleService}
             onToggleOption={(o) => {
               setSelectedOptions((curr) =>
                 curr.find((c) => c.id === o.id)
