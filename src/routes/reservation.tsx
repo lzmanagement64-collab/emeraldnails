@@ -171,16 +171,24 @@ function ReservationPage() {
       },
       service: {
         id: service.id,
-        name: service.name,
-        durationMinutes: service.durationMinutes,
+        name: selectedServices.map((s) => s.name).join(" + "),
+        durationMinutes: duration,
         basePrice: service.basePrice,
       },
-      options: selectedOptions.map((o) => ({
-        id: o.id,
-        name: o.name,
-        price: o.price,
-        durationMinutes: o.durationMinutes,
-      })),
+      options: [
+        ...selectedServices.slice(1).map((s) => ({
+          id: s.id,
+          name: s.name,
+          price: s.basePrice,
+          durationMinutes: s.durationMinutes,
+        })),
+        ...selectedOptions.map((o) => ({
+          id: o.id,
+          name: o.name,
+          price: o.price,
+          durationMinutes: o.durationMinutes,
+        })),
+      ],
       appointment: {
         date: formatDateISO(selectedDate),
         startTime: selectedTime,
