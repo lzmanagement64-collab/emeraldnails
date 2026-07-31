@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SecuriteRouteImport } from './routes/securite'
+import { Route as ReserverRouteImport } from './routes/reserver'
 import { Route as ReservationRouteImport } from './routes/reservation'
 import { Route as PrestationsRouteImport } from './routes/prestations'
 import { Route as PaiementRouteImport } from './routes/paiement'
@@ -37,6 +38,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const SecuriteRoute = SecuriteRouteImport.update({
   id: '/securite',
   path: '/securite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReserverRoute = ReserverRouteImport.update({
+  id: '/reserver',
+  path: '/reserver',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReservationRoute = ReservationRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/reserver': typeof ReserverRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/reserver': typeof ReserverRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/reserver': typeof ReserverRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/paiement'
     | '/prestations'
     | '/reservation'
+    | '/reserver'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/paiement'
     | '/prestations'
     | '/reservation'
+    | '/reserver'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/paiement'
     | '/prestations'
     | '/reservation'
+    | '/reserver'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
@@ -272,6 +284,7 @@ export interface RootRouteChildren {
   PaiementRoute: typeof PaiementRoute
   PrestationsRoute: typeof PrestationsRoute
   ReservationRoute: typeof ReservationRoute
+  ReserverRoute: typeof ReserverRoute
   SecuriteRoute: typeof SecuriteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   OnglerieVilleRoute: typeof OnglerieVilleRoute
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/securite'
       fullPath: '/securite'
       preLoaderRoute: typeof SecuriteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reserver': {
+      id: '/reserver'
+      path: '/reserver'
+      fullPath: '/reserver'
+      preLoaderRoute: typeof ReserverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reservation': {
@@ -432,6 +452,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaiementRoute: PaiementRoute,
   PrestationsRoute: PrestationsRoute,
   ReservationRoute: ReservationRoute,
+  ReserverRoute: ReserverRoute,
   SecuriteRoute: SecuriteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   OnglerieVilleRoute: OnglerieVilleRoute,
