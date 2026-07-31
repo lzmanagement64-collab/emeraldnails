@@ -966,7 +966,7 @@ function Chip({
 // Étape 5 — Récapitulatif
 // ============================================================
 function RecapStep({
-  service,
+  servicesList,
   options,
   date,
   time,
@@ -979,6 +979,7 @@ function RecapStep({
   onConsent,
 }: {
   service: Service;
+  servicesList: Service[];
   options: ServiceOption[];
   date: Date;
   time: string;
@@ -996,7 +997,11 @@ function RecapStep({
       <div className="rounded-sm border border-border bg-card p-6">
         <p className="eyebrow mb-4">Votre rendez-vous</p>
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
-          <Row label="Prestation" value={service.name} />
+          <Row
+            label={servicesList.length > 1 ? "Prestations" : "Prestation"}
+            value={servicesList.map((s) => s.name).join(" + ")}
+          />
+
           <Row label="Options" value={options.length ? options.map((o) => o.name).join(", ") : "—"} />
           <Row
             label="Date"
