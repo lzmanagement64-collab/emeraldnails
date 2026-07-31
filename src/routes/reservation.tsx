@@ -12,8 +12,6 @@ import {
   fetchAvailability,
   formatDateISO,
   submitBooking,
-  totalDuration,
-  totalPrice,
   depositAmount,
   depositRate,
   type Availability,
@@ -72,9 +70,11 @@ function ReservationPage() {
   const navigate = useNavigate();
 
   const [stepIdx, setStepIdx] = useState(0);
-  const [service, setService] = useState<Service | null>(
-    services.find((s) => s.id === search.service) ?? null,
-  );
+  const [selectedServices, setSelectedServices] = useState<Service[]>(() => {
+    const found = services.find((s) => s.id === search.service);
+    return found ? [found] : [];
+  });
+  const service = selectedServices[0] ?? null;
   const [selectedOptions, setSelectedOptions] = useState<ServiceOption[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -106,12 +106,28 @@ function ReservationPage() {
   useEffect(() => {
     if (search.service && !service) {
       const found = services.find((s) => s.id === search.service);
-      if (found) setService(found);
+      if (found) setSelectedServices([found]);
     }
   }, [search.service, service]);
 
-  const duration = service ? totalDuration(service, selectedOptions) : 0;
-  const price = service ? totalPrice(service, selectedOptions) : 0;
+  const toggleService = (s: Service) => {
+    setSelectedServices((curr) => {
+      const nextList = curr.find((c) => c.id === s.id)
+        ? curr.filter((c) => c.id !== s.id)
+        : [...curr, s];
+      const allowed = new Set(nextList.flatMap((x) => (x.options ?? []).map((o) => o.id)));
+      setSelectedOptions((opts) => opts.filter((o) => allowed.has(o.id)));
+      return nextList;
+    });
+    setSelectedTime(null);
+  };
+
+  const duration =
+    selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0) +
+    selectedOptions.reduce((sum, o) => sum + o.durationMinutes, 0);
+  const price =
+    selectedServices.reduce((sum, s) => sum + s.basePrice, 0) +
+    selectedOptions.reduce((sum, o) => sum + o.price, 0);
   const deposit = depositAmount(price);
 
   const canContinue = useMemo(() => {
@@ -156,16 +172,24 @@ function ReservationPage() {
       },
       service: {
         id: service.id,
-        name: service.name,
-        durationMinutes: service.durationMinutes,
+        name: selectedServices.map((s) => s.name).join(" + "),
+        durationMinutes: duration,
         basePrice: service.basePrice,
       },
-      options: selectedOptions.map((o) => ({
-        id: o.id,
-        name: o.name,
-        price: o.price,
-        durationMinutes: o.durationMinutes,
-      })),
+      options: [
+        ...selectedServices.slice(1).map((s) => ({
+          id: s.id,
+          name: s.name,
+          price: s.basePrice,
+          durationMinutes: s.durationMinutes,
+        })),
+        ...selectedOptions.map((o) => ({
+          id: o.id,
+          name: o.name,
+          price: o.price,
+          durationMinutes: o.durationMinutes,
+        })),
+      ],
       appointment: {
         date: formatDateISO(selectedDate),
         startTime: selectedTime,
@@ -220,13 +244,9 @@ function ReservationPage() {
       <div className="mx-auto grid max-w-3xl gap-8">
         {stepIdx === 0 && (
           <ServiceStep
-            service={service}
+            selected={selectedServices}
             options={selectedOptions}
-            onSelect={(s) => {
-              setService(s);
-              setSelectedOptions([]);
-              setSelectedTime(null);
-            }}
+            onToggleService={toggleService}
             onToggleOption={(o) => {
               setSelectedOptions((curr) =>
                 curr.find((c) => c.id === o.id)
@@ -266,6 +286,7 @@ function ReservationPage() {
         {stepIdx === 4 && service && selectedDate && selectedTime && (
           <RecapStep
             service={service}
+            servicesList={selectedServices}
             options={selectedOptions}
             date={selectedDate}
             time={selectedTime}
@@ -327,26 +348,40 @@ function ReservationPage() {
 // Étape 1 — Prestation
 // ============================================================
 function ServiceStep({
-  service,
+  selected,
   options,
-  onSelect,
+  onToggleService,
   onToggleOption,
 }: {
-  service: Service | null;
+  selected: Service[];
   options: ServiceOption[];
-  onSelect: (s: Service) => void;
+  onToggleService: (s: Service) => void;
   onToggleOption: (o: ServiceOption) => void;
 }) {
+  const availableOptions = selected.flatMap((s) => s.options ?? []);
+  const totalDurationMin =
+    selected.reduce((sum, s) => sum + s.durationMinutes, 0) +
+    options.reduce((sum, o) => sum + o.durationMinutes, 0);
+  const totalPriceEur =
+    selected.reduce((sum, s) => sum + s.basePrice, 0) +
+    options.reduce((sum, o) => sum + o.price, 0);
+
   return (
     <div className="space-y-6">
+      <p className="text-sm text-taupe">
+        Sélectionnez une ou plusieurs prestations : les durées et les tarifs se cumulent
+        automatiquement pour un seul rendez-vous.
+      </p>
+
       <div className="grid gap-3">
         {services.map((s) => {
-          const active = service?.id === s.id;
+          const active = selected.some((c) => c.id === s.id);
           return (
             <button
               key={s.id}
               type="button"
-              onClick={() => onSelect(s)}
+              aria-pressed={active}
+              onClick={() => onToggleService(s)}
               className={cn(
                 "flex items-start justify-between gap-4 rounded-sm border p-5 text-left transition-colors",
                 active
@@ -354,19 +389,29 @@ function ServiceStep({
                   : "border-border bg-card text-ink hover:border-ink/40",
               )}
             >
-              <div className="min-w-0">
-                <p className="font-display text-lg">{s.name}</p>
-                <p className={cn("mt-1 text-sm", active ? "text-porcelain/70" : "text-taupe")}>
-                  {s.description}
-                </p>
-                <p
+              <div className="flex min-w-0 gap-4">
+                <span
                   className={cn(
-                    "mt-2 font-mono text-[10px] uppercase tracking-widest",
-                    active ? "text-porcelain/60" : "text-taupe",
+                    "mt-1 grid size-5 shrink-0 place-items-center rounded-sm border transition-colors",
+                    active ? "border-porcelain bg-porcelain text-ink" : "border-border",
                   )}
                 >
-                  {formatDuration(s.durationMinutes)}
-                </p>
+                  {active && <Check className="size-3.5" />}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-display text-lg">{s.name}</p>
+                  <p className={cn("mt-1 text-sm", active ? "text-porcelain/70" : "text-taupe")}>
+                    {s.description}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-2 font-mono text-[10px] uppercase tracking-widest",
+                      active ? "text-porcelain/60" : "text-taupe",
+                    )}
+                  >
+                    {formatDuration(s.durationMinutes)}
+                  </p>
+                </div>
               </div>
               <span className={cn("shrink-0 font-mono text-sm", active ? "text-porcelain" : "text-bordeaux")}>
                 {s.basePrice} €
@@ -376,11 +421,11 @@ function ServiceStep({
         })}
       </div>
 
-      {service?.options && service.options.length > 0 && (
+      {availableOptions.length > 0 && (
         <div className="rounded-sm border border-border bg-linen/40 p-5">
           <p className="eyebrow mb-4">Options</p>
           <div className="flex flex-wrap gap-2">
-            {service.options.map((o) => {
+            {availableOptions.map((o) => {
               const active = !!options.find((c) => c.id === o.id);
               return (
                 <button
@@ -398,6 +443,32 @@ function ServiceStep({
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {selected.length > 0 && (
+        <div className="rounded-sm border border-border bg-card p-5">
+          <p className="eyebrow mb-3">Votre sélection</p>
+          <ul className="space-y-2 text-sm">
+            {selected.map((s) => (
+              <li key={s.id} className="flex items-center justify-between gap-4">
+                <span className="text-ink">{s.name}</span>
+                <span className="font-mono text-taupe">{s.basePrice} €</span>
+              </li>
+            ))}
+            {options.map((o) => (
+              <li key={o.id} className="flex items-center justify-between gap-4">
+                <span className="text-taupe">{o.name}</span>
+                <span className="font-mono text-taupe">+{o.price} €</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 flex items-center justify-between border-t border-border pt-4 text-sm">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-taupe">
+              {formatDuration(totalDurationMin)}
+            </span>
+            <span className="font-mono text-bordeaux">Total {totalPriceEur} €</span>
           </div>
         </div>
       )}
@@ -893,7 +964,7 @@ function Chip({
 // Étape 5 — Récapitulatif
 // ============================================================
 function RecapStep({
-  service,
+  servicesList,
   options,
   date,
   time,
@@ -906,6 +977,7 @@ function RecapStep({
   onConsent,
 }: {
   service: Service;
+  servicesList: Service[];
   options: ServiceOption[];
   date: Date;
   time: string;
@@ -923,7 +995,11 @@ function RecapStep({
       <div className="rounded-sm border border-border bg-card p-6">
         <p className="eyebrow mb-4">Votre rendez-vous</p>
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
-          <Row label="Prestation" value={service.name} />
+          <Row
+            label={servicesList.length > 1 ? "Prestations" : "Prestation"}
+            value={servicesList.map((s) => s.name).join(" + ")}
+          />
+
           <Row label="Options" value={options.length ? options.map((o) => o.name).join(", ") : "—"} />
           <Row
             label="Date"
