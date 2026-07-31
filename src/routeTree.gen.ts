@@ -29,6 +29,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnglerieVilleRouteImport } from './routes/onglerie.$ville'
+import { Route as ApiPublicRappelsRouteImport } from './routes/api/public/rappels'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -131,6 +132,11 @@ const OnglerieVilleRoute = OnglerieVilleRouteImport.update({
   path: '/onglerie/$ville',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRappelsRoute = ApiPublicRappelsRouteImport.update({
+  id: '/api/public/rappels',
+  path: '/api/public/rappels',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/rappels': typeof ApiPublicRappelsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/rappels': typeof ApiPublicRappelsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/rappels': typeof ApiPublicRappelsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/rappels'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/rappels'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -277,6 +288,7 @@ export interface FileRouteTypes {
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/rappels'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -301,6 +313,7 @@ export interface RootRouteChildren {
   SecuriteRoute: typeof SecuriteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   OnglerieVilleRoute: typeof OnglerieVilleRoute
+  ApiPublicRappelsRoute: typeof ApiPublicRappelsRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -446,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnglerieVilleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/rappels': {
+      id: '/api/public/rappels'
+      path: '/api/public/rappels'
+      fullPath: '/api/public/rappels'
+      preLoaderRoute: typeof ApiPublicRappelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -477,6 +497,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecuriteRoute: SecuriteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   OnglerieVilleRoute: OnglerieVilleRoute,
+  ApiPublicRappelsRoute: ApiPublicRappelsRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
