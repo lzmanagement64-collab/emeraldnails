@@ -98,6 +98,69 @@ export type Database = {
         }
         Relationships: []
       }
+      horaires_ouverture: {
+        Row: {
+          created_at: string
+          ferme: boolean
+          heure_debut: string
+          heure_fin: string
+          id: string
+          jour_semaine: number
+          pause_debut: string | null
+          pause_fin: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ferme?: boolean
+          heure_debut?: string
+          heure_fin?: string
+          id?: string
+          jour_semaine: number
+          pause_debut?: string | null
+          pause_fin?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ferme?: boolean
+          heure_debut?: string
+          heure_fin?: string
+          id?: string
+          jour_semaine?: number
+          pause_debut?: string | null
+          pause_fin?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      indisponibilites: {
+        Row: {
+          created_at: string
+          date_debut: string
+          date_fin: string
+          id: string
+          motif: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_debut: string
+          date_fin: string
+          id?: string
+          motif?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_debut?: string
+          date_fin?: string
+          id?: string
+          motif?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           city: string | null
@@ -137,6 +200,101 @@ export type Database = {
         }
         Relationships: []
       }
+      prestations: {
+        Row: {
+          actif: boolean
+          couleur: string
+          created_at: string
+          description: string
+          duree_minutes: number
+          id: string
+          nom: string
+          ordre: number
+          prix: number
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          couleur?: string
+          created_at?: string
+          description?: string
+          duree_minutes: number
+          id?: string
+          nom: string
+          ordre?: number
+          prix: number
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          couleur?: string
+          created_at?: string
+          description?: string
+          duree_minutes?: number
+          id?: string
+          nom?: string
+          ordre?: number
+          prix?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          cliente_email: string
+          cliente_nom: string
+          cliente_prenom: string
+          cliente_telephone: string
+          commentaire: string | null
+          cree_le: string
+          date_debut: string
+          date_fin: string
+          id: string
+          prestation_id: string
+          statut: string
+          token_annulation: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_email: string
+          cliente_nom: string
+          cliente_prenom: string
+          cliente_telephone: string
+          commentaire?: string | null
+          cree_le?: string
+          date_debut: string
+          date_fin: string
+          id?: string
+          prestation_id: string
+          statut?: string
+          token_annulation?: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_email?: string
+          cliente_nom?: string
+          cliente_prenom?: string
+          cliente_telephone?: string
+          commentaire?: string | null
+          cree_le?: string
+          date_debut?: string
+          date_fin?: string
+          id?: string
+          prestation_id?: string
+          statut?: string
+          token_annulation?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_prestation_id_fkey"
+            columns: ["prestation_id"]
+            isOneToOne: false
+            referencedRelation: "prestations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -163,6 +321,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      annuler_reservation: { Args: { p_token: string }; Returns: boolean }
+      get_creneaux_disponibles: {
+        Args: { date_recherche: string; prestation_id: string }
+        Returns: {
+          heure_debut: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
