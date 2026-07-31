@@ -17,13 +17,33 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const signIn = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin + "/auth" },
+      });
+      setLoading(false);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      if (!data.session) {
+        toast.success("Compte créé. Vérifiez votre boîte mail pour confirmer l'adresse.");
+        setMode("signin");
+        return;
+      }
+      navigate({ to: "/admin" });
+      return;
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
@@ -38,7 +58,8 @@ function AuthPage() {
       <div className="w-full max-w-sm rounded-sm border border-border bg-card p-8">
         <p className="eyebrow mb-2">Espace professionnel</p>
         <h1 className="mb-6 font-display text-2xl text-ink">{business.name}</h1>
-        <form onSubmit={signIn} className="space-y-4">
+        <form onSubmit={submit} className="space-y-4">
+
           <div>
             <label htmlFor="email" className="mb-1 block text-sm text-taupe">E-mail</label>
             <input
