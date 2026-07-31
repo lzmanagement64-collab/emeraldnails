@@ -14,7 +14,7 @@ export function MobileBar() {
           <Phone className="size-4" />
         </a>
         <Link
-          to="/reservation"
+          to="/reserver"
           className="grid flex-1 place-items-center rounded-full bg-ink font-mono text-[11px] uppercase tracking-widest text-porcelain"
         >
           Prendre rendez-vous

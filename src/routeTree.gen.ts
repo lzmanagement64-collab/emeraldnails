@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SecuriteRouteImport } from './routes/securite'
+import { Route as ReserverRouteImport } from './routes/reserver'
 import { Route as ReservationRouteImport } from './routes/reservation'
 import { Route as PrestationsRouteImport } from './routes/prestations'
 import { Route as PaiementRouteImport } from './routes/paiement'
@@ -23,10 +24,12 @@ import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as ConditionsRouteImport } from './routes/conditions'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AnnulationRouteImport } from './routes/annulation'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnglerieVilleRouteImport } from './routes/onglerie.$ville'
+import { Route as ApiPublicRappelsRouteImport } from './routes/api/public/rappels'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -37,6 +40,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const SecuriteRoute = SecuriteRouteImport.update({
   id: '/securite',
   path: '/securite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReserverRoute = ReserverRouteImport.update({
+  id: '/reserver',
+  path: '/reserver',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReservationRoute = ReservationRouteImport.update({
@@ -99,6 +107,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnnulationRoute = AnnulationRouteImport.update({
+  id: '/annulation',
+  path: '/annulation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -119,6 +132,11 @@ const OnglerieVilleRoute = OnglerieVilleRouteImport.update({
   path: '/onglerie/$ville',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRappelsRoute = ApiPublicRappelsRouteImport.update({
+  id: '/api/public/rappels',
+  path: '/api/public/rappels',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -130,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/annulation': typeof AnnulationRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -142,15 +161,18 @@ export interface FileRoutesByFullPath {
   '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/reserver': typeof ReserverRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/rappels': typeof ApiPublicRappelsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/annulation': typeof AnnulationRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -163,9 +185,11 @@ export interface FileRoutesByTo {
   '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/reserver': typeof ReserverRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/rappels': typeof ApiPublicRappelsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -173,6 +197,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/annulation': typeof AnnulationRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -185,9 +210,11 @@ export interface FileRoutesById {
   '/paiement': typeof PaiementRoute
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
+  '/reserver': typeof ReserverRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
+  '/api/public/rappels': typeof ApiPublicRappelsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -196,6 +223,7 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/annulation'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -208,15 +236,18 @@ export interface FileRouteTypes {
     | '/paiement'
     | '/prestations'
     | '/reservation'
+    | '/reserver'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/rappels'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/annulation'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -229,15 +260,18 @@ export interface FileRouteTypes {
     | '/paiement'
     | '/prestations'
     | '/reservation'
+    | '/reserver'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/rappels'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/annulation'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -250,9 +284,11 @@ export interface FileRouteTypes {
     | '/paiement'
     | '/prestations'
     | '/reservation'
+    | '/reserver'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
+    | '/api/public/rappels'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -260,6 +296,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AProposRoute: typeof AProposRoute
   AdminRoute: typeof AdminRoute
+  AnnulationRoute: typeof AnnulationRoute
   AuthRoute: typeof AuthRoute
   ConditionsRoute: typeof ConditionsRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
@@ -272,9 +309,11 @@ export interface RootRouteChildren {
   PaiementRoute: typeof PaiementRoute
   PrestationsRoute: typeof PrestationsRoute
   ReservationRoute: typeof ReservationRoute
+  ReserverRoute: typeof ReserverRoute
   SecuriteRoute: typeof SecuriteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   OnglerieVilleRoute: typeof OnglerieVilleRoute
+  ApiPublicRappelsRoute: typeof ApiPublicRappelsRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -292,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/securite'
       fullPath: '/securite'
       preLoaderRoute: typeof SecuriteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reserver': {
+      id: '/reserver'
+      path: '/reserver'
+      fullPath: '/reserver'
+      preLoaderRoute: typeof ReserverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reservation': {
@@ -378,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/annulation': {
+      id: '/annulation'
+      path: '/annulation'
+      fullPath: '/annulation'
+      preLoaderRoute: typeof AnnulationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -406,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnglerieVilleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/rappels': {
+      id: '/api/public/rappels'
+      path: '/api/public/rappels'
+      fullPath: '/api/public/rappels'
+      preLoaderRoute: typeof ApiPublicRappelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -420,6 +480,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AProposRoute: AProposRoute,
   AdminRoute: AdminRoute,
+  AnnulationRoute: AnnulationRoute,
   AuthRoute: AuthRoute,
   ConditionsRoute: ConditionsRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
@@ -432,9 +493,11 @@ const rootRouteChildren: RootRouteChildren = {
   PaiementRoute: PaiementRoute,
   PrestationsRoute: PrestationsRoute,
   ReservationRoute: ReservationRoute,
+  ReserverRoute: ReserverRoute,
   SecuriteRoute: SecuriteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   OnglerieVilleRoute: OnglerieVilleRoute,
+  ApiPublicRappelsRoute: ApiPublicRappelsRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
