@@ -72,9 +72,11 @@ function ReservationPage() {
   const navigate = useNavigate();
 
   const [stepIdx, setStepIdx] = useState(0);
-  const [service, setService] = useState<Service | null>(
-    services.find((s) => s.id === search.service) ?? null,
-  );
+  const [selectedServices, setSelectedServices] = useState<Service[]>(() => {
+    const found = services.find((s) => s.id === search.service);
+    return found ? [found] : [];
+  });
+  const service = selectedServices[0] ?? null;
   const [selectedOptions, setSelectedOptions] = useState<ServiceOption[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
