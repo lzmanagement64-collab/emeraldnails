@@ -12,8 +12,6 @@ import {
   fetchAvailability,
   formatDateISO,
   submitBooking,
-  totalDuration,
-  totalPrice,
   depositAmount,
   depositRate,
   type Availability,
