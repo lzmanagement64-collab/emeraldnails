@@ -113,11 +113,14 @@ function ReservationPage() {
   }, [search.service, service]);
 
   const toggleService = (s: Service) => {
-    setSelectedServices((curr) =>
-      curr.find((c) => c.id === s.id)
+    setSelectedServices((curr) => {
+      const nextList = curr.find((c) => c.id === s.id)
         ? curr.filter((c) => c.id !== s.id)
-        : [...curr, s],
-    );
+        : [...curr, s];
+      const allowed = new Set(nextList.flatMap((x) => (x.options ?? []).map((o) => o.id)));
+      setSelectedOptions((opts) => opts.filter((o) => allowed.has(o.id)));
+      return nextList;
+    });
     setSelectedTime(null);
   };
 
