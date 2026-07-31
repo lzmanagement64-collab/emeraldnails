@@ -24,6 +24,7 @@ import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as ConditionsRouteImport } from './routes/conditions'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AnnulationRouteImport } from './routes/annulation'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
@@ -105,6 +106,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnnulationRoute = AnnulationRouteImport.update({
+  id: '/annulation',
+  path: '/annulation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/annulation': typeof AnnulationRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/annulation': typeof AnnulationRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
+  '/annulation': typeof AnnulationRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/annulation'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/annulation'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/admin'
+    | '/annulation'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -272,6 +284,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AProposRoute: typeof AProposRoute
   AdminRoute: typeof AdminRoute
+  AnnulationRoute: typeof AnnulationRoute
   AuthRoute: typeof AuthRoute
   ConditionsRoute: typeof ConditionsRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
@@ -398,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/annulation': {
+      id: '/annulation'
+      path: '/annulation'
+      fullPath: '/annulation'
+      preLoaderRoute: typeof AnnulationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -440,6 +460,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AProposRoute: AProposRoute,
   AdminRoute: AdminRoute,
+  AnnulationRoute: AnnulationRoute,
   AuthRoute: AuthRoute,
   ConditionsRoute: ConditionsRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
