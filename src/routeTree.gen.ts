@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SecuriteRouteImport } from './routes/securite'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReserverRouteImport } from './routes/reserver'
 import { Route as ReservationRouteImport } from './routes/reservation'
 import { Route as PrestationsRouteImport } from './routes/prestations'
@@ -40,6 +41,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const SecuriteRoute = SecuriteRouteImport.update({
   id: '/securite',
   path: '/securite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReserverRoute = ReserverRouteImport.update({
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/reserver': typeof ReserverRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/reserver': typeof ReserverRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/prestations': typeof PrestationsRoute
   '/reservation': typeof ReservationRoute
   '/reserver': typeof ReserverRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/securite': typeof SecuriteRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/onglerie/$ville': typeof OnglerieVilleRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/prestations'
     | '/reservation'
     | '/reserver'
+    | '/reset-password'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/prestations'
     | '/reservation'
     | '/reserver'
+    | '/reset-password'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/prestations'
     | '/reservation'
     | '/reserver'
+    | '/reset-password'
     | '/securite'
     | '/sitemap.xml'
     | '/onglerie/$ville'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   PrestationsRoute: typeof PrestationsRoute
   ReservationRoute: typeof ReservationRoute
   ReserverRoute: typeof ReserverRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SecuriteRoute: typeof SecuriteRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   OnglerieVilleRoute: typeof OnglerieVilleRoute
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       path: '/securite'
       fullPath: '/securite'
       preLoaderRoute: typeof SecuriteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reserver': {
@@ -494,6 +514,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrestationsRoute: PrestationsRoute,
   ReservationRoute: ReservationRoute,
   ReserverRoute: ReserverRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SecuriteRoute: SecuriteRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   OnglerieVilleRoute: OnglerieVilleRoute,
