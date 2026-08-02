@@ -9,6 +9,8 @@ import { toast } from "sonner";
 /** Contrôle d'ergonomie seulement : la vraie protection est côté serveur. */
 const comptesAutorises = business.adminEmails.map((e) => e.toLowerCase());
 
+type AuthMode = "signin" | "signup" | "reset";
+
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
   head: () => ({
@@ -22,7 +24,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,6 +46,21 @@ function AuthPage() {
       return;
     }
     setLoading(true);
+
+    if (mode === "reset") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset-password",
+      });
+      setLoading(false);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Lien envoyé. Vérifiez votre boîte mail (et vos spams).");
+      setMode("signin");
+      return;
+    }
+
     if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -63,6 +80,7 @@ function AuthPage() {
       await apresConnexion();
       return;
     }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
@@ -72,13 +90,14 @@ function AuthPage() {
     await apresConnexion();
   };
 
+  const label = mode === "signin" ? "Se connecter" : mode === "signup" ? "Créer le compte" : "Envoyer le lien";
+
   return (
     <div className="grid min-h-[70vh] place-items-center px-4 py-16">
       <div className="w-full max-w-sm rounded-sm border border-border bg-card p-8">
         <p className="eyebrow mb-2">Espace professionnel</p>
         <h1 className="mb-6 font-display text-2xl text-ink">{business.name}</h1>
         <form onSubmit={submit} className="space-y-4">
-
           <div>
             <label htmlFor="email" className="mb-1 block text-sm text-taupe">E-mail</label>
             <input
@@ -91,33 +110,57 @@ function AuthPage() {
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm"
             />
           </div>
-          <div>
-            <label htmlFor="password" className="mb-1 block text-sm text-taupe">Mot de passe</label>
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm"
-            />
-          </div>
+          {mode !== "reset" && (
+            <div>
+              <label htmlFor="password" className="mb-1 block text-sm text-taupe">Mot de passe</label>
+              <input
+                id="password"
+                type="password"
+                required
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm"
+              />
+            </div>
+          )}
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
           >
-            {loading ? "Un instant…" : mode === "signup" ? "Créer le compte" : "Se connecter"}
+            {loading ? "Un instant…" : label}
           </button>
         </form>
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-4 w-full text-xs text-taupe underline"
-        >
-          {mode === "signin" ? "Créer un compte" : "J'ai déjà un compte"}
-        </button>
+
+        <div className="mt-4 flex flex-col items-center gap-2">
+          {mode === "signin" ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setMode("signup")}
+                className="text-xs text-taupe underline"
+              >
+                Créer un compte
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("reset")}
+                className="text-xs text-taupe underline"
+              >
+                Mot de passe oublié ?
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setMode("signin")}
+              className="text-xs text-taupe underline"
+            >
+              J'ai déjà un compte
+            </button>
+          )}
+        </div>
 
         <p className="mt-6 text-xs text-taupe">
           Accès réservé. Les tentatives de connexion sont journalisées et les données clientes
