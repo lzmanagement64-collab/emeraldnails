@@ -1,5 +1,6 @@
 // Helpers serveur pour l'espace administration.
 // Ce fichier n'est jamais embarqué dans le bundle navigateur (*.server.ts).
+import { business } from "@/config/business";
 import type { BookingInput, LeadInput } from "./booking-schemas";
 
 type StaffContext = {
@@ -7,15 +8,34 @@ type StaffContext = {
     rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }>;
   };
   userId: string;
+  claims?: { email?: string | null } | null;
 };
 
-/** Vérifie que l'utilisateur connecté possède un rôle admin ou staff. */
+/** Liste blanche des comptes autorisés à administrer le site (normalisée). */
+const COMPTES_AUTORISES = business.adminEmails.map((e) => e.trim().toLowerCase());
+
+export function estCompteAutorise(email?: string | null) {
+  if (!email) return false;
+  return COMPTES_AUTORISES.includes(email.trim().toLowerCase());
+}
+
+/**
+ * Vérifie que le compte connecté est bien celui de la gérante :
+ * 1. son e-mail figure dans la liste blanche ;
+ * 2. il possède le rôle admin ou staff en base.
+ * Les deux conditions sont obligatoires.
+ */
 export async function assertStaff(context: StaffContext) {
+  if (!estCompteAutorise(context.claims?.email)) {
+    throw new Error("Accès refusé : ce compte n'est pas autorisé à ouvrir l'espace de gestion.");
+  }
   const [admin, staff] = await Promise.all([
     context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
     context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
   ]);
-  if (!admin.data && !staff.data) throw new Error("Accès refusé");
+  if (!admin.data && !staff.data) {
+    throw new Error("Accès refusé : ce compte n'a pas les droits de gestion.");
+  }
 }
 
 export function bookingRow(data: BookingInput) {
