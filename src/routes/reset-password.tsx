@@ -23,9 +23,21 @@ function ResetPasswordPage() {
   const [validLink, setValidLink] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Récupère la session depuis le hash de récupération Supabase.
+    // Récupère les tokens depuis le hash de récupération Supabase.
+    const hash = window.location.hash.replace(/^#/, "");
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const type = params.get("type");
+
+    if (type !== "recovery" || !accessToken || !refreshToken) {
+      setValidLink(false);
+      toast.error("Lien invalide ou expiré.");
+      return;
+    }
+
     supabase.auth
-      .getSessionFromUrl({ storeSession: true })
+      .setSession({ access_token: accessToken, refresh_token: refreshToken })
       .then(({ data, error }) => {
         if (error || !data.session) {
           setValidLink(false);
