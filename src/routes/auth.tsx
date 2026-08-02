@@ -30,7 +30,7 @@ function AuthPage() {
 
   const apresConnexion = async () => {
     try {
-      await activerAcces({ data: undefined });
+      await activerAcces({});
     } catch {
       /* l'accès reste refusé côté serveur si le compte n'est pas autorisé */
     }
