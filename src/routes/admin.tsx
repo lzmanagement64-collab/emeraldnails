@@ -219,7 +219,10 @@ function AdminPage() {
       <div className="grid min-h-screen place-items-center px-6 text-center">
         <div>
           <h1 className="font-display text-2xl text-ink">Accès refusé</h1>
-          <p className="mt-2 text-taupe">Votre compte n'a pas les droits de gestion.</p>
+          <p className="mt-2 text-taupe">
+            Ce compte n'est pas autorisé à ouvrir l'espace de gestion. Seul le compte de la
+            gérante y a accès.
+          </p>
           <button onClick={deconnexion} className={cn(btnSecondaire, "mt-6")}>
             Se déconnecter
           </button>

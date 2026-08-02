@@ -57,13 +57,14 @@ export function versEmail(row: RowAvecPrestation): ReservationEmail {
 type StaffContext = {
   supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> };
   userId: string;
+  claims?: { email?: string | null } | null;
 };
 
-/** Vérifie le rôle admin/staff de la gérante. */
+/**
+ * Vérifie que le compte connecté est bien celui de la gérante :
+ * liste blanche d'e-mails + rôle admin/staff en base. Vérification serveur.
+ */
 export async function assertGerante(context: StaffContext) {
-  const [admin, staff] = await Promise.all([
-    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
-  ]);
-  if (!admin.data && !staff.data) throw new Error("Accès refusé : compte sans droits de gestion.");
+  const { assertStaff } = await import("./admin-guard.server");
+  await assertStaff(context);
 }

@@ -137,7 +137,7 @@ export async function emailRappelCliente(r: ReservationEmail) {
 
 export async function emailNouvelleDemandeGerante(r: ReservationEmail) {
   return envoyerEmail({
-    to: business.email,
+    to: business.ownerEmail,
     subject: `Nouvelle demande de rendez-vous — ${r.prenom} ${r.nom}`,
     html: gabarit(
       "Nouvelle demande de rendez-vous",
@@ -155,7 +155,7 @@ export async function emailNouvelleDemandeGerante(r: ReservationEmail) {
 
 export async function emailAnnulationGerante(r: ReservationEmail) {
   return envoyerEmail({
-    to: business.email,
+    to: business.ownerEmail,
     subject: `Annulation — ${r.prenom} ${r.nom}`,
     html: gabarit(
       "Un créneau vient d'être libéré",
