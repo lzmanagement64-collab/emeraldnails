@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { business } from "@/config/business";
+import { reclamerAccesAdmin } from "@/lib/admin-access.functions";
 import { toast } from "sonner";
+
+/** Contrôle d'ergonomie seulement : la vraie protection est côté serveur. */
+const comptesAutorises = business.adminEmails.map((e) => e.toLowerCase());
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -21,9 +26,23 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const activerAcces = useServerFn(reclamerAccesAdmin);
+
+  const apresConnexion = async () => {
+    try {
+      await activerAcces({ data: undefined });
+    } catch {
+      /* l'accès reste refusé côté serveur si le compte n'est pas autorisé */
+    }
+    navigate({ to: "/admin" });
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && !comptesAutorises.includes(email.trim().toLowerCase())) {
+      toast.error("Cette adresse n'est pas autorisée à créer un compte de gestion.");
+      return;
+    }
     setLoading(true);
     if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({
@@ -41,7 +60,7 @@ function AuthPage() {
         setMode("signin");
         return;
       }
-      navigate({ to: "/admin" });
+      await apresConnexion();
       return;
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -50,7 +69,7 @@ function AuthPage() {
       toast.error("Identifiants invalides");
       return;
     }
-    navigate({ to: "/admin" });
+    await apresConnexion();
   };
 
   return (
