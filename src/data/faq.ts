@@ -16,12 +16,12 @@ export const faq = [
     a: "Un acompte de 30 % du montant de la prestation est demandé afin de confirmer définitivement le rendez-vous.",
   },
   {
-    q: "Quelles sont les conditions d'annulation ?",
-    a: "Toute annulation ou demande de modification doit être effectuée au minimum 72 heures avant le rendez-vous. Passé ce délai, l'acompte versé ne sera pas remboursé.",
+    q: "Quelles sont les conditions d’annulation ?",
+    a: "Toute annulation ou demande de modification doit être effectuée au minimum 72 heures avant le rendez-vous. Passé ce délai, l’acompte versé ne sera pas remboursé.",
   },
   {
     q: "Et si je suis en retard ?",
-    a: "Au-delà de 15 minutes de retard, la prestation pourra être annulée sans remboursement de l'acompte. Selon les disponibilités et la durée restante, un supplément pourra également être demandé.",
+    a: "Au-delà de 15 minutes de retard, la prestation pourra être annulée sans remboursement de l’acompte. Selon les disponibilités et la durée restante, un supplément pourra également être demandé.",
   },
   {
     q: "Puis-je venir accompagnée ?",
@@ -36,7 +36,7 @@ export const faq = [
     a: "Un kit beauté pour les mains vous sera remis à la fin de la prestation afin de vous aider à prendre soin de vos mains et de vos ongles à la maison.",
   },
   {
-    q: "J'ai des allergies ou des ongles fragiles.",
+    q: "J’ai des allergies ou des ongles fragiles.",
     a: "Merci de le préciser au moment de la réservation. Nous adapterons les produits et la technique.",
   },
 ];
