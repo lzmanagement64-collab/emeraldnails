@@ -10,8 +10,7 @@ export const business = {
   siteUrl: SITE_URL,
   name: "Emerald Beauty",
   tagline: "L'art de sublimer chaque instant.",
-  shortDescription:
-    "Studio d'ongles à Lons — extension gel, Gel X et nail art signés Maria.",
+  shortDescription: "Studio d'ongles à Lons — extension gel, Gel X et nail art signés Maria.",
   founder: "Maria",
   city: "Lons",
   address: "7 Imp. d'Ossau, 64140 Lons",

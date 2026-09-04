@@ -16,8 +16,9 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", city: "", message: "" });
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set =
+    (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,27 +50,68 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
   const field = "w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm";
 
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-sm border border-border bg-card p-6 sm:p-8">
+    <form
+      onSubmit={submit}
+      className="space-y-4 rounded-sm border border-border bg-card p-6 sm:p-8"
+    >
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor={`${type}-name`} className="mb-1 block text-sm text-taupe">Nom et prénom *</label>
-          <input id={`${type}-name`} required maxLength={80} value={form.name} onChange={set("name")} className={field} />
+          <label htmlFor={`${type}-name`} className="mb-1 block text-sm text-taupe">
+            Nom et prénom *
+          </label>
+          <input
+            id={`${type}-name`}
+            required
+            maxLength={80}
+            value={form.name}
+            onChange={set("name")}
+            className={field}
+          />
         </div>
         <div>
-          <label htmlFor={`${type}-email`} className="mb-1 block text-sm text-taupe">E-mail *</label>
-          <input id={`${type}-email`} type="email" required maxLength={255} value={form.email} onChange={set("email")} className={field} />
+          <label htmlFor={`${type}-email`} className="mb-1 block text-sm text-taupe">
+            E-mail *
+          </label>
+          <input
+            id={`${type}-email`}
+            type="email"
+            required
+            maxLength={255}
+            value={form.email}
+            onChange={set("email")}
+            className={field}
+          />
         </div>
         <div>
-          <label htmlFor={`${type}-phone`} className="mb-1 block text-sm text-taupe">Téléphone</label>
-          <input id={`${type}-phone`} type="tel" maxLength={30} value={form.phone} onChange={set("phone")} className={field} />
+          <label htmlFor={`${type}-phone`} className="mb-1 block text-sm text-taupe">
+            Téléphone
+          </label>
+          <input
+            id={`${type}-phone`}
+            type="tel"
+            maxLength={30}
+            value={form.phone}
+            onChange={set("phone")}
+            className={field}
+          />
         </div>
         <div>
-          <label htmlFor={`${type}-city`} className="mb-1 block text-sm text-taupe">Ville</label>
-          <input id={`${type}-city`} maxLength={80} value={form.city} onChange={set("city")} className={field} />
+          <label htmlFor={`${type}-city`} className="mb-1 block text-sm text-taupe">
+            Ville
+          </label>
+          <input
+            id={`${type}-city`}
+            maxLength={80}
+            value={form.city}
+            onChange={set("city")}
+            className={field}
+          />
         </div>
       </div>
       <div>
-        <label htmlFor={`${type}-message`} className="mb-1 block text-sm text-taupe">Message</label>
+        <label htmlFor={`${type}-message`} className="mb-1 block text-sm text-taupe">
+          Message
+        </label>
         <textarea
           id={`${type}-message`}
           rows={5}

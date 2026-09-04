@@ -13,7 +13,10 @@ export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
       { title: "Questions fréquentes — Emerald Beauty" },
-      { name: "description", content: "Durée d'une pose, préparation, remplissage, annulation, moyens de paiement..." },
+      {
+        name: "description",
+        content: "Durée d'une pose, préparation, remplissage, annulation, moyens de paiement...",
+      },
       { property: "og:title", content: "Questions fréquentes" },
       { property: "og:url", content: "/faq" },
     ],

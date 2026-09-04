@@ -58,7 +58,6 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-
 function Index() {
   const featured = services.slice(0, 3);
   const heroGallery = galleryItems.slice(0, 4);
@@ -71,12 +70,13 @@ function Index() {
           <div className="reveal">
             <p className="eyebrow mb-6">Prothésiste ongulaire · {business.city}</p>
             <h1 className="font-display text-[2.75rem] leading-[1.05] text-ink sm:text-6xl">
-              Des ongles élégants,<br />
+              Des ongles élégants,
+              <br />
               <span className="italic">soignés et personnalisés</span> selon votre style.
             </h1>
             <p className="mt-6 max-w-md text-base text-taupe sm:text-lg">
-              Chaque prestation est réalisée avec précision, écoute et attention.
-              Un studio confidentiel où la beauté naturelle de l'ongle passe avant tout.
+              Chaque prestation est réalisée avec précision, écoute et attention. Un studio
+              confidentiel où la beauté naturelle de l'ongle passe avant tout.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -190,12 +190,18 @@ function Index() {
         <ol className="grid gap-8 md:grid-cols-4">
           {[
             { n: "01", t: "Échange", d: "On discute forme, longueur, couleur et inspiration." },
-            { n: "02", t: "Préparation", d: "Manucure russe et préparation minutieuse de l'ongle." },
+            {
+              n: "02",
+              t: "Préparation",
+              d: "Manucure russe et préparation minutieuse de l'ongle.",
+            },
             { n: "03", t: "Pose", d: "Réalisation soignée dans une ambiance calme." },
             { n: "04", t: "Finition", d: "Soin des cuticules, huile nourrissante et conseils." },
           ].map((step) => (
             <li key={step.n} className="border-t border-border pt-5">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-bordeaux">{step.n}</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-bordeaux">
+                {step.n}
+              </p>
               <h3 className="mt-3 font-display text-xl text-ink">{step.t}</h3>
               <p className="mt-2 text-sm text-taupe">{step.d}</p>
             </li>
@@ -213,8 +219,13 @@ function Index() {
         <ul className="mb-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {reviewsSummary.breakdown.map((b) => (
             <li key={b.label} className="border-t border-porcelain/20 pt-4">
-              <p className="font-display text-2xl">{b.value.toString().replace(".", ",")}<span className="text-porcelain/50 text-base"> /5</span></p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-porcelain/60">{b.label}</p>
+              <p className="font-display text-2xl">
+                {b.value.toString().replace(".", ",")}
+                <span className="text-porcelain/50 text-base"> /5</span>
+              </p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-porcelain/60">
+                {b.label}
+              </p>
             </li>
           ))}
         </ul>
@@ -230,7 +241,6 @@ function Index() {
           ))}
         </div>
       </Section>
-
 
       {/* ZONES DESSERVIES — SEO LOCAL */}
       <Section

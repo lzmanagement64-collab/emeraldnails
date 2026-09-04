@@ -162,7 +162,11 @@ export const annulerReservation = createServerFn({ method: "POST" })
     }
 
     await Promise.allSettled([emailAnnulationGerante(versEmail(row as never))]);
-    return { annulee: true, message: "Votre rendez-vous a bien été annulé.", dateDebut: row.date_debut };
+    return {
+      annulee: true,
+      message: "Votre rendez-vous a bien été annulé.",
+      dateDebut: row.date_debut,
+    };
   });
 
 // ------------------------------------------------------------
@@ -225,7 +229,8 @@ export const adminChangerStatut = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => statutSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { assertGerante, versEmail, SELECT_AVEC_PRESTATION } = await import("./reservation.server");
+    const { assertGerante, versEmail, SELECT_AVEC_PRESTATION } =
+      await import("./reservation.server");
     await assertGerante(context as never);
     const { data: row, error } = await context.supabase
       .from("reservations")

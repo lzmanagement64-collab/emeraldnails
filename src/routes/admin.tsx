@@ -115,8 +115,7 @@ const ONGLETS = [
 
 type Onglet = (typeof ONGLETS)[number]["id"];
 
-const champ =
-  "w-full rounded-sm border border-border bg-background px-3 py-2 text-sm";
+const champ = "w-full rounded-sm border border-border bg-background px-3 py-2 text-sm";
 const btnPrimaire =
   "rounded-sm bg-ink px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-porcelain disabled:opacity-50";
 const btnSecondaire =
@@ -220,8 +219,8 @@ function AdminPage() {
         <div>
           <h1 className="font-display text-2xl text-ink">Accès refusé</h1>
           <p className="mt-2 text-taupe">
-            Ce compte n'est pas autorisé à ouvrir l'espace de gestion. Seul le compte de la
-            gérante y a accès.
+            Ce compte n'est pas autorisé à ouvrir l'espace de gestion. Seul le compte de la gérante
+            y a accès.
           </p>
           <button onClick={deconnexion} className={cn(btnSecondaire, "mt-6")}>
             Se déconnecter
@@ -286,9 +285,7 @@ function AdminPage() {
           ))}
         </nav>
 
-        {onglet === "planning" && (
-          <Planning reservations={aVenir} onStatut={majStatut} />
-        )}
+        {onglet === "planning" && <Planning reservations={aVenir} onStatut={majStatut} />}
         {onglet === "reservations" && (
           <Reservations
             reservations={reservations}
@@ -323,13 +320,7 @@ function BadgeStatut({ statut }: { statut: Statut }) {
   );
 }
 
-function SelectStatut({
-  statut,
-  onChange,
-}: {
-  statut: Statut;
-  onChange: (s: Statut) => void;
-}) {
+function SelectStatut({ statut, onChange }: { statut: Statut; onChange: (s: Statut) => void }) {
   return (
     <select
       value={statut}
@@ -391,9 +382,7 @@ function Planning({
                   <BadgeStatut statut={r.statut} />
                   <SelectStatut statut={r.statut} onChange={(s) => onStatut(r.id, s)} />
                 </span>
-                {r.commentaire && (
-                  <p className="w-full text-xs text-taupe">« {r.commentaire} »</p>
-                )}
+                {r.commentaire && <p className="w-full text-xs text-taupe">« {r.commentaire} »</p>}
               </li>
             ))}
           </ul>
@@ -477,7 +466,10 @@ function Reservations({
           aria-label="Rechercher une cliente"
           className="flex-1 rounded-sm border border-border bg-background px-3 py-2 text-sm sm:max-w-xs"
         />
-        <button onClick={() => setOuvert((v) => !v)} className={cn(btnPrimaire, "flex items-center gap-2")}>
+        <button
+          onClick={() => setOuvert((v) => !v)}
+          className={cn(btnPrimaire, "flex items-center gap-2")}
+        >
           <Plus className="size-3.5" /> Ajouter
         </button>
       </div>
@@ -505,14 +497,58 @@ function Reservations({
             ))}
           </select>
           <div className="grid grid-cols-2 gap-3">
-            <input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} aria-label="Date" className={champ} />
-            <input type="time" required value={f.heure} onChange={(e) => setF({ ...f, heure: e.target.value })} aria-label="Heure" className={champ} />
+            <input
+              type="date"
+              required
+              value={f.date}
+              onChange={(e) => setF({ ...f, date: e.target.value })}
+              aria-label="Date"
+              className={champ}
+            />
+            <input
+              type="time"
+              required
+              value={f.heure}
+              onChange={(e) => setF({ ...f, heure: e.target.value })}
+              aria-label="Heure"
+              className={champ}
+            />
           </div>
-          <input required placeholder="Prénom" value={f.prenom} onChange={(e) => setF({ ...f, prenom: e.target.value })} className={champ} />
-          <input required placeholder="Nom" value={f.nom} onChange={(e) => setF({ ...f, nom: e.target.value })} className={champ} />
-          <input required placeholder="Téléphone" value={f.telephone} onChange={(e) => setF({ ...f, telephone: e.target.value })} className={champ} />
-          <input type="email" placeholder="Email (facultatif)" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} className={champ} />
-          <textarea placeholder="Commentaire" rows={2} value={f.commentaire} onChange={(e) => setF({ ...f, commentaire: e.target.value })} className={cn(champ, "sm:col-span-2")} />
+          <input
+            required
+            placeholder="Prénom"
+            value={f.prenom}
+            onChange={(e) => setF({ ...f, prenom: e.target.value })}
+            className={champ}
+          />
+          <input
+            required
+            placeholder="Nom"
+            value={f.nom}
+            onChange={(e) => setF({ ...f, nom: e.target.value })}
+            className={champ}
+          />
+          <input
+            required
+            placeholder="Téléphone"
+            value={f.telephone}
+            onChange={(e) => setF({ ...f, telephone: e.target.value })}
+            className={champ}
+          />
+          <input
+            type="email"
+            placeholder="Email (facultatif)"
+            value={f.email}
+            onChange={(e) => setF({ ...f, email: e.target.value })}
+            className={champ}
+          />
+          <textarea
+            placeholder="Commentaire"
+            rows={2}
+            value={f.commentaire}
+            onChange={(e) => setF({ ...f, commentaire: e.target.value })}
+            className={cn(champ, "sm:col-span-2")}
+          />
           <div className="flex gap-2 sm:col-span-2">
             <button type="submit" disabled={envoi} className={btnPrimaire}>
               {envoi ? "Enregistrement…" : "Enregistrer"}
@@ -558,7 +594,9 @@ function Reservations({
                       {formatDuree(r.prestations?.duree_minutes ?? 0)} ·{" "}
                       {formatEuros(Number(r.prestations?.prix ?? 0))}
                     </p>
-                    {r.commentaire && <p className="mt-1 text-xs text-taupe">« {r.commentaire} »</p>}
+                    {r.commentaire && (
+                      <p className="mt-1 text-xs text-taupe">« {r.commentaire} »</p>
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     <BadgeStatut statut={r.statut} />
@@ -598,8 +636,7 @@ function Clientes({ reservations }: { reservations: Reservation[] }) {
         telephone: r.cliente_telephone,
         email: r.cliente_email,
         total: (prec?.total ?? 0) + 1,
-        derniere:
-          !prec || r.date_debut > prec.derniere ? r.date_debut : prec.derniere,
+        derniere: !prec || r.date_debut > prec.derniere ? r.date_debut : prec.derniere,
         ca: (prec?.ca ?? 0) + (honore ? Number(r.prestations?.prix ?? 0) : 0),
       });
     }
@@ -683,7 +720,14 @@ function Prestations({
   return (
     <div className="space-y-4">
       <button
-        onClick={() => setEdition({ couleur: "#1f6b43", actif: true, duree_minutes: 60, ordre: prestations.length })}
+        onClick={() =>
+          setEdition({
+            couleur: "#1f6b43",
+            actif: true,
+            duree_minutes: 60,
+            ordre: prestations.length,
+          })
+        }
         className={cn(btnPrimaire, "flex items-center gap-2")}
       >
         <Plus className="size-3.5" /> Nouvelle prestation
@@ -697,13 +741,54 @@ function Prestations({
             soumettre();
           }}
         >
-          <input required placeholder="Nom" value={edition.nom ?? ""} onChange={(e) => setEdition({ ...edition, nom: e.target.value })} className={champ} />
-          <input placeholder="Description" value={edition.description ?? ""} onChange={(e) => setEdition({ ...edition, description: e.target.value })} className={champ} />
-          <input type="number" min={5} max={600} step={5} required value={edition.duree_minutes ?? 60} onChange={(e) => setEdition({ ...edition, duree_minutes: Number(e.target.value) })} aria-label="Durée en minutes" className={champ} />
-          <input type="number" min={0} step={1} required value={edition.prix ?? 0} onChange={(e) => setEdition({ ...edition, prix: Number(e.target.value) })} aria-label="Prix en euros" className={champ} />
-          <input type="color" value={edition.couleur ?? "#1f6b43"} onChange={(e) => setEdition({ ...edition, couleur: e.target.value })} aria-label="Couleur" className="h-10 w-full rounded-sm border border-border" />
+          <input
+            required
+            placeholder="Nom"
+            value={edition.nom ?? ""}
+            onChange={(e) => setEdition({ ...edition, nom: e.target.value })}
+            className={champ}
+          />
+          <input
+            placeholder="Description"
+            value={edition.description ?? ""}
+            onChange={(e) => setEdition({ ...edition, description: e.target.value })}
+            className={champ}
+          />
+          <input
+            type="number"
+            min={5}
+            max={600}
+            step={5}
+            required
+            value={edition.duree_minutes ?? 60}
+            onChange={(e) => setEdition({ ...edition, duree_minutes: Number(e.target.value) })}
+            aria-label="Durée en minutes"
+            className={champ}
+          />
+          <input
+            type="number"
+            min={0}
+            step={1}
+            required
+            value={edition.prix ?? 0}
+            onChange={(e) => setEdition({ ...edition, prix: Number(e.target.value) })}
+            aria-label="Prix en euros"
+            className={champ}
+          />
+          <input
+            type="color"
+            value={edition.couleur ?? "#1f6b43"}
+            onChange={(e) => setEdition({ ...edition, couleur: e.target.value })}
+            aria-label="Couleur"
+            className="h-10 w-full rounded-sm border border-border"
+          />
           <label className="flex items-center gap-2 text-sm text-taupe">
-            <input type="checkbox" checked={edition.actif ?? true} onChange={(e) => setEdition({ ...edition, actif: e.target.checked })} className="size-4" />
+            <input
+              type="checkbox"
+              checked={edition.actif ?? true}
+              onChange={(e) => setEdition({ ...edition, actif: e.target.checked })}
+              className="size-4"
+            />
             Visible sur le site
           </label>
           <div className="flex gap-2 sm:col-span-2">
@@ -720,7 +805,11 @@ function Prestations({
       <div className="grid gap-3 sm:grid-cols-2">
         {prestations.map((p) => (
           <article key={p.id} className={cn(carte, "flex items-start gap-3")}>
-            <span aria-hidden className="mt-1 size-3 rounded-full" style={{ backgroundColor: p.couleur }} />
+            <span
+              aria-hidden
+              className="mt-1 size-3 rounded-full"
+              style={{ backgroundColor: p.couleur }}
+            />
             <div className="flex-1">
               <p className="font-display text-lg text-ink">{p.nom}</p>
               <p className="text-sm text-taupe">{p.description}</p>
@@ -801,17 +890,46 @@ function LigneHoraire({
     <div className={cn(carte, "flex flex-wrap items-center gap-3")}>
       <p className="w-24 font-display text-ink">{JOURS_LONG[h.jour_semaine]}</p>
       <label className="flex items-center gap-2 text-sm text-taupe">
-        <input type="checkbox" checked={!h.ferme} onChange={(e) => setH({ ...h, ferme: !e.target.checked })} className="size-4" />
+        <input
+          type="checkbox"
+          checked={!h.ferme}
+          onChange={(e) => setH({ ...h, ferme: !e.target.checked })}
+          className="size-4"
+        />
         Ouvert
       </label>
       {!h.ferme && (
         <>
-          <input type="time" value={h.heure_debut.slice(0, 5)} onChange={(e) => setH({ ...h, heure_debut: e.target.value })} aria-label="Ouverture" className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm" />
+          <input
+            type="time"
+            value={h.heure_debut.slice(0, 5)}
+            onChange={(e) => setH({ ...h, heure_debut: e.target.value })}
+            aria-label="Ouverture"
+            className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+          />
           <span className="text-taupe">→</span>
-          <input type="time" value={h.heure_fin.slice(0, 5)} onChange={(e) => setH({ ...h, heure_fin: e.target.value })} aria-label="Fermeture" className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm" />
+          <input
+            type="time"
+            value={h.heure_fin.slice(0, 5)}
+            onChange={(e) => setH({ ...h, heure_fin: e.target.value })}
+            aria-label="Fermeture"
+            className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+          />
           <span className="text-xs text-taupe">Pause</span>
-          <input type="time" value={h.pause_debut?.slice(0, 5) ?? ""} onChange={(e) => setH({ ...h, pause_debut: e.target.value })} aria-label="Début de pause" className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm" />
-          <input type="time" value={h.pause_fin?.slice(0, 5) ?? ""} onChange={(e) => setH({ ...h, pause_fin: e.target.value })} aria-label="Fin de pause" className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm" />
+          <input
+            type="time"
+            value={h.pause_debut?.slice(0, 5) ?? ""}
+            onChange={(e) => setH({ ...h, pause_debut: e.target.value })}
+            aria-label="Début de pause"
+            className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+          />
+          <input
+            type="time"
+            value={h.pause_fin?.slice(0, 5) ?? ""}
+            onChange={(e) => setH({ ...h, pause_fin: e.target.value })}
+            aria-label="Fin de pause"
+            className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+          />
         </>
       )}
       <button onClick={() => onSave(h)} className={cn(btnSecondaire, "ml-auto")}>
@@ -857,12 +975,49 @@ function Absences({
           }
         }}
       >
-        <input type="date" required value={f.dateDebut} onChange={(e) => setF({ ...f, dateDebut: e.target.value })} aria-label="Date de début" className={champ} />
-        <input type="time" required value={f.heureDebut} onChange={(e) => setF({ ...f, heureDebut: e.target.value })} aria-label="Heure de début" className={champ} />
-        <input type="date" required value={f.dateFin} onChange={(e) => setF({ ...f, dateFin: e.target.value })} aria-label="Date de fin" className={champ} />
-        <input type="time" required value={f.heureFin} onChange={(e) => setF({ ...f, heureFin: e.target.value })} aria-label="Heure de fin" className={champ} />
-        <input placeholder="Motif" value={f.motif} onChange={(e) => setF({ ...f, motif: e.target.value })} className={champ} />
-        <button type="submit" disabled={envoi} className={cn(btnPrimaire, "sm:col-span-5 sm:justify-self-start")}>
+        <input
+          type="date"
+          required
+          value={f.dateDebut}
+          onChange={(e) => setF({ ...f, dateDebut: e.target.value })}
+          aria-label="Date de début"
+          className={champ}
+        />
+        <input
+          type="time"
+          required
+          value={f.heureDebut}
+          onChange={(e) => setF({ ...f, heureDebut: e.target.value })}
+          aria-label="Heure de début"
+          className={champ}
+        />
+        <input
+          type="date"
+          required
+          value={f.dateFin}
+          onChange={(e) => setF({ ...f, dateFin: e.target.value })}
+          aria-label="Date de fin"
+          className={champ}
+        />
+        <input
+          type="time"
+          required
+          value={f.heureFin}
+          onChange={(e) => setF({ ...f, heureFin: e.target.value })}
+          aria-label="Heure de fin"
+          className={champ}
+        />
+        <input
+          placeholder="Motif"
+          value={f.motif}
+          onChange={(e) => setF({ ...f, motif: e.target.value })}
+          className={champ}
+        />
+        <button
+          type="submit"
+          disabled={envoi}
+          className={cn(btnPrimaire, "sm:col-span-5 sm:justify-self-start")}
+        >
           {envoi ? "Enregistrement…" : "Bloquer ce créneau"}
         </button>
       </form>
@@ -875,8 +1030,8 @@ function Absences({
             <div key={i.id} className={cn(carte, "flex items-center gap-3")}>
               <div className="flex-1 text-sm">
                 <p className="text-ink">
-                  {parisLongDate(i.date_debut)} {parisTime(i.date_debut)} → {parisLongDate(i.date_fin)}{" "}
-                  {parisTime(i.date_fin)}
+                  {parisLongDate(i.date_debut)} {parisTime(i.date_debut)} →{" "}
+                  {parisLongDate(i.date_fin)} {parisTime(i.date_fin)}
                 </p>
                 {i.motif && <p className="text-taupe">{i.motif}</p>}
               </div>

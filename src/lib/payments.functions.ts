@@ -24,7 +24,9 @@ export const createDepositCheckout = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: booking, error } = await supabaseAdmin
         .from("bookings")
-        .select("id, email, service_name, deposit_amount, deposit_status, appointment_date, start_time")
+        .select(
+          "id, email, service_name, deposit_amount, deposit_status, appointment_date, start_time",
+        )
         .eq("id", data.bookingId)
         .maybeSingle();
 
@@ -70,7 +72,9 @@ export const getDepositStatus = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("deposit_amount, deposit_status, service_name, first_name, appointment_date, start_time")
+      .select(
+        "deposit_amount, deposit_status, service_name, first_name, appointment_date, start_time",
+      )
       .eq("id", data.bookingId)
       .maybeSingle();
     if (!booking) return null;

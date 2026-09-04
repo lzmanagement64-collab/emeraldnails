@@ -32,12 +32,12 @@ function PrestationsPage() {
     <>
       <Section eyebrow="Prestations" title="Tarifs et durées">
         <p className="max-w-2xl text-taupe">
-          Les tarifs affichés sont indicatifs. Le prix final peut varier selon la complexité
-          du nail art ou la longueur souhaitée. Chaque prestation inclut la manucure russe.
+          Les tarifs affichés sont indicatifs. Le prix final peut varier selon la complexité du nail
+          art ou la longueur souhaitée. Chaque prestation inclut la manucure russe.
         </p>
         <p className="mt-4 max-w-2xl rounded-sm border border-border bg-card p-4 text-sm text-taupe">
-          Un acompte de 20 % est demandé à la réservation pour confirmer le créneau. Il est
-          déduit du montant total le jour du rendez-vous.
+          Un acompte de 20 % est demandé à la réservation pour confirmer le créneau. Il est déduit
+          du montant total le jour du rendez-vous.
         </p>
       </Section>
 

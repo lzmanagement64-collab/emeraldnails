@@ -132,8 +132,10 @@ function ReservationPage() {
 
   const canContinue = useMemo(() => {
     switch (stepIdx) {
-      case 0: return !!service;
-      case 1: return !!selectedDate && !!selectedTime;
+      case 0:
+        return !!service;
+      case 1:
+        return !!selectedDate && !!selectedTime;
       case 2:
         return (
           customer.firstName.trim().length >= 2 &&
@@ -141,9 +143,12 @@ function ReservationPage() {
           /.+@.+\..+/.test(customer.email) &&
           customer.phone.replace(/\s/g, "").length >= 8
         );
-      case 3: return true;
-      case 4: return consent;
-      default: return false;
+      case 3:
+        return true;
+      case 4:
+        return consent;
+      default:
+        return false;
     }
   }, [stepIdx, service, selectedDate, selectedTime, customer, consent]);
 
@@ -249,9 +254,7 @@ function ReservationPage() {
             onToggleService={toggleService}
             onToggleOption={(o) => {
               setSelectedOptions((curr) =>
-                curr.find((c) => c.id === o.id)
-                  ? curr.filter((c) => c.id !== o.id)
-                  : [...curr, o],
+                curr.find((c) => c.id === o.id) ? curr.filter((c) => c.id !== o.id) : [...curr, o],
               );
             }}
           />
@@ -270,9 +273,7 @@ function ReservationPage() {
           />
         )}
 
-        {stepIdx === 2 && (
-          <CustomerStep customer={customer} onChange={setCustomer} />
-        )}
+        {stepIdx === 2 && <CustomerStep customer={customer} onChange={setCustomer} />}
 
         {stepIdx === 3 && (
           <InspirationStep
@@ -413,7 +414,12 @@ function ServiceStep({
                   </p>
                 </div>
               </div>
-              <span className={cn("shrink-0 font-mono text-sm", active ? "text-porcelain" : "text-bordeaux")}>
+              <span
+                className={cn(
+                  "shrink-0 font-mono text-sm",
+                  active ? "text-porcelain" : "text-bordeaux",
+                )}
+              >
                 {s.basePrice} €
               </span>
             </button>
@@ -527,8 +533,9 @@ function DateStep({
   const maxDate = new Date();
   maxDate.setDate(maxDate.getDate() + business.bookingRules.maxAdvanceDays);
 
-  const slotsForSelected =
-    selectedDate ? availableMap.get(formatDateISO(selectedDate)) ?? [] : [];
+  const slotsForSelected = selectedDate
+    ? (availableMap.get(formatDateISO(selectedDate)) ?? [])
+    : [];
 
   return (
     <div className="space-y-6">
@@ -557,7 +564,9 @@ function DateStep({
 
         <div className="mb-1 grid grid-cols-7 gap-1 font-mono text-[10px] uppercase tracking-widest text-taupe">
           {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
-            <div key={i} className="grid h-8 place-items-center">{d}</div>
+            <div key={i} className="grid h-8 place-items-center">
+              {d}
+            </div>
           ))}
         </div>
 
@@ -711,7 +720,9 @@ function CustomerStep({
             <button
               key={o.v}
               type="button"
-              onClick={() => onChange({ ...customer, customerType: o.v as Customer["customerType"] })}
+              onClick={() =>
+                onChange({ ...customer, customerType: o.v as Customer["customerType"] })
+              }
               className={cn(
                 "flex-1 rounded-sm border px-4 py-3 text-sm transition-colors",
                 customer.customerType === o.v
@@ -798,10 +809,22 @@ function InspirationStep({
 
   const SHAPES = ["Amande", "Ballerine", "Carré", "Carré arrondi", "Ovale", "Stiletto"];
   const LENGTHS = ["Naturelle", "Courte", "Moyenne", "Longue", "Extra longue"];
-  const PALETTE = ["Nude", "French", "Milky", "Vert émeraude", "Bordeaux", "Bleu", "Rose poudré", "Noir"];
+  const PALETTE = [
+    "Nude",
+    "French",
+    "Milky",
+    "Vert émeraude",
+    "Bordeaux",
+    "Bleu",
+    "Rose poudré",
+    "Noir",
+  ];
 
   const toggleColor = (c: string) => {
-    const curr = preferences.colors.split(",").map((s) => s.trim()).filter(Boolean);
+    const curr = preferences.colors
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const next = curr.includes(c) ? curr.filter((x) => x !== c) : [...curr, c];
     update("colors", next.join(", "));
   };
@@ -815,7 +838,9 @@ function InspirationStep({
           <div>
             <p className="mb-2 text-sm text-taupe">Forme souhaitée</p>
             <div className="flex flex-wrap gap-2">
-              <Chip active={!preferences.shape} onClick={() => update("shape", "")}>Au choix</Chip>
+              <Chip active={!preferences.shape} onClick={() => update("shape", "")}>
+                Au choix
+              </Chip>
               {SHAPES.map((s) => (
                 <Chip key={s} active={preferences.shape === s} onClick={() => update("shape", s)}>
                   {s}
@@ -826,7 +851,9 @@ function InspirationStep({
           <div>
             <p className="mb-2 text-sm text-taupe">Longueur</p>
             <div className="flex flex-wrap gap-2">
-              <Chip active={!preferences.length} onClick={() => update("length", "")}>Au choix</Chip>
+              <Chip active={!preferences.length} onClick={() => update("length", "")}>
+                Au choix
+              </Chip>
               {LENGTHS.map((l) => (
                 <Chip key={l} active={preferences.length === l} onClick={() => update("length", l)}>
                   {l}
@@ -847,7 +874,10 @@ function InspirationStep({
               {PALETTE.map((c) => (
                 <Chip
                   key={c}
-                  active={preferences.colors.split(",").map((s) => s.trim()).includes(c)}
+                  active={preferences.colors
+                    .split(",")
+                    .map((s) => s.trim())
+                    .includes(c)}
                   onClick={() => toggleColor(c)}
                 >
                   {c}
@@ -903,7 +933,10 @@ function InspirationStep({
         <p className="mb-4 text-sm text-taupe">4 photos maximum, 5 Mo par image.</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {images.map((img, i) => (
-            <div key={i} className="relative aspect-square overflow-hidden rounded-sm border border-border">
+            <div
+              key={i}
+              className="relative aspect-square overflow-hidden rounded-sm border border-border"
+            >
               <img src={img.dataUrl} alt={img.name} className="h-full w-full object-cover" />
               <button
                 type="button"
@@ -1000,7 +1033,10 @@ function RecapStep({
             value={servicesList.map((s) => s.name).join(" + ")}
           />
 
-          <Row label="Options" value={options.length ? options.map((o) => o.name).join(", ") : "—"} />
+          <Row
+            label="Options"
+            value={options.length ? options.map((o) => o.name).join(", ") : "—"}
+          />
           <Row
             label="Date"
             value={date.toLocaleDateString("fr-FR", {
@@ -1013,7 +1049,11 @@ function RecapStep({
           <Row label="Horaire" value={`${time} – ${endTime}`} />
           <Row label="Durée estimée" value={formatDuration(duration)} />
           <Row label="Prix estimé" value={`${price} €`} highlight />
-          <Row label={`Acompte (${Math.round(depositRate * 100)} %)`} value={`${deposit} €`} highlight />
+          <Row
+            label={`Acompte (${Math.round(depositRate * 100)} %)`}
+            value={`${deposit} €`}
+            highlight
+          />
           <Row label="Solde sur place" value={`${price - deposit} €`} />
         </dl>
       </div>
@@ -1034,11 +1074,18 @@ function RecapStep({
           <Row label="Email" value={customer.email} />
           <Row label="Téléphone" value={customer.phone} />
           {customer.instagram && <Row label="Instagram" value={customer.instagram} />}
-          <Row label="Statut" value={customer.customerType === "new" ? "Nouvelle cliente" : "Déjà venue"} />
+          <Row
+            label="Statut"
+            value={customer.customerType === "new" ? "Nouvelle cliente" : "Déjà venue"}
+          />
         </dl>
       </div>
 
-      {(preferences.shape || preferences.length || preferences.colors || preferences.designDescription || preferences.notes) && (
+      {(preferences.shape ||
+        preferences.length ||
+        preferences.colors ||
+        preferences.designDescription ||
+        preferences.notes) && (
         <div className="rounded-sm border border-border bg-card p-6">
           <p className="eyebrow mb-4">Vos préférences</p>
           <dl className="grid gap-4 text-sm sm:grid-cols-2">
@@ -1058,8 +1105,9 @@ function RecapStep({
           Conditions d'annulation
         </p>
         <p>
-          Toute annulation doit être effectuée au moins {business.bookingRules.minLeadHours}h à l'avance.
-          Le prix affiché est une estimation susceptible d'évoluer selon la complexité du nail art.
+          Toute annulation doit être effectuée au moins {business.bookingRules.minLeadHours}h à
+          l'avance. Le prix affiché est une estimation susceptible d'évoluer selon la complexité du
+          nail art.
         </p>
       </div>
 
@@ -1070,14 +1118,28 @@ function RecapStep({
           className="mt-0.5 border-ink"
         />
         <span>
-          J'accepte les <a href="/conditions" className="underline underline-offset-4">conditions de réservation et d'annulation</a>.
+          J'accepte les{" "}
+          <a href="/conditions" className="underline underline-offset-4">
+            conditions de réservation et d'annulation
+          </a>
+          .
         </span>
       </label>
     </div>
   );
 }
 
-function Row({ label, value, highlight, full }: { label: string; value: string; highlight?: boolean; full?: boolean }) {
+function Row({
+  label,
+  value,
+  highlight,
+  full,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  full?: boolean;
+}) {
   return (
     <div className={cn("flex flex-col gap-1", full && "sm:col-span-2")}>
       <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">{label}</dt>

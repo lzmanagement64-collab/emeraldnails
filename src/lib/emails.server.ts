@@ -89,7 +89,8 @@ function recap(r: ReservationEmail) {
   </table>`;
 }
 
-const lienAnnulation = (r: ReservationEmail) => `${siteUrl()}/annulation?token=${r.tokenAnnulation}`;
+const lienAnnulation = (r: ReservationEmail) =>
+  `${siteUrl()}/annulation?token=${r.tokenAnnulation}`;
 
 const phraseAnnulation = (r: ReservationEmail) =>
   `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? Vous pouvez <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. Merci de prévenir au moins 24 h à l'avance.</p>`;
