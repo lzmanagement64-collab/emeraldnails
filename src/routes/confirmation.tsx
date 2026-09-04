@@ -17,10 +17,7 @@ export const Route = createFileRoute("/confirmation")({
   validateSearch: schema,
   component: Confirmation,
   head: () => ({
-    meta: [
-      { title: "Demande envoyée — Emerald Beauty" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Demande envoyée — Emerald Beauty" }, { name: "robots", content: "noindex" }],
   }),
 });
 

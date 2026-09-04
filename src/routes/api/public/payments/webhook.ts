@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
+import { type StripeEnv, type StripeWebhookObject, verifyWebhook } from "@/lib/stripe.server";
 
-async function markDepositPaid(session: any, env: StripeEnv) {
+async function markDepositPaid(session: StripeWebhookObject, env: StripeEnv) {
   const bookingId = session?.metadata?.bookingId;
   if (!bookingId) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -12,7 +12,7 @@ async function markDepositPaid(session: any, env: StripeEnv) {
   console.log(`[payments:${env}] acompte payé pour ${bookingId}`);
 }
 
-async function markDepositFailed(session: any) {
+async function markDepositFailed(session: StripeWebhookObject) {
   const bookingId = session?.metadata?.bookingId;
   if (!bookingId) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

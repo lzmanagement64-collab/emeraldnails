@@ -29,19 +29,18 @@ function AProposPage() {
         />
         <div className="space-y-5 text-taupe">
           <p className="font-display text-2xl italic text-ink">
-            « L'ongle soigné est un détail qui change tout. Il révèle une élégance discrète, quotidienne. »
+            « L'ongle soigné est un détail qui change tout. Il révèle une élégance discrète,
+            quotidienne. »
           </p>
           <p>
-            Passionnée par le geste précis et l'esthétique naturelle, {business.founder} a fondé
-            {" "}
-            {business.name} pour offrir un accompagnement sur-mesure loin de l'industrialisation
-            des salons classiques.
+            Passionnée par le geste précis et l'esthétique naturelle, {business.founder} a fondé{" "}
+            {business.name} pour offrir un accompagnement sur-mesure loin de l'industrialisation des
+            salons classiques.
           </p>
           <p>
-            Formée à la manucure russe et diplômée d'onglerie, elle place la santé de l'ongle
-            au cœur de chaque rendez-vous. Chaque cliente bénéficie d'un temps d'échange
-            avant la prestation pour définir ensemble la forme, la longueur et l'univers
-            souhaité.
+            Formée à la manucure russe et diplômée d'onglerie, elle place la santé de l'ongle au
+            cœur de chaque rendez-vous. Chaque cliente bénéficie d'un temps d'échange avant la
+            prestation pour définir ensemble la forme, la longueur et l'univers souhaité.
           </p>
           <div className="grid grid-cols-3 gap-6 border-y border-border py-6">
             {[

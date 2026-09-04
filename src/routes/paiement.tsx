@@ -132,26 +132,35 @@ function PaymentPage() {
                 <p className="eyebrow mb-4">Votre rendez-vous</p>
                 <dl className="space-y-3 text-sm">
                   <div>
-                    <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">Prestation</dt>
+                    <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">
+                      Prestation
+                    </dt>
                     <dd className="text-ink">{summary.serviceName}</dd>
                   </div>
                   <div>
-                    <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">Date</dt>
+                    <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">
+                      Date
+                    </dt>
                     <dd className="text-ink">
-                      {new Date(`${summary.appointmentDate}T${summary.startTime}`).toLocaleString("fr-FR", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {new Date(`${summary.appointmentDate}T${summary.startTime}`).toLocaleString(
+                        "fr-FR",
+                        {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
                     </dd>
                   </div>
                   <div>
                     <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">
                       Acompte à régler
                     </dt>
-                    <dd className="font-display text-2xl text-bordeaux">{summary.depositAmount} €</dd>
+                    <dd className="font-display text-2xl text-bordeaux">
+                      {summary.depositAmount} €
+                    </dd>
                   </div>
                 </dl>
               </div>
@@ -164,8 +173,12 @@ function PaymentPage() {
               <ul className="space-y-2">
                 <li>Connexion chiffrée TLS et page de paiement certifiée PCI-DSS niveau 1.</li>
                 <li>Authentification forte 3D Secure imposée par votre banque.</li>
-                <li>Montant recalculé côté serveur : il ne peut pas être modifié depuis le navigateur.</li>
-                <li>Aucune donnée de carte n'est transmise, affichée ni stockée par {business.name}.</li>
+                <li>
+                  Montant recalculé côté serveur : il ne peut pas être modifié depuis le navigateur.
+                </li>
+                <li>
+                  Aucune donnée de carte n'est transmise, affichée ni stockée par {business.name}.
+                </li>
               </ul>
               <p className="flex items-center gap-2 pt-1 text-xs">
                 <Lock className="size-3.5" /> Le solde est réglé sur place le jour du rendez-vous.

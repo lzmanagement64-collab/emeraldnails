@@ -79,24 +79,26 @@ function SecurityPage() {
         <div className="grid gap-8 md:grid-cols-2">
           <div className="space-y-4 text-sm leading-relaxed text-taupe">
             <p>
-              Conformément au RGPD, vous pouvez à tout moment demander l'accès, la rectification,
-              la portabilité ou la suppression des données vous concernant, ainsi que vous opposer
-              à leur traitement.
+              Conformément au RGPD, vous pouvez à tout moment demander l'accès, la rectification, la
+              portabilité ou la suppression des données vous concernant, ainsi que vous opposer à
+              leur traitement.
             </p>
             <p>
-              Les données de réservation sont conservées le temps nécessaire au suivi de la
-              relation cliente et aux obligations comptables, puis supprimées.
+              Les données de réservation sont conservées le temps nécessaire au suivi de la relation
+              cliente et aux obligations comptables, puis supprimées.
             </p>
             <p>
-              Nous n'utilisons aucun traceur publicitaire et ne revendons aucune donnée à des
-              tiers.
+              Nous n'utilisons aucun traceur publicitaire et ne revendons aucune donnée à des tiers.
             </p>
           </div>
           <div className="rounded-sm border border-border bg-card p-6 text-sm">
             <p className="eyebrow mb-3">Contact données personnelles</p>
             <p className="text-taupe">
               Écrivez à{" "}
-              <a href={`mailto:${business.email}`} className="text-ink underline underline-offset-4">
+              <a
+                href={`mailto:${business.email}`}
+                className="text-ink underline underline-offset-4"
+              >
                 {business.email}
               </a>{" "}
               ou appelez le{" "}

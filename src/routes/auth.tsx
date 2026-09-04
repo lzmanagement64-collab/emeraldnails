@@ -90,7 +90,8 @@ function AuthPage() {
     await apresConnexion();
   };
 
-  const label = mode === "signin" ? "Se connecter" : mode === "signup" ? "Créer le compte" : "Envoyer le lien";
+  const label =
+    mode === "signin" ? "Se connecter" : mode === "signup" ? "Créer le compte" : "Envoyer le lien";
 
   return (
     <div className="grid min-h-[70vh] place-items-center px-4 py-16">
@@ -99,7 +100,9 @@ function AuthPage() {
         <h1 className="mb-6 font-display text-2xl text-ink">{business.name}</h1>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm text-taupe">E-mail</label>
+            <label htmlFor="email" className="mb-1 block text-sm text-taupe">
+              E-mail
+            </label>
             <input
               id="email"
               type="email"
@@ -112,7 +115,9 @@ function AuthPage() {
           </div>
           {mode !== "reset" && (
             <div>
-              <label htmlFor="password" className="mb-1 block text-sm text-taupe">Mot de passe</label>
+              <label htmlFor="password" className="mb-1 block text-sm text-taupe">
+                Mot de passe
+              </label>
               <input
                 id="password"
                 type="password"

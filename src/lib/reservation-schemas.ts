@@ -74,16 +74,30 @@ export const horaireSchema = z.object({
   jourSemaine: z.number().int().min(0).max(6),
   heureDebut: z.string().regex(/^\d{2}:\d{2}$/),
   heureFin: z.string().regex(/^\d{2}:\d{2}$/),
-  pauseDebut: z.string().regex(/^\d{2}:\d{2}$/).or(z.literal("")).optional(),
-  pauseFin: z.string().regex(/^\d{2}:\d{2}$/).or(z.literal("")).optional(),
+  pauseDebut: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .or(z.literal(""))
+    .optional(),
+  pauseFin: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .or(z.literal(""))
+    .optional(),
   ferme: z.boolean(),
 });
 
 export const indisponibiliteSchema = z.object({
   dateDebut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  heureDebut: z.string().regex(/^\d{2}:\d{2}$/).default("00:00"),
+  heureDebut: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .default("00:00"),
   dateFin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  heureFin: z.string().regex(/^\d{2}:\d{2}$/).default("23:59"),
+  heureFin: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .default("23:59"),
   motif: txt(200).optional().default(""),
 });
 

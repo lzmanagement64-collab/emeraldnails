@@ -10,7 +10,10 @@ export const Route = createFileRoute("/reset-password")({
     meta: [
       { title: "Nouveau mot de passe — Emerald Beauty" },
       { name: "robots", content: "noindex, nofollow" },
-      { name: "description", content: "Définissez un nouveau mot de passe pour votre espace Emerald Beauty." },
+      {
+        name: "description",
+        content: "Définissez un nouveau mot de passe pour votre espace Emerald Beauty.",
+      },
     ],
   }),
 });

@@ -54,8 +54,18 @@ type Prestation = {
 
 const JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 const MOIS_FR = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+  "janvier",
+  "février",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "août",
+  "septembre",
+  "octobre",
+  "novembre",
+  "décembre",
 ];
 
 function moisCourant(dateISO: string) {
@@ -258,7 +268,8 @@ function ReserverPage() {
             </p>
           ) : prestations.length === 0 ? (
             <p className="py-16 text-center text-taupe">
-              Aucune prestation disponible pour le moment. Contactez-nous au {business.phoneDisplay}.
+              Aucune prestation disponible pour le moment. Contactez-nous au {business.phoneDisplay}
+              .
             </p>
           ) : (
             prestations.map((p) => (
@@ -376,7 +387,9 @@ function ReserverPage() {
 
           {date && (
             <div className="rounded-sm border border-border bg-card p-4 sm:p-6">
-              <p className="mb-3 font-display text-lg text-ink">{parisLongDate(`${date}T12:00:00Z`)}</p>
+              <p className="mb-3 font-display text-lg text-ink">
+                {parisLongDate(`${date}T12:00:00Z`)}
+              </p>
               {chargeCreneaux ? (
                 <p className="flex items-center gap-2 py-4 text-sm text-taupe">
                   <Loader2 className="size-4 animate-spin" /> Chargement des créneaux…
@@ -438,8 +451,8 @@ function ReserverPage() {
           <div className="rounded-sm border border-border bg-linen/40 p-5">
             <p className="font-display text-lg text-ink">{prestation.nom}</p>
             <p className="mt-1 text-sm text-taupe">
-              {parisLongDate(`${date}T12:00:00Z`)} à {heure} · {formatDuree(prestation.duree_minutes)} ·{" "}
-              {formatEuros(prestation.prix)}
+              {parisLongDate(`${date}T12:00:00Z`)} à {heure} ·{" "}
+              {formatDuree(prestation.duree_minutes)} · {formatEuros(prestation.prix)}
             </p>
           </div>
 
@@ -536,8 +549,8 @@ function ReserverPage() {
           <div>
             <h2 className="font-display text-2xl text-ink">Demande enregistrée</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-taupe">
-              Un email récapitulatif vient de vous être envoyé à <strong>{form.email}</strong>. Maria
-              vous adresse la confirmation définitive très rapidement.
+              Un email récapitulatif vient de vous être envoyé à <strong>{form.email}</strong>.
+              Maria vous adresse la confirmation définitive très rapidement.
             </p>
           </div>
 

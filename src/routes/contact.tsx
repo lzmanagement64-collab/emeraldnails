@@ -54,7 +54,10 @@ function ContactPage() {
             </div>
             <div className="flex gap-3">
               <Mail className="mt-0.5 size-4 shrink-0 text-taupe" />
-              <a href={`mailto:${business.email}`} className="text-ink underline underline-offset-4">
+              <a
+                href={`mailto:${business.email}`}
+                className="text-ink underline underline-offset-4"
+              >
                 {business.email}
               </a>
             </div>

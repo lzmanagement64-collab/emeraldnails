@@ -9,7 +9,9 @@ import { business } from "@/config/business";
 import type { Service, ServiceOption } from "@/data/services";
 
 const BOOKING_WEBHOOK = import.meta.env.VITE_N8N_BOOKING_WEBHOOK_URL as string | undefined;
-const AVAILABILITY_WEBHOOK = import.meta.env.VITE_N8N_AVAILABILITY_WEBHOOK_URL as string | undefined;
+const AVAILABILITY_WEBHOOK = import.meta.env.VITE_N8N_AVAILABILITY_WEBHOOK_URL as
+  | string
+  | undefined;
 
 export type BookingPayload = {
   bookingId: string;
@@ -219,4 +221,3 @@ export async function submitBooking(payload: BookingPayload): Promise<{
 
   return { ok: true, demoMode: false, bookingId };
 }
-

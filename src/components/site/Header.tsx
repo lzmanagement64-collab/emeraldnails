@@ -16,7 +16,6 @@ const links = [
   { to: "/contact", label: "Contact" },
 ];
 
-
 export function Header() {
   const [open, setOpen] = useState(false);
 

@@ -3,7 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { X } from "lucide-react";
 
 import { Section } from "@/components/site/Section";
-import { galleryCategories, galleryItems, type GalleryCategory, type GalleryItem } from "@/data/gallery";
+import {
+  galleryCategories,
+  galleryItems,
+  type GalleryCategory,
+  type GalleryItem,
+} from "@/data/gallery";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/galerie")({
@@ -11,7 +16,10 @@ export const Route = createFileRoute("/galerie")({
   head: () => ({
     meta: [
       { title: "Galerie — Emerald Beauty" },
-      { name: "description", content: "Nail art, french, nude, ongles longs et courts. Nos dernières réalisations." },
+      {
+        name: "description",
+        content: "Nail art, french, nude, ongles longs et courts. Nos dernières réalisations.",
+      },
       { property: "og:title", content: "Galerie" },
       { property: "og:url", content: "/galerie" },
     ],
@@ -31,9 +39,7 @@ function GaleriePage() {
 
   const filtered = useMemo(
     () =>
-      active === "tout"
-        ? galleryItems
-        : galleryItems.filter((g) => g.categories.includes(active)),
+      active === "tout" ? galleryItems : galleryItems.filter((g) => g.categories.includes(active)),
     [active],
   );
 
@@ -89,10 +95,7 @@ function GaleriePage() {
           onClick={() => setOpen(null)}
           role="dialog"
         >
-          <div
-            className="relative w-full max-w-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="relative w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <button
               aria-label="Fermer"
               onClick={() => setOpen(null)}

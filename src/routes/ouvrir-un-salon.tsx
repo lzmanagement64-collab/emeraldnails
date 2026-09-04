@@ -42,10 +42,22 @@ const PILLARS = [
 ];
 
 const STEPS = [
-  ["01", "Prise de contact", "Vous remplissez le formulaire ci-dessous. Nous répondons sous 24 h ouvrées."],
-  ["02", "Échange & projet", "Un entretien pour comprendre votre expérience, votre zone visée et votre capacité d'investissement."],
+  [
+    "01",
+    "Prise de contact",
+    "Vous remplissez le formulaire ci-dessous. Nous répondons sous 24 h ouvrées.",
+  ],
+  [
+    "02",
+    "Échange & projet",
+    "Un entretien pour comprendre votre expérience, votre zone visée et votre capacité d'investissement.",
+  ],
   ["03", "Immersion au studio", "Une journée à Lons pour vivre le concept de l'intérieur."],
-  ["04", "Formation & ouverture", "Formation technique et commerciale, aide au choix du local, lancement digital."],
+  [
+    "04",
+    "Formation & ouverture",
+    "Formation technique et commerciale, aide au choix du local, lancement digital.",
+  ],
 ];
 
 function FranchisePage() {
