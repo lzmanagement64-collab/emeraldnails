@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { PhotoGalerie } from "@/lib/galerie";
 import { libelleCategorie } from "@/lib/galerie";
@@ -36,7 +37,8 @@ export function Visionneuse({
   });
 
   if (!photo) return null;
-  return (
+  // Affichée à la racine de la page : un bloc animé parent ne peut pas la rétrécir.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -105,6 +107,7 @@ export function Visionneuse({
           {libelleCategorie(photo.categorie)}
         </p>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
