@@ -14,7 +14,7 @@ type Entry = {
 const entries: Entry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/prestations", changefreq: "monthly", priority: "0.9" },
-  { path: "/reservation", changefreq: "weekly", priority: "0.9" },
+  { path: "/reserver", changefreq: "weekly", priority: "0.9" },
   { path: "/galerie", changefreq: "weekly", priority: "0.8" },
   ...areas.map<Entry>((a) => ({
     path: `/onglerie/${a.slug}`,

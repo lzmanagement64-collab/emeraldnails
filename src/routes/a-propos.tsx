@@ -58,7 +58,7 @@ function AProposPage() {
           </div>
           <div>
             <Link
-              to="/reservation"
+              to="/reserver"
               className="inline-block rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
             >
               Réserver un rendez-vous

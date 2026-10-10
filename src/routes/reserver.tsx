@@ -23,6 +23,9 @@ import { REGLES } from "@/lib/reservation-schemas";
 
 export const Route = createFileRoute("/reserver")({
   component: ReserverPage,
+  // ?prestation=<id> : présélection depuis le bouton « Choisir » d'une fiche prestation.
+  validateSearch: (search: Record<string, unknown>): { prestation?: string } =>
+    typeof search.prestation === "string" ? { prestation: search.prestation } : {},
   head: () => ({
     meta: [
       { title: "Réserver en ligne — Emerald Beauty, prothésiste ongulaire à Lons" },
@@ -73,6 +76,7 @@ function moisCourant(dateISO: string) {
 }
 
 function ReserverPage() {
+  const { prestation: prestationDemandee } = Route.useSearch();
   const chargerPrestations = useServerFn(listPrestations);
   const chargerCreneaux = useServerFn(getCreneaux);
   const chargerMois = useServerFn(getDisponibilitesMois);
@@ -113,14 +117,21 @@ function ReserverPage() {
   useEffect(() => {
     (async () => {
       try {
-        const rows = await chargerPrestations({});
-        setPrestations(rows as unknown as Prestation[]);
+        const rows = (await chargerPrestations({})) as unknown as Prestation[];
+        setPrestations(rows);
+        const demandee = rows.find((p) => p.id === prestationDemandee);
+        if (demandee) {
+          setPrestation(demandee);
+          setEtape(2);
+        }
       } catch {
         toast.error("Impossible de charger les prestations.");
       } finally {
         setChargement(false);
       }
     })();
+    // Présélection uniquement au premier chargement de la page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chargerPrestations]);
 
   useEffect(() => {

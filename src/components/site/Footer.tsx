@@ -1,8 +1,12 @@
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { business } from "@/config/business";
 import { areas } from "@/data/areas";
+import { lignesHoraires } from "@/lib/site-data";
+
+const rootRoute = getRouteApi("__root__");
 
 export function Footer() {
+  const { horaires } = rootRoute.useLoaderData();
   return (
     <footer className="border-t border-border bg-linen/40">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
@@ -37,7 +41,7 @@ export function Footer() {
         <div className="space-y-3 text-sm">
           <p className="eyebrow">Horaires</p>
           <ul className="space-y-1 text-taupe">
-            {business.hours.map((h) => (
+            {lignesHoraires(horaires).map((h) => (
               <li key={h.day} className="flex justify-between gap-4">
                 <span>{h.day}</span>
                 <span className="text-ink">{h.value}</span>

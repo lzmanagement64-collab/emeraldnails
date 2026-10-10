@@ -102,7 +102,7 @@ function PaymentPage() {
               <div className="space-y-3 text-sm text-taupe">
                 <p className="font-display text-xl text-ink">Aucune réservation à régler</p>
                 <p>Commencez par choisir votre prestation et votre créneau.</p>
-                <Link to="/reservation" className="inline-block underline underline-offset-4">
+                <Link to="/reserver" className="inline-block underline underline-offset-4">
                   Prendre rendez-vous
                 </Link>
               </div>

@@ -3,7 +3,7 @@ import { ArrowUpRight, Sparkles, Sprout, HeartHandshake } from "lucide-react";
 
 import { Section } from "@/components/site/Section";
 import { ServiceCard } from "@/components/site/ServiceCard";
-import { services } from "@/data/services";
+import { chargerPrestations } from "@/lib/site-data";
 import { testimonials, reviewsSummary } from "@/data/testimonials";
 import { galleryItems } from "@/data/gallery";
 import { areas } from "@/data/areas";
@@ -15,6 +15,7 @@ const DESC =
 
 export const Route = createFileRoute("/")({
   component: Index,
+  loader: async () => ({ prestations: await chargerPrestations() }),
   head: () => ({
     meta: [
       { title: TITLE },
@@ -59,7 +60,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const featured = services.slice(0, 3);
+  const { prestations } = Route.useLoaderData();
+  const featured = prestations.slice(0, 3);
   const heroGallery = galleryItems.slice(0, 4);
 
   return (
@@ -80,7 +82,7 @@ function Index() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/reservation"
+                to="/reserver"
                 className="rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain transition-opacity hover:opacity-90"
               >
                 Prendre rendez-vous
@@ -287,7 +289,7 @@ function Index() {
             Un parcours simple en quelques étapes. Vous recevrez une confirmation par email.
           </p>
           <Link
-            to="/reservation"
+            to="/reserver"
             className="mt-8 inline-block rounded-sm bg-ink px-8 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
           >
             Prendre rendez-vous

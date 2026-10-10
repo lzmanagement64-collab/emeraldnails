@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
 import { ServiceCard } from "@/components/site/ServiceCard";
-import { services } from "@/data/services";
+import { chargerPrestations } from "@/lib/site-data";
 
 export const Route = createFileRoute("/prestations")({
   component: PrestationsPage,
+  loader: async () => ({ prestations: await chargerPrestations() }),
   head: () => ({
     meta: [
       { title: "Prestations & tarifs — Emerald Beauty" },
@@ -20,14 +21,8 @@ export const Route = createFileRoute("/prestations")({
   }),
 });
 
-const groups = [
-  { id: "naturels", label: "Ongles naturels" },
-  { id: "gel", label: "Extension gel" },
-  { id: "gelx", label: "Gel-X" },
-  { id: "nailart", label: "Nail art" },
-] as const;
-
 function PrestationsPage() {
+  const { prestations } = Route.useLoaderData();
   return (
     <>
       <Section eyebrow="Prestations" title="Tarifs et durées">
@@ -41,19 +36,18 @@ function PrestationsPage() {
         </p>
       </Section>
 
-      {groups.map((g) => {
-        const items = services.filter((s) => s.category === g.id);
-        if (!items.length) return null;
-        return (
-          <Section key={g.id} eyebrow={g.label} className="pt-0">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map((s) => (
-                <ServiceCard key={s.id} service={s} />
-              ))}
-            </div>
-          </Section>
-        );
-      })}
+      {/* Prestations actives, dans l'ordre défini depuis l'admin. */}
+      <Section className="pt-0">
+        {prestations.length ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {prestations.map((p) => (
+              <ServiceCard key={p.id} service={p} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-taupe">Les prestations sont momentanément indisponibles.</p>
+        )}
+      </Section>
     </>
   );
 }

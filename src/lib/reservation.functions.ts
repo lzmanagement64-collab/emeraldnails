@@ -32,6 +32,16 @@ export const listPrestations = createServerFn({ method: "GET" }).handler(async (
   return data ?? [];
 });
 
+export const listHoraires = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabasePublic } = await import("./reservation.server");
+  const { data, error } = await supabasePublic()
+    .from("horaires_ouverture")
+    .select("jour_semaine, heure_debut, heure_fin, pause_debut, pause_fin, ferme")
+    .order("jour_semaine", { ascending: true });
+  if (error) throw new Error("Impossible de charger les horaires.");
+  return data ?? [];
+});
+
 export const getCreneaux = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => creneauxSchema.parse(d))
   .handler(async ({ data }) => {
