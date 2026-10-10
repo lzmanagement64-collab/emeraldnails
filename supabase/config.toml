@@ -1,1 +1,6 @@
 project_id = "ybuacgwyjbkbyirnfnts"
+
+# Relais des secrets vers les fonctions du site : l'accès est vérifié dans
+# la fonction elle-même (clé serveur du projet obligatoire).
+[functions.secrets-serveur]
+verify_jwt = false

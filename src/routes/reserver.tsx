@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, ChevronLeft, ChevronRight, Clock, Loader2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, Loader2, Lock } from "lucide-react";
+import { PaiementAcompte, type InfosPaiement } from "@/components/site/PaiementAcompte";
 import { business } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
 import { ACOMPTE_TEXTE, acompteFormate, montantAcompte, POURCENT_ACOMPTE } from "@/lib/acompte";
@@ -19,7 +20,8 @@ import {
 import { NOTE_CATEGORIE, parCategorie } from "@/lib/categories";
 
 /** Temps laissé à la cliente pour payer (identique au serveur, voir acompte.server.ts). */
-const DELAI_PAIEMENT_AFFICHE = 30;
+// Le créneau est bloqué 35 minutes pendant le paiement (30 min + 5 min de marge).
+const DELAI_PAIEMENT_AFFICHE = 35;
 import { cn } from "@/lib/utils";
 import {
   listPrestations,
@@ -27,6 +29,7 @@ import {
   getDisponibilitesMois,
   creerReservation,
   infosPaiement,
+  confirmerPaiement,
 } from "@/lib/reservation.functions";
 import {
   formatDuree,
@@ -102,6 +105,10 @@ function ReserverPage() {
   const chargerMois = useServerFn(getDisponibilitesMois);
   const enregistrer = useServerFn(creerReservation);
   const lirePaiement = useServerFn(infosPaiement);
+  const verifierPaiement = useServerFn(confirmerPaiement);
+  // Paiement intégré de l'étape 5 (réservation provisoire en cours)
+  const [enCours, setEnCours] = useState<{ id: string; infos: InfosPaiement } | null>(null);
+  const [acomptePaye, setAcomptePaye] = useState(false);
   // Paiement de l'acompte en ligne actif ? (déterminé par le serveur)
   const [paiement, setPaiement] = useState({ actif: false, modeTest: false });
   useEffect(() => {
@@ -254,11 +261,6 @@ function ReserverPage() {
           dureeMs: Math.round(performance.now() - ouvertA.current),
         },
       });
-      if (res.paiementUrl) {
-        // Paiement de l'acompte sur la page sécurisée Stripe.
-        window.location.assign(res.paiementUrl);
-        return;
-      }
       setConfirmation({
         dateDebut: res.dateDebut,
         dateFin: res.dateFin,
@@ -266,7 +268,14 @@ function ReserverPage() {
         dureeMinutes: res.dureeMinutes,
         prix: res.prix,
       });
-      setEtape(4);
+      if (res.paiement) {
+        // Créneau bloqué : paiement de l'acompte directement dans la page.
+        setEnCours({ id: res.id, infos: res.paiement });
+        setEtape(5);
+        return;
+      }
+      // Sélection uniquement « sur devis » : pas d'acompte.
+      setEtape(6);
     } catch (e) {
       const msg = (e as Error).message || "Une erreur est survenue.";
       toast.error(msg.includes("créneau") ? msg : msg.replace(/^Error:\s*/, ""));
@@ -292,7 +301,25 @@ function ReserverPage() {
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
   }, [confirmation]);
 
-  const etapes = ["Prestation", "Date & heure", "Coordonnées", "Confirmation"];
+  /** Paiement accepté par Stripe : vérification côté serveur puis écran final. */
+  const apresPaiement = async () => {
+    if (!enCours) return;
+    try {
+      // Le serveur vérifie le paiement auprès de Stripe (quelques secondes au plus).
+      for (let essai = 0; essai < 6; essai++) {
+        const { paye } = await verifierPaiement({ data: { id: enCours.id } });
+        if (paye) break;
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    } catch {
+      // Le webhook Stripe enregistrera le paiement de toute façon.
+    }
+    setAcomptePaye(true);
+    setEtape(6);
+  };
+
+  const acompteDu = montantAcompte(total.prix) >= 0.5;
+  const etapes = ["Prestation", "Date & heure", "Coordonnées", "Confirmation", "Paiement"];
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-8 sm:px-6 sm:pt-14">
@@ -302,7 +329,7 @@ function ReserverPage() {
           Réserver en ligne
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-sm text-taupe">
-          Quatre étapes, deux minutes. {ACOMPTE_TEXTE}
+          Cinq étapes, deux minutes. {ACOMPTE_TEXTE}
         </p>
       </header>
 
@@ -310,10 +337,10 @@ function ReserverPage() {
         <div className="h-1.5 overflow-hidden rounded-full bg-sand">
           <div
             className="h-full rounded-full bg-gradient-to-r from-sage to-emerald transition-[width] duration-700 ease-out"
-            style={{ width: `${(etape / etapes.length) * 100}%` }}
+            style={{ width: `${(Math.min(etape, etapes.length) / etapes.length) * 100}%` }}
           />
         </div>
-        <ol className="mt-3 grid grid-cols-4 gap-1 text-center">
+        <ol className="mt-3 grid grid-cols-5 gap-1 text-center">
           {etapes.map((label, i) => {
             const n = i + 1;
             return (
@@ -608,57 +635,14 @@ function ReserverPage() {
       {/* ÉTAPE 3 — COORDONNÉES */}
       {etape === 3 && selection.length > 0 && date && heure && (
         <section aria-label="Vos coordonnées" className="space-y-6">
-          <div className="fond-aurore rounded-[1.75rem] p-6">
-            <p className="font-display text-lg text-ink">
-              {parisLongDate(`${date}T12:00:00Z`)} à {heure}
-            </p>
-            <ul className="mt-3 space-y-1 text-sm">
-              {lignes.map((p) => (
-                <li key={p.id} className="flex justify-between gap-4 text-taupe">
-                  <span>
-                    {p.nom} · {formatDuree(p.duree_minutes)}
-                  </span>
-                  <span className="shrink-0 text-ink">{prixAffiche(p)}</span>
-                </li>
-              ))}
-              <li className="flex justify-between gap-4 border-t border-border pt-2 font-medium text-ink">
-                <span>Total · {formatDuree(total.duree)}</span>
-                <span>{formatEuros(total.prix)}</span>
-              </li>
-            </ul>
-            <p className="mt-3 text-sm text-ink">
-              Acompte pour valider le rendez-vous : {acompteFormate(total.prix)} ({POURCENT_ACOMPTE}{" "}
-              % du total), déduit du montant total. Reste à régler sur place :{" "}
-              {formatEuros(Math.max(0, total.prix - montantAcompte(total.prix)))}.
-            </p>
-            {avecDevis && (
-              <p className="mt-2 text-sm text-ink">
-                Prestation sur devis : son prix est fixé avec Maria et s'ajoute au total. Il n'est
-                pas compté dans l'acompte.
-              </p>
-            )}
-            <p className="mt-2 text-sm text-taupe">{ANNULATION_TEXTE}</p>
-            <p className="mt-2 text-sm text-taupe">{REGLE_ACOMPTE_TEXTE}</p>
-            {payerEnLigne && (
-              <p className="mt-2 text-sm text-taupe">
-                L'acompte se règle en ligne sur la page sécurisée de Stripe. Le créneau vous est
-                réservé {DELAI_PAIEMENT_AFFICHE} minutes le temps du paiement ; sans paiement, il
-                est libéré.
-              </p>
-            )}
-            {paiement.modeTest && (
-              <p className="mt-2 rounded-2xl border border-border bg-card p-3 text-xs text-taupe">
-                Mode test : aucun paiement réel n'est encaissé. Carte de test : 4242 4242 4242 4242,
-                date future, code 123.
-              </p>
-            )}
-          </div>
-
+          <p className="rounded-2xl bg-sage-soft/50 px-4 py-3 text-sm text-ink">
+            {noms} · {parisLongDate(`${date}T12:00:00Z`)} à {heure}
+          </p>
           <form
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              soumettre();
+              setEtape(4);
             }}
           >
             <div className="grid gap-4 sm:grid-cols-2">
@@ -723,29 +707,195 @@ function ReserverPage() {
               <button type="button" onClick={() => setEtape(2)} className="btn-secondaire">
                 Retour
               </button>
-              <button type="submit" disabled={envoi} className="btn-primaire flex-1">
-                {envoi && <Loader2 className="size-4 animate-spin" />}
-                {envoi
-                  ? "Enregistrement…"
-                  : payerEnLigne
-                    ? `Payer l'acompte de ${acompteFormate(total.prix)}`
-                    : "Confirmer ma demande"}
+              <button type="submit" className="btn-primaire flex-1">
+                Continuer
+                <ChevronRight className="size-4" strokeWidth={1.8} />
               </button>
             </div>
           </form>
         </section>
       )}
 
-      {/* ÉTAPE 4 — CONFIRMATION */}
-      {etape === 4 && confirmation && (
-        <section aria-label="Confirmation" className="space-y-6 text-center">
-          <div className="mx-auto grid size-14 place-items-center rounded-full bg-ink/10">
-            <Check className="size-6 text-ink" />
+      {/* ÉTAPE 4 — CONFIRMATION (récapitulatif avant paiement) */}
+      {etape === 4 && selection.length > 0 && date && heure && (
+        <section aria-label="Confirmation" className="space-y-6">
+          <div className="fond-aurore rounded-[1.75rem] p-6">
+            <p className="font-display text-lg text-ink">
+              {parisLongDate(`${date}T12:00:00Z`)} à {heure}
+            </p>
+            <ul className="mt-3 space-y-1 text-sm">
+              {lignes.map((p) => (
+                <li key={p.id} className="flex justify-between gap-4 text-taupe">
+                  <span>
+                    {p.nom} · {formatDuree(p.duree_minutes)}
+                  </span>
+                  <span className="shrink-0 text-ink">{prixAffiche(p)}</span>
+                </li>
+              ))}
+              <li className="flex justify-between gap-4 border-t border-border pt-2 font-medium text-ink">
+                <span>Total · {formatDuree(total.duree)}</span>
+                <span>{formatEuros(total.prix)}</span>
+              </li>
+              {acompteDu && (
+                <>
+                  <li className="flex justify-between gap-4 font-semibold text-emerald">
+                    <span>Acompte à payer maintenant ({POURCENT_ACOMPTE} %)</span>
+                    <span>{acompteFormate(total.prix)}</span>
+                  </li>
+                  <li className="flex justify-between gap-4 text-taupe">
+                    <span>Reste à payer sur place</span>
+                    <span>{formatEuros(Math.max(0, total.prix - montantAcompte(total.prix)))}</span>
+                  </li>
+                </>
+              )}
+            </ul>
+            {avecDevis && (
+              <p className="mt-3 text-sm text-ink">
+                Prestation sur devis : son prix est fixé avec Maria et s'ajoute au total. Il n'est
+                pas compté dans l'acompte.
+              </p>
+            )}
+          </div>
+
+          <div className="carte space-y-1 p-5 text-sm">
+            <p className="eyebrow">Vos coordonnées</p>
+            <p className="pt-1 text-ink">
+              {form.prenom} {form.nom}
+            </p>
+            <p className="text-taupe">
+              {form.telephone} · {form.email}
+            </p>
+            {form.commentaire && <p className="text-taupe">« {form.commentaire} »</p>}
+          </div>
+
+          <div className="space-y-2 text-sm text-taupe">
+            <p>{ANNULATION_TEXTE}</p>
+            <p>{REGLE_ACOMPTE_TEXTE}</p>
+            {acompteDu && (
+              <p>
+                À l'étape suivante, vous réglez l'acompte directement sur cette page. Votre créneau
+                vous est réservé {DELAI_PAIEMENT_AFFICHE} minutes le temps du paiement ; sans
+                paiement, il est libéré. Maria valide ensuite votre rendez-vous.
+              </p>
+            )}
+          </div>
+
+          {acompteDu && !payerEnLigne && (
+            <p role="alert" className="rounded-2xl bg-bordeaux/10 p-4 text-sm text-bordeaux">
+              Le paiement en ligne est momentanément indisponible. Merci de nous contacter au{" "}
+              <a href={`tel:${business.phone}`} className="font-semibold underline">
+                {business.phoneDisplay}
+              </a>{" "}
+              pour prendre rendez-vous.
+            </p>
+          )}
+
+          <div className="flex gap-3">
+            <button type="button" onClick={() => setEtape(3)} className="btn-secondaire">
+              Retour
+            </button>
+            <button
+              type="button"
+              onClick={soumettre}
+              disabled={envoi || (acompteDu && !payerEnLigne)}
+              className="btn-primaire flex-1"
+            >
+              {envoi ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                acompteDu && <Lock className="size-4" />
+              )}
+              {envoi
+                ? "Réservation du créneau…"
+                : acompteDu
+                  ? "Confirmer et payer l'acompte"
+                  : "Confirmer ma demande"}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* ÉTAPE 5 — PAIEMENT intégré (carte, Apple Pay, Google Pay) */}
+      {etape === 5 && enCours && date && heure && (
+        <section
+          aria-label="Paiement de l'acompte"
+          className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]"
+        >
+          <div className="carte order-2 p-5 sm:p-6 md:order-1">
+            <h2 className="flex items-center gap-2 font-display text-2xl text-ink">
+              <Lock className="size-5 text-emerald" strokeWidth={1.6} /> Paiement de l'acompte
+            </h2>
+            <p className="mb-5 mt-1 text-sm text-taupe">
+              Carte bancaire (CB, Visa, Mastercard), Apple Pay ou Google Pay.
+            </p>
+            <PaiementAcompte
+              infos={enCours.infos}
+              retourUrl={
+                typeof window !== "undefined"
+                  ? `${window.location.origin}/paiement?reservation=${enCours.id}&retour=ok`
+                  : ""
+              }
+              onPaye={apresPaiement}
+            />
+          </div>
+          <aside className="order-1 md:order-2">
+            <div className="fond-aurore rounded-[1.75rem] p-6">
+              <p className="font-display text-lg text-ink">
+                {parisLongDate(`${date}T12:00:00Z`)} à {heure}
+              </p>
+              <ul className="mt-3 space-y-1 text-sm">
+                {lignes.map((p) => (
+                  <li key={p.id} className="flex justify-between gap-4 text-taupe">
+                    <span>
+                      {p.nom} · {formatDuree(p.duree_minutes)}
+                    </span>
+                    <span className="shrink-0 text-ink">{prixAffiche(p)}</span>
+                  </li>
+                ))}
+                <li className="flex justify-between gap-4 border-t border-border pt-2 font-medium text-ink">
+                  <span>Total · {formatDuree(total.duree)}</span>
+                  <span>{formatEuros(total.prix)}</span>
+                </li>
+                {acompteDu && (
+                  <>
+                    <li className="flex justify-between gap-4 font-semibold text-emerald">
+                      <span>Acompte à payer maintenant ({POURCENT_ACOMPTE} %)</span>
+                      <span>{acompteFormate(total.prix)}</span>
+                    </li>
+                    <li className="flex justify-between gap-4 text-taupe">
+                      <span>Reste à payer sur place</span>
+                      <span>
+                        {formatEuros(Math.max(0, total.prix - montantAcompte(total.prix)))}
+                      </span>
+                    </li>
+                  </>
+                )}
+              </ul>
+              {avecDevis && (
+                <p className="mt-3 text-sm text-ink">
+                  Prestation sur devis : son prix est fixé avec Maria et s'ajoute au total. Il n'est
+                  pas compté dans l'acompte.
+                </p>
+              )}
+            </div>
+          </aside>
+        </section>
+      )}
+
+      {/* FIN — demande reçue */}
+      {etape === 6 && confirmation && (
+        <section aria-label="Demande reçue" className="space-y-6 text-center">
+          <div className="mx-auto grid size-14 place-items-center rounded-full bg-sage-soft">
+            <Check className="size-6 text-emerald" />
           </div>
           <div>
-            <h2 className="font-display text-2xl text-ink">Demande enregistrée</h2>
+            <h2 className="font-display text-3xl text-ink">
+              {acomptePaye ? "Acompte payé – demande reçue" : "Demande enregistrée"}
+            </h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-taupe">
-              Votre demande a bien été transmise. Maria vous contacte pour confirmer le rendez-vous.
+              {acomptePaye
+                ? "Merci ! Votre créneau est réservé. Maria va valider votre rendez-vous : vous recevrez un e-mail de confirmation. Si elle ne pouvait pas vous recevoir, votre acompte vous serait remboursé intégralement."
+                : "Votre demande a bien été transmise. Maria vous contacte pour confirmer le rendez-vous."}
             </p>
           </div>
 
@@ -757,9 +907,12 @@ function ReserverPage() {
             <p className="mt-1 text-sm text-taupe">
               {formatDuree(confirmation.dureeMinutes)} · {formatEuros(confirmation.prix)}
             </p>
-            <p className="mt-1 text-sm text-ink">
-              Acompte : {acompteFormate(confirmation.prix)} ({POURCENT_ACOMPTE} %)
-            </p>
+            {acomptePaye && (
+              <p className="mt-1 text-sm text-ink">
+                Acompte payé : {acompteFormate(confirmation.prix)} · reste à payer sur place :{" "}
+                {formatEuros(Math.max(0, confirmation.prix - montantAcompte(confirmation.prix)))}
+              </p>
+            )}
             <p className="mt-3 text-sm text-taupe">{ANNULATION_TEXTE}</p>
             <p className="mt-3 text-sm text-taupe">{business.address}</p>
           </div>

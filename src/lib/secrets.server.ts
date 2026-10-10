@@ -6,13 +6,25 @@
 //   (espace en trop, minuscules) et des espaces/guillemets autour de la valeur.
 // - Cherche aussi dans les variables de l'hébergement (Cloudflare) si
 //   l'environnement ne les recopie pas dans process.env.
+// - Si l'hébergement du site ne reçoit pas les secrets de Lovable Cloud,
+//   ils sont demandés à la fonction Supabase « secrets-serveur » (qui, elle,
+//   les reçoit toujours), avec la clé serveur du projet. Gardés 5 min en
+//   mémoire du serveur, jamais envoyés au navigateur.
 // ============================================================
 
 type Source = Record<string, unknown> | undefined;
 
-function sources(): Source[] {
+/** Secrets reçus de la fonction Supabase « secrets-serveur » (mémoire du serveur). */
+let relais: { valeurs: Record<string, string>; lu: number } | null = null;
+const DUREE_RELAIS_MS = 5 * 60_000;
+
+function sourcesSite(): Source[] {
   const g = globalThis as { __env__?: Source; process?: { env?: Source } };
   return [g.process?.env, g.__env__];
+}
+
+function sources(): Source[] {
+  return [...sourcesSite(), relais?.valeurs];
 }
 
 const normaliser = (nom: string) => nom.trim().toUpperCase();
@@ -56,15 +68,67 @@ export const SECRETS_ATTENDUS = [
   "RESEND_API_KEY",
   "RESEND_FROM",
   "STRIPE_SECRET_KEY",
+  "STRIPE_PUBLISHABLE_KEY",
   "STRIPE_WEBHOOK_SECRET",
   "CRON_SECRET",
   "SITE_URL",
 ] as const;
 
-export function diagnosticSecrets() {
-  return SECRETS_ATTENDUS.map((nom) => ({
-    nom,
-    present: !!lireSecret(nom),
-    nomApproximatif: nomApproximatif(nom),
-  }));
+/** Secrets indispensables : s'il en manque un au site, on interroge le relais. */
+const ESSENTIELS = [
+  "RESEND_API_KEY",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_PUBLISHABLE_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+];
+
+let dernierEchecRelais = "";
+
+/**
+ * À appeler (await) avant d'utiliser Stripe ou Resend : complète les secrets
+ * manquants depuis la fonction Supabase « secrets-serveur ».
+ */
+export async function preparerSecrets(): Promise<void> {
+  const presentAuSite = (nom: string) => sourcesSite().some((src) => !!src && !!nettoyer(src[nom]));
+  if (ESSENTIELS.every(presentAuSite)) return;
+  if (relais && Date.now() - relais.lu < DUREE_RELAIS_MS) return;
+
+  const url = lireSecret("SUPABASE_URL");
+  const cle = lireSecret("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !cle) return;
+  try {
+    const res = await fetch(`${url.replace(/\/$/, "")}/functions/v1/secrets-serveur`, {
+      method: "POST",
+      headers: { "x-cle-serveur": cle, "content-type": "application/json" },
+      body: "{}",
+    });
+    if (!res.ok) {
+      dernierEchecRelais = `fonction secrets-serveur : réponse ${res.status}${res.status === 404 ? " (pas encore déployée)" : ""}`;
+      // On réessaiera dans une minute plutôt qu'à chaque requête.
+      relais = { valeurs: relais?.valeurs ?? {}, lu: Date.now() - DUREE_RELAIS_MS + 60_000 };
+      return;
+    }
+    const corps = (await res.json()) as { secrets?: Record<string, string> };
+    relais = { valeurs: corps.secrets ?? {}, lu: Date.now() };
+    dernierEchecRelais = "";
+  } catch {
+    dernierEchecRelais = "fonction secrets-serveur injoignable";
+    relais = { valeurs: relais?.valeurs ?? {}, lu: Date.now() - DUREE_RELAIS_MS + 60_000 };
+  }
 }
+
+export function diagnosticSecrets() {
+  return SECRETS_ATTENDUS.map((nom) => {
+    const auSite = sourcesSite().some((src) => !!src && !!nettoyer(src[nom]));
+    const parRelais = !auSite && !!nettoyer(relais?.valeurs[nom]);
+    return {
+      nom,
+      present: auSite || parRelais,
+      source: auSite ? ("site" as const) : parRelais ? ("relais" as const) : null,
+      nomApproximatif: nomApproximatif(nom),
+    };
+  });
+}
+
+/** Raison du dernier échec du relais (pour l'admin), ou "". */
+export const etatRelaisSecrets = () => dernierEchecRelais;
