@@ -50,6 +50,7 @@ RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
   SELECT coalesce((SELECT battement_minutes FROM public.reglages WHERE id = 1), 10);
 $$;
 REVOKE ALL ON FUNCTION public.battement_actuel() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.battement_actuel() FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.battement_actuel() TO service_role;
 
 -- 3) Fin bloquée (fin + battement), calculée par la base
@@ -65,6 +66,7 @@ BEGIN
   RETURN NEW;
 END; $$;
 REVOKE ALL ON FUNCTION public.calculer_fin_bloquee() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.calculer_fin_bloquee() FROM anon, authenticated;
 
 DROP TRIGGER IF EXISTS reservations_fin_bloquee ON public.reservations;
 CREATE TRIGGER reservations_fin_bloquee BEFORE INSERT OR UPDATE ON public.reservations
