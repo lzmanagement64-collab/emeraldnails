@@ -11,7 +11,7 @@ import { business, SITE_URL } from "@/config/business";
 
 const TITLE = "Prothésiste ongulaire Pau & Lons (64) — Pose gel, Gel X & nail art | Emerald Beauty";
 const DESC =
-  "Studio d'onglerie à Lons près de Pau : extension gel, Gel X, semi-permanent et nail art par Maria. Noté 4,8/5. Réservation en ligne 24/7, acompte 20 %.";
+  "Studio d'onglerie à Lons près de Pau : extension gel, Gel X, semi-permanent et nail art par Maria. Noté 4,8/5. Réservation en ligne 24/7.";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -248,7 +248,7 @@ function Index() {
       <Section
         eyebrow="Secteur 64"
         title="Un studio pensé pour toute l'agglomération paloise"
-        description="Emerald Beauty reçoit les clientes de Pau et des communes voisines à Lons, avec stationnement gratuit et créneaux jusqu'à 22h en semaine."
+        description="Emerald Beauty reçoit les clientes de Pau et des communes voisines à Lons, avec stationnement gratuit."
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {areas.map((a) => (
@@ -268,13 +268,6 @@ function Index() {
             </Link>
           ))}
         </div>
-        <p className="mt-8 text-sm text-taupe">
-          Vous êtes prothésiste et souhaitez ouvrir un studio dans le 64 ?{" "}
-          <Link to="/ouvrir-un-salon" className="text-ink underline underline-offset-4">
-            Découvrez le projet d'expansion Emerald Beauty
-          </Link>
-          .
-        </p>
       </Section>
 
       {/* CTA FINAL */}

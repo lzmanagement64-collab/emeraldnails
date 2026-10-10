@@ -6,10 +6,9 @@ import { business } from "@/config/business";
 import { reclamerAccesAdmin } from "@/lib/admin-access.functions";
 import { toast } from "sonner";
 
-/** Contrôle d'ergonomie seulement : la vraie protection est côté serveur. */
-const comptesAutorises = business.adminEmails.map((e) => e.toLowerCase());
-
-type AuthMode = "signin" | "signup" | "reset";
+// Pas de création de compte depuis le site : le seul compte est celui de la gérante.
+// Les inscriptions sont aussi bloquées côté base de données (voir supabase/migrations).
+type AuthMode = "signin" | "reset";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -41,10 +40,6 @@ function AuthPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === "signup" && !comptesAutorises.includes(email.trim().toLowerCase())) {
-      toast.error("Cette adresse n'est pas autorisée à créer un compte de gestion.");
-      return;
-    }
     setLoading(true);
 
     if (mode === "reset") {
@@ -61,26 +56,6 @@ function AuthPage() {
       return;
     }
 
-    if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin + "/auth" },
-      });
-      setLoading(false);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      if (!data.session) {
-        toast.success("Compte créé. Vérifiez votre boîte mail pour confirmer l'adresse.");
-        setMode("signin");
-        return;
-      }
-      await apresConnexion();
-      return;
-    }
-
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
@@ -90,8 +65,7 @@ function AuthPage() {
     await apresConnexion();
   };
 
-  const label =
-    mode === "signin" ? "Se connecter" : mode === "signup" ? "Créer le compte" : "Envoyer le lien";
+  const label = mode === "signin" ? "Se connecter" : "Envoyer le lien";
 
   return (
     <div className="grid min-h-[70vh] place-items-center px-4 py-16">
@@ -122,7 +96,7 @@ function AuthPage() {
                 id="password"
                 type="password"
                 required
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm"
@@ -140,29 +114,20 @@ function AuthPage() {
 
         <div className="mt-4 flex flex-col items-center gap-2">
           {mode === "signin" ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setMode("signup")}
-                className="text-xs text-taupe underline"
-              >
-                Créer un compte
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("reset")}
-                className="text-xs text-taupe underline"
-              >
-                Mot de passe oublié ?
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => setMode("reset")}
+              className="text-xs text-taupe underline"
+            >
+              Mot de passe oublié ?
+            </button>
           ) : (
             <button
               type="button"
               onClick={() => setMode("signin")}
               className="text-xs text-taupe underline"
             >
-              J'ai déjà un compte
+              Retour à la connexion
             </button>
           )}
         </div>

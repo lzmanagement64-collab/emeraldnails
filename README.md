@@ -1,4 +1,4 @@
-# Elegant Nails Studio
+# Emerald Beauty
 
 Tu es un expert senior en design web premium, UX/UI, conversion locale et développement d’applications avec Lovable.
 

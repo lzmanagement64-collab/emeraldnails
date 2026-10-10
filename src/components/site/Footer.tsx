@@ -64,14 +64,6 @@ export function Footer() {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link
-                to="/ouvrir-un-salon"
-                className="underline-offset-4 hover:text-ink hover:underline"
-              >
-                Ouvrir un salon
-              </Link>
-            </li>
           </ul>
         </div>
       </div>

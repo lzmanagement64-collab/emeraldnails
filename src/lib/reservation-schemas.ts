@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { champsAntiSpam } from "./anti-spam";
 
 const txt = (max: number) => z.string().trim().max(max);
 
@@ -18,11 +19,12 @@ export const reservationPubliqueSchema = z.object({
   prenom: txt(60).min(1, "Le prénom est obligatoire"),
   nom: txt(60).min(1, "Le nom est obligatoire"),
   telephone: telephoneFR,
-  email: txt(255).email("Adresse email invalide"),
+  email: txt(255).toLowerCase().email("Adresse email invalide"),
   commentaire: txt(1000).optional().default(""),
   consentement: z.literal(true, {
     message: "Vous devez accepter la politique de confidentialité",
   }),
+  ...champsAntiSpam,
 });
 export type ReservationPubliqueInput = z.infer<typeof reservationPubliqueSchema>;
 

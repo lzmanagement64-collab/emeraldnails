@@ -105,10 +105,7 @@ function AreaPage() {
               ))}
             </ul>
 
-            <p>
-              Toutes les prestations se réservent en ligne avec un acompte de 20 % qui sécurise
-              votre créneau et se déduit du montant final.
-            </p>
+            <p>Toutes les prestations se réservent en ligne, en quelques minutes.</p>
 
             <h2 className="pt-4 font-display text-2xl text-ink">Venir depuis {area.city}</h2>
             <p>

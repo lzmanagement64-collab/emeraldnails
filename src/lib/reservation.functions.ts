@@ -85,6 +85,12 @@ export const creerReservation = createServerFn({ method: "POST" })
     const { versEmail, SELECT_AVEC_PRESTATION } = await import("./reservation.server");
     const { parisToUtc } = await import("./tz");
     const { emailDemandeCliente, emailNouvelleDemandeGerante } = await import("./emails.server");
+    const { semblableHumain, limiterReservations } = await import("./anti-spam.server");
+
+    if (!semblableHumain(data)) {
+      throw new Error("Envoi refusé. Merci de patienter quelques secondes puis de réessayer.");
+    }
+    await limiterReservations(supabaseAdmin, { email: data.email, telephone: data.telephone });
 
     const { data: prestation } = await supabaseAdmin
       .from("prestations")

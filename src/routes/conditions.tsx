@@ -14,12 +14,6 @@ export const Route = createFileRoute("/conditions")({
           Toute demande de rendez-vous est confirmée par email ou SMS après validation manuelle. Un
           délai minimum de {business.bookingRules.minLeadHours}h est nécessaire.
         </p>
-        <h3 className="font-display text-xl text-ink">Acompte</h3>
-        <p>
-          Un acompte de 20 % du montant de la prestation est demandé pour confirmer le rendez-vous.
-          Il est déduit du montant total le jour de la prestation et reste acquis au studio en cas
-          d'annulation tardive (moins de 24h) ou d'absence.
-        </p>
         <h3 className="font-display text-xl text-ink">Annulation</h3>
         <p>
           Une annulation ou modification doit être effectuée au moins 24h avant le rendez-vous.

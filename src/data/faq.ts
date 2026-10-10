@@ -12,16 +12,12 @@ export const faq = [
     a: "En cas de doute, sélectionnez la prestation la plus proche et décrivez votre besoin dans le commentaire. Nous ajusterons ensemble sur place.",
   },
   {
-    q: "Faut-il verser un acompte ?",
-    a: "Un acompte de 30 % du montant de la prestation est demandé afin de confirmer définitivement le rendez-vous.",
-  },
-  {
     q: "Quelles sont les conditions d’annulation ?",
-    a: "Toute annulation ou demande de modification doit être effectuée au minimum 72 heures avant le rendez-vous. Passé ce délai, l’acompte versé ne sera pas remboursé.",
+    a: "Toute annulation ou demande de modification doit être effectuée au minimum 72 heures avant le rendez-vous.",
   },
   {
     q: "Et si je suis en retard ?",
-    a: "Au-delà de 15 minutes de retard, la prestation pourra être annulée sans remboursement de l’acompte. Selon les disponibilités et la durée restante, un supplément pourra également être demandé.",
+    a: "Au-delà de 15 minutes de retard, la prestation pourra être annulée. Selon les disponibilités et la durée restante, un supplément pourra également être demandé.",
   },
   {
     q: "Puis-je venir accompagnée ?",

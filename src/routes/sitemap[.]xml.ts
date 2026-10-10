@@ -23,7 +23,6 @@ const entries: Entry[] = [
   })),
   { path: "/a-propos", changefreq: "monthly", priority: "0.7" },
   { path: "/contact", changefreq: "monthly", priority: "0.7" },
-  { path: "/ouvrir-un-salon", changefreq: "monthly", priority: "0.7" },
   { path: "/faq", changefreq: "monthly", priority: "0.6" },
   { path: "/securite", changefreq: "yearly", priority: "0.3" },
   { path: "/mentions-legales", changefreq: "yearly", priority: "0.2" },

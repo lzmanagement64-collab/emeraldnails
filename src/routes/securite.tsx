@@ -5,7 +5,7 @@ import { business, SITE_URL } from "@/config/business";
 
 const TITLE = "Sécurité & confidentialité — Emerald Beauty";
 const DESC =
-  "Comment Emerald Beauty protège vos données : chiffrement HTTPS, hébergement européen, accès restreint, validation serveur des formulaires et paiement d'acompte sécurisé.";
+  "Comment Emerald Beauty protège vos données : chiffrement HTTPS, hébergement européen, accès restreint, validation serveur des formulaires et aucune donnée bancaire collectée.";
 
 export const Route = createFileRoute("/securite")({
   component: SecurityPage,
@@ -45,8 +45,8 @@ const CONTROLS = [
   },
   {
     icon: CreditCard,
-    title: "Acompte : aucune donnée bancaire chez nous",
-    body: "Le règlement de l'acompte de 20 % passera par un prestataire de paiement certifié PCI-DSS (Stripe). Le numéro de carte est saisi chez le prestataire : Emerald Beauty ne le voit jamais, ne le stocke jamais et ne peut pas y accéder.",
+    title: "Aucune donnée bancaire chez nous",
+    body: "Aucun paiement n'est demandé sur le site : le règlement se fait au studio. Aucun numéro de carte ne transite donc par Emerald Beauty.",
   },
   {
     icon: ShieldCheck,

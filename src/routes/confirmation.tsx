@@ -45,8 +45,8 @@ function Confirmation() {
         </h1>
         <p className="mx-auto mt-4 max-w-md text-taupe">
           {session_id
-            ? "Votre acompte de 20 % a bien été reçu : le créneau est réservé. Le solde se règle sur place le jour du rendez-vous."
-            : "Votre demande de rendez-vous a bien été transmise. Vous recevrez une confirmation par email dès validation, sous quelques heures. Un acompte de 20 % vous sera demandé pour confirmer définitivement le créneau."}
+            ? "Votre paiement a bien été reçu : le créneau est réservé."
+            : "Votre demande de rendez-vous a bien été transmise. Vous recevrez une confirmation par email dès validation, sous quelques heures."}
         </p>
 
         {(service || prettyDate || time) && (

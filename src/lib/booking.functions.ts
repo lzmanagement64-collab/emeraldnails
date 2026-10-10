@@ -6,30 +6,20 @@
 // ============================================================
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { bookingSchema, leadSchema, bookingStatusSchema } from "./booking-schemas";
-
-export const createBooking = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => bookingSchema.parse(data))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { bookingRow } = await import("./admin-guard.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("bookings")
-      .insert(bookingRow(data))
-      .select("id")
-      .single();
-    if (error) {
-      console.error("[createBooking]", error.message);
-      throw new Error("Impossible d'enregistrer la réservation");
-    }
-    return { id: row.id as string };
-  });
+import { leadSchema, bookingStatusSchema } from "./booking-schemas";
 
 export const createLead = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => leadSchema.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { leadRow } = await import("./admin-guard.server");
+    const { semblableHumain, limiterMessages } = await import("./anti-spam.server");
+    // Champ piège rempli : on fait comme si tout allait bien, sans rien enregistrer.
+    if (data.siteWeb.trim() !== "") return { ok: true };
+    if (!semblableHumain(data)) {
+      throw new Error("Merci de patienter quelques secondes avant d'envoyer.");
+    }
+    await limiterMessages(supabaseAdmin, data.email);
     const { error } = await supabaseAdmin.from("leads").insert(leadRow(data));
     if (error) {
       console.error("[createLead]", error.message);

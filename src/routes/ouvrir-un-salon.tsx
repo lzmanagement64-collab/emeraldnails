@@ -11,6 +11,8 @@ export const Route = createFileRoute("/ouvrir-un-salon")({
   component: FranchisePage,
   head: () => ({
     meta: [
+      // Page retirée de la navigation : non référencée en attendant une décision.
+      { name: "robots", content: "noindex, nofollow" },
       { title: TITLE },
       { name: "description", content: DESC },
       { property: "og:title", content: TITLE },
@@ -33,7 +35,7 @@ const PILLARS = [
   },
   {
     title: "Acquisition digitale incluse",
-    body: "Site optimisé SEO local, pages ville dédiées, fiche Google Business, réservation en ligne avec acompte et suivi des demandes. Vous héritez d'un système d'acquisition, pas seulement d'une enseigne.",
+    body: "Site optimisé SEO local, pages ville dédiées, fiche Google Business, réservation en ligne et suivi des demandes. Vous héritez d'un système d'acquisition, pas seulement d'une enseigne.",
   },
   {
     title: "Un maillage sur tout le 64",

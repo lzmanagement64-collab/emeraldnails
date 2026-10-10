@@ -1,7 +1,7 @@
 // Helpers serveur pour l'espace administration.
 // Ce fichier n'est jamais embarqué dans le bundle navigateur (*.server.ts).
 import { business } from "@/config/business";
-import type { BookingInput, LeadInput } from "./booking-schemas";
+import type { LeadInput } from "./booking-schemas";
 
 type StaffContext = {
   supabase: {
@@ -36,30 +36,6 @@ export async function assertStaff(context: StaffContext) {
   if (!admin.data && !staff.data) {
     throw new Error("Accès refusé : ce compte n'a pas les droits de gestion.");
   }
-}
-
-export function bookingRow(data: BookingInput) {
-  return {
-    first_name: data.firstName,
-    last_name: data.lastName,
-    email: data.email,
-    phone: data.phone,
-    instagram: data.instagram || null,
-    customer_type: data.customerType,
-    city: data.city || null,
-    service_id: data.serviceId,
-    service_name: data.serviceName,
-    options: data.options,
-    appointment_date: data.appointmentDate,
-    start_time: data.startTime,
-    end_time: data.endTime,
-    duration_minutes: data.durationMinutes,
-    total_amount: data.totalAmount,
-    deposit_amount: data.depositAmount,
-    remaining_balance: data.remainingBalance,
-    preferences: data.preferences,
-    notes: data.preferences.notes || null,
-  };
 }
 
 export function leadRow(data: LeadInput) {

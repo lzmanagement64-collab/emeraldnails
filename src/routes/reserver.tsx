@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
+import { ChampPiege } from "@/components/site/ChampPiege";
 import { cn } from "@/lib/utils";
 import {
   listPrestations,
@@ -106,6 +107,12 @@ function ReserverPage() {
     consentement: false,
   });
   const [envoi, setEnvoi] = useState(false);
+  // Anti-spam : champ piège + temps passé sur la page avant l'envoi.
+  const [piege, setPiege] = useState("");
+  const ouvertA = useRef(0);
+  useEffect(() => {
+    ouvertA.current = performance.now();
+  }, []);
   const [confirmation, setConfirmation] = useState<{
     dateDebut: string;
     dateFin: string;
@@ -193,6 +200,8 @@ function ReserverPage() {
           email: form.email,
           commentaire: form.commentaire,
           consentement: form.consentement as true,
+          siteWeb: piege,
+          dureeMs: Math.round(performance.now() - ouvertA.current),
         },
       });
       setConfirmation({
@@ -511,6 +520,8 @@ function ReserverPage() {
                 className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm"
               />
             </div>
+
+            <ChampPiege id="reserver-ref" value={piege} onChange={setPiege} />
 
             <label className="flex items-start gap-3 text-sm text-taupe">
               <input

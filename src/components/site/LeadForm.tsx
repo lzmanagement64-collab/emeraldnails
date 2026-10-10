@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { createLead } from "@/lib/booking.functions";
+import { ChampPiege } from "@/components/site/ChampPiege";
 
 type Props = {
   type: "contact" | "franchise" | "recrutement";
@@ -15,6 +16,12 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", city: "", message: "" });
+  // Anti-spam : champ piège + temps passé sur la page avant l'envoi.
+  const [piege, setPiege] = useState("");
+  const ouvertA = useRef(0);
+  useEffect(() => {
+    ouvertA.current = performance.now();
+  }, []);
 
   const set =
     (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -26,11 +33,20 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) return toast.error("E-mail invalide");
     setLoading(true);
     try {
-      await send({ data: { type, ...form } });
+      await send({
+        data: {
+          type,
+          ...form,
+          siteWeb: piege,
+          dureeMs: Math.round(performance.now() - ouvertA.current),
+        },
+      });
       setDone(true);
       toast.success("Message envoyé — réponse sous 24 h ouvrées.");
-    } catch {
-      toast.error("Envoi impossible, réessayez dans un instant.");
+    } catch (err) {
+      const msg = (err as Error).message?.replace(/^Error:\s*/, "");
+      // Messages lisibles seulement (pas les détails techniques de validation).
+      toast.error(msg && !/^[[{]/.test(msg) ? msg : "Envoi impossible, réessayez dans un instant.");
     } finally {
       setLoading(false);
     }
@@ -122,6 +138,7 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
           className={field}
         />
       </div>
+      <ChampPiege id={`${type}-ref`} value={piege} onChange={setPiege} />
       <button
         type="submit"
         disabled={loading}
