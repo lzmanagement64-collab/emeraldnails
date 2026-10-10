@@ -21,7 +21,7 @@ export const business = {
   email: "emeraldnails@outlook.fr",
   // Adresse privée de la gérante : notifications back-office uniquement.
   // Ne jamais l'afficher sur une page publique ni dans un e-mail cliente.
-  ownerEmail: "emeraldnails@outlook.fr",
+  ownerEmail: "mariachtioui@outlook.fr",
   // Liste blanche des comptes autorisés à accéder à l'administration.
   // La vérification réelle est faite côté serveur (voir admin-guard.server.ts).
   adminEmails: ["mariachtioui@outlook.fr"],
