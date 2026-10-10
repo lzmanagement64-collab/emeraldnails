@@ -124,7 +124,10 @@ export const creerReservation = createServerFn({ method: "POST" })
     const debut = parisToUtc(data.date, data.heure);
     const fin = new Date(debut.getTime() + selection.duree * 60000);
     const prix = selection.prix;
-    const paiement = configPaiement();
+    // Paiement de l'acompte en ligne : Stripe actif et acompte à payer
+    // (une sélection uniquement « sur devis » n'a pas d'acompte).
+    const config = configPaiement();
+    const paiement = { actif: config.actif && montantAcompte(prix) >= 0.5 };
 
     const { data: row, error } = await supabaseAdmin
       .from("reservations")
@@ -202,14 +205,17 @@ export const etatAcompte = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { nomsPrestations, lignesDuRendezVous } = await import("./selection");
-    const { data: row } = await supabaseAdmin
-      .from("reservations")
-      .select(
-        "statut, date_debut, prix_total, prestations_detail, acompte_montant, acompte_statut, acompte_expire_le, prestations(nom, prix, duree_minutes)",
-      )
-      .eq("id", data.id)
-      .maybeSingle();
+    const { verifierPaiement } = await import("./acompte.server");
+    const colonnes =
+      "statut, date_debut, prix_total, prestations_detail, acompte_montant, acompte_statut, acompte_expire_le, stripe_session_id, prestations(nom, prix, duree_minutes)";
+    const lire = () =>
+      supabaseAdmin.from("reservations").select(colonnes).eq("id", data.id).maybeSingle();
+    let { data: row } = await lire();
     if (!row) return null;
+    // Retour de Stripe : on vérifie directement le paiement (sans attendre le webhook).
+    if (await verifierPaiement(supabaseAdmin, row)) {
+      row = (await lire()).data ?? row;
+    }
     const expire =
       row.acompte_statut === "en_attente" &&
       !!row.acompte_expire_le &&
@@ -325,6 +331,62 @@ export const adminEmailTest = createServerFn({ method: "POST" })
     await assertGerante(context as never);
     const { emailTestGerante } = await import("./emails.server");
     return emailTestGerante();
+  });
+
+/** Refus d'une demande par la gérante : acompte remboursé intégralement + e-mail. */
+export const adminRefuserReservation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { assertGerante, versEmail, SELECT_AVEC_PRESTATION } =
+      await import("./reservation.server");
+    await assertGerante(context as never);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { rembourserAcompte, fermerSessionPaiement } = await import("./acompte.server");
+    const { emailRefusCliente } = await import("./emails.server");
+
+    const { data: row } = await supabaseAdmin
+      .from("reservations")
+      .select(SELECT_AVEC_PRESTATION)
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row) throw new Error("Rendez-vous introuvable.");
+    if (row.statut === "annulee") throw new Error("Ce rendez-vous est déjà annulé.");
+
+    let rembourse = false;
+    if (row.acompte_statut === "paye") {
+      rembourse = await rembourserAcompte(supabaseAdmin, row);
+    } else if (row.acompte_statut === "en_attente") {
+      await fermerSessionPaiement(row.stripe_session_id);
+    }
+    const acompteStatut = rembourse
+      ? "rembourse"
+      : row.acompte_statut === "en_attente"
+        ? "expire"
+        : row.acompte_statut;
+    const { error } = await supabaseAdmin
+      .from("reservations")
+      .update({ statut: "annulee", acompte_statut: acompteStatut })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    const mail = versEmail({ ...row, acompte_statut: acompteStatut } as never);
+    await Promise.allSettled([emailRefusCliente(mail, rembourse)]);
+    return {
+      ok: true,
+      acompteEtaitPaye: row.acompte_statut === "paye",
+      rembourse,
+    };
+  });
+
+/** État du paiement en ligne (format des secrets, connexion à Stripe), sans aucune clé. */
+export const adminDiagnosticPaiement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { assertGerante } = await import("./reservation.server");
+    await assertGerante(context as never);
+    const { diagnosticPaiement } = await import("./stripe.server");
+    return diagnosticPaiement();
   });
 
 export const adminReservations = createServerFn({ method: "POST" })

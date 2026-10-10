@@ -5,8 +5,12 @@
 // 1. La cliente valide le formulaire : le rendez-vous est enregistré en
 //    « réservation provisoire » (acompte_statut = en_attente) et la page de
 //    paiement Stripe s'ouvre. Le créneau est bloqué 35 minutes.
-// 2. Paiement reçu (webhook Stripe signé) : acompte « payé », rendez-vous
-//    confirmé, e-mails envoyés.
+// 2. Paiement reçu (webhook Stripe signé, ou vérification directe auprès de
+//    Stripe au retour de la cliente) : acompte « payé », rendez-vous « à
+//    valider » par Maria. E-mail « demande reçue, acompte payé » à la cliente,
+//    alerte à Maria.
+// 2 bis. Maria valide (e-mail de confirmation) ou refuse (acompte remboursé
+//    intégralement, e-mail d'explication).
 // 3. Pas de paiement à temps : le créneau est libéré automatiquement.
 // 4. Annulation en ligne (plus de 72 h avant) : acompte remboursé.
 // ============================================================
@@ -144,7 +148,7 @@ type SessionStripe = {
   metadata?: Record<string, string> | null;
 };
 
-/** Webhook « paiement terminé » : acompte payé, rendez-vous confirmé, e-mails. */
+/** Paiement terminé : acompte payé, rendez-vous à valider par Maria, e-mails. */
 export async function enregistrerPaiement(admin: Admin, session: SessionStripe) {
   const id = session.metadata?.reservationId;
   if (!id || session.payment_status !== "paid") return;
@@ -170,26 +174,37 @@ export async function enregistrerPaiement(admin: Admin, session: SessionStripe) 
     stripe_session_id: session.id,
     stripe_payment_intent: pi,
   };
-  const { emailConfirmationCliente, emailNouvelleDemandeGerante, emailAlerteGerante } =
+  const { emailAcomptePayeCliente, emailNouvelleDemandeGerante, emailAlerteGerante } =
     await import("./emails.server");
 
   // Rendez-vous annulé entre-temps par la gérante : on rembourse.
   const annuleParGerante = row.statut === "annulee" && row.acompte_statut !== "expire";
   let conflit = annuleParGerante;
   if (!annuleParGerante) {
-    const statut =
-      row.statut === "en_attente" || row.statut === "annulee" ? "confirmee" : row.statut;
-    const { error } = await admin
+    // Toujours « à valider » par Maria (paiement arrivé après le délai : on retente le créneau).
+    const statut = row.statut === "annulee" ? "en_attente" : row.statut;
+    // Mise à jour exclusive : si le webhook et le retour de la cliente arrivent
+    // en même temps, un seul enregistre le paiement (et envoie les e-mails).
+    const { data: faits, error } = await admin
       .from("reservations")
       .update({ ...paiement, statut })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("acompte_statut", row.acompte_statut)
+      .select("id");
     if (error && error.code !== "23P01") throw new Error(error.message);
     // 23P01 : paiement arrivé après le délai et créneau repris par une autre cliente.
     conflit = error?.code === "23P01";
+    if (!conflit && !faits?.length) return; // déjà enregistré par l'autre appel
   }
 
   if (conflit) {
-    await admin.from("reservations").update(paiement).eq("id", id);
+    const { data: faits } = await admin
+      .from("reservations")
+      .update(paiement)
+      .eq("id", id)
+      .eq("acompte_statut", row.acompte_statut)
+      .select("id");
+    if (!faits?.length) return; // déjà traité par l'autre appel
     const rembourse = await rembourserAcompte(admin, { id, stripe_payment_intent: pi });
     await emailAlerteGerante(
       versEmail({ ...row, ...paiement } as never),
@@ -206,7 +221,36 @@ export async function enregistrerPaiement(admin: Admin, session: SessionStripe) 
     .eq("id", id)
     .maybeSingle();
   const mail = versEmail((maj ?? row) as never);
-  await Promise.allSettled([emailConfirmationCliente(mail), emailNouvelleDemandeGerante(mail)]);
+  await Promise.allSettled([emailAcomptePayeCliente(mail), emailNouvelleDemandeGerante(mail)]);
+}
+
+/**
+ * Vérifie directement auprès de Stripe si l'acompte d'une réservation
+ * provisoire a été payé (retour de la cliente sur le site). Ne dépend pas du
+ * webhook : le paiement est enregistré même si le webhook est mal réglé.
+ */
+export async function verifierPaiement(
+  admin: Admin,
+  row: { acompte_statut: string; stripe_session_id: string | null },
+) {
+  if (row.acompte_statut !== "en_attente" || !row.stripe_session_id) return false;
+  try {
+    const session = await getStripe().checkout.sessions.retrieve(row.stripe_session_id);
+    if (session.payment_status !== "paid") return false;
+    await enregistrerPaiement(admin, session as never);
+    return true;
+  } catch (e) {
+    console.error("[acompte] vérification du paiement", getStripeErrorMessage(e));
+    return false;
+  }
+}
+
+/** Ferme la page de paiement Stripe d'une réservation provisoire (refus, annulation). */
+export async function fermerSessionPaiement(sessionId: string | null) {
+  if (!sessionId) return;
+  await getStripe()
+    .checkout.sessions.expire(sessionId)
+    .catch(() => undefined);
 }
 
 /** Webhook « page de paiement expirée » : le créneau est libéré. */

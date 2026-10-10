@@ -15,10 +15,46 @@ const getEnv = (key: string): string => {
 // Sans STRIPE_SECRET_KEY, le paiement en ligne est simplement désactivé.
 // ------------------------------------------------------------
 
+/**
+ * Nature de la clé enregistrée dans STRIPE_SECRET_KEY (jamais la clé elle-même).
+ * Clés acceptées : secrète (sk_…) ou restreinte (rk_…), en test ou en réel.
+ */
+export type EtatCleStripe = "ok" | "absente" | "cle_publique" | "secret_webhook" | "inconnue";
+
+export function analyserCleStripe(cle: string): EtatCleStripe {
+  if (!cle) return "absente";
+  if (/^(sk|rk)_(test|live)_/.test(cle)) return "ok";
+  if (cle.startsWith("pk_")) return "cle_publique";
+  if (cle.startsWith("whsec_")) return "secret_webhook";
+  return "inconnue";
+}
+
 /** Paiement en ligne actif ? Et en mode test ? (aucune clé n'est renvoyée) */
 export function configPaiement() {
   const key = lireSecret("STRIPE_SECRET_KEY");
-  return { actif: key.startsWith("sk_"), modeTest: key.startsWith("sk_test_") };
+  return { actif: analyserCleStripe(key) === "ok", modeTest: /^(sk|rk)_test_/.test(key) };
+}
+
+/** Diagnostic complet pour l'admin : format des secrets et connexion réelle à Stripe. */
+export async function diagnosticPaiement() {
+  const cle = lireSecret("STRIPE_SECRET_KEY");
+  const etatCle = analyserCleStripe(cle);
+  const webhook = lireSecret("STRIPE_WEBHOOK_SECRET");
+  let connexion: { ok: boolean; erreur?: string } | null = null;
+  if (etatCle === "ok") {
+    try {
+      await getStripe().checkout.sessions.list({ limit: 1 });
+      connexion = { ok: true };
+    } catch (e) {
+      connexion = { ok: false, erreur: getStripeErrorMessage(e) };
+    }
+  }
+  return {
+    etatCle,
+    modeTest: /^(sk|rk)_test_/.test(cle),
+    webhook: !webhook ? "absent" : webhook.startsWith("whsec_") ? "ok" : "format_inconnu",
+    connexion,
+  };
 }
 
 let client: Stripe | null = null;

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, LogOut, Plus, Trash2 } from "lucide-react";
+import { Check, Loader2, LogOut, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { business } from "@/config/business";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,8 @@ import {
   adminEmailTest,
   adminReglages,
   adminEnregistrerReglages,
+  adminRefuserReservation,
+  adminDiagnosticPaiement,
 } from "@/lib/reservation.functions";
 import { STATUTS, STATUT_LABEL, type Statut } from "@/lib/reservation-schemas";
 import {
@@ -210,7 +212,7 @@ const ONGLETS = [
   { id: "horaires", label: "Horaires" },
   { id: "indispos", label: "Absences" },
   { id: "leads", label: "Demandes" },
-  { id: "emails", label: "E-mails" },
+  { id: "emails", label: "E-mails & paiement" },
 ] as const;
 
 type Onglet = (typeof ONGLETS)[number]["id"];
@@ -286,7 +288,11 @@ function AdminPage() {
     setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, statut } : r)));
     try {
       await changerStatut({ data: { id, statut } });
-      toast.success(statut === "confirmee" ? "Rendez-vous confirmé." : "Statut mis à jour.");
+      toast.success(
+        statut === "confirmee"
+          ? "Rendez-vous validé : e-mail de confirmation envoyé à la cliente."
+          : "Statut mis à jour.",
+      );
     } catch (e) {
       toast.error((e as Error).message || "Mise à jour impossible");
     }
@@ -397,7 +403,9 @@ function AdminPage() {
           ))}
         </nav>
 
-        {onglet === "planning" && <Planning reservations={aVenir} onStatut={majStatut} />}
+        {onglet === "planning" && (
+          <Planning reservations={aVenir} onStatut={majStatut} onRefresh={rafraichir} />
+        )}
         {onglet === "reservations" && (
           <Reservations
             reservations={reservations}
@@ -414,23 +422,99 @@ function AdminPage() {
         {onglet === "horaires" && <Horaires horaires={horaires} onRefresh={rafraichir} />}
         {onglet === "indispos" && <Absences indispos={indispos} onRefresh={rafraichir} />}
         {onglet === "leads" && <Demandes leads={leads} />}
-        {onglet === "emails" && <ReglagesEmails />}
+        {onglet === "emails" && (
+          <div className="space-y-6">
+            <ReglagesPaiement />
+            <ReglagesEmails />
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // ------------------------------------------------------------
-function BadgeStatut({ statut }: { statut: Statut }) {
+/** Demande dont l'acompte est payé et qui attend la validation de Maria. */
+const aValider = (r: Reservation) => r.statut === "en_attente" && r.acompte_statut === "paye";
+
+function BadgeStatut({ statut, r }: { statut: Statut; r?: Reservation }) {
   return (
     <span
       className={cn(
         "inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-widest",
-        STATUT_COULEUR[statut],
+        r && aValider(r) ? "bg-amber-200 text-amber-950" : STATUT_COULEUR[statut],
       )}
     >
-      {STATUT_LABEL[statut]}
+      {r && aValider(r) ? "Acompte payé – à valider" : STATUT_LABEL[statut]}
     </span>
+  );
+}
+
+/** Boutons « Valider » / « Refuser » d'une demande en attente. */
+function ValidationDemande({
+  r,
+  onStatut,
+  onRefresh,
+}: {
+  r: Reservation;
+  onStatut: (id: string, s: Statut) => void;
+  onRefresh: () => Promise<void>;
+}) {
+  const refuser = useServerFn(adminRefuserReservation);
+  const [envoi, setEnvoi] = useState(false);
+  // Réservation provisoire dont le paiement est en cours : rien à valider encore.
+  if (r.statut !== "en_attente" || r.acompte_statut === "en_attente") return null;
+
+  const paye = r.acompte_statut === "paye";
+  const lancerRefus = async () => {
+    const message = paye
+      ? `Refuser ce rendez-vous ? L'acompte de ${formatEuros(Number(r.acompte_montant ?? 0))} sera remboursé intégralement à ${r.cliente_prenom}, qui recevra un e-mail d'explication.`
+      : `Refuser ce rendez-vous ? ${r.cliente_prenom} recevra un e-mail d'explication.`;
+    if (!window.confirm(message)) return;
+    setEnvoi(true);
+    try {
+      const res = await refuser({ data: { id: r.id } });
+      if (res.acompteEtaitPaye && !res.rembourse) {
+        toast.error(
+          "Rendez-vous refusé, mais le remboursement automatique a échoué : remboursez l'acompte depuis le tableau de bord Stripe.",
+        );
+      } else {
+        toast.success(
+          res.rembourse ? "Rendez-vous refusé, acompte remboursé." : "Rendez-vous refusé.",
+        );
+      }
+      await onRefresh();
+    } catch (e) {
+      toast.error((e as Error).message || "Refus impossible");
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 flex w-full flex-wrap gap-2">
+      <button
+        type="button"
+        disabled={envoi}
+        onClick={() => onStatut(r.id, "confirmee")}
+        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald px-4 py-2 text-xs font-semibold text-porcelain transition-colors hover:bg-emerald-deep disabled:opacity-50"
+      >
+        <Check className="size-3.5" strokeWidth={2} /> Valider
+      </button>
+      <button
+        type="button"
+        disabled={envoi}
+        onClick={lancerRefus}
+        className="inline-flex items-center gap-1.5 rounded-xl border border-bordeaux/40 px-4 py-2 text-xs font-semibold text-bordeaux transition-colors hover:bg-bordeaux hover:text-porcelain disabled:opacity-50"
+      >
+        {envoi ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <X className="size-3.5" strokeWidth={2} />
+        )}
+        {paye ? "Refuser et rembourser" : "Refuser"}
+      </button>
+    </div>
   );
 }
 
@@ -454,9 +538,11 @@ function SelectStatut({ statut, onChange }: { statut: Statut; onChange: (s: Stat
 function Planning({
   reservations,
   onStatut,
+  onRefresh,
 }: {
   reservations: Reservation[];
   onStatut: (id: string, s: Statut) => void;
+  onRefresh: () => Promise<void>;
 }) {
   const parJour = useMemo(() => {
     const map = new Map<string, Reservation[]>();
@@ -495,12 +581,13 @@ function Planning({
                   {r.cliente_prenom} {r.cliente_nom} · {r.cliente_telephone}
                 </span>
                 <span className="ml-auto flex items-center gap-2">
-                  <BadgeStatut statut={r.statut} />
+                  <BadgeStatut statut={r.statut} r={r} />
                   <SelectStatut statut={r.statut} onChange={(s) => onStatut(r.id, s)} />
                 </span>
                 <div className="w-full">
                   <InfoAcompte r={r} />
                 </div>
+                <ValidationDemande r={r} onStatut={onStatut} onRefresh={onRefresh} />
                 {r.commentaire && <p className="w-full text-xs text-taupe">« {r.commentaire} »</p>}
               </li>
             ))}
@@ -718,7 +805,8 @@ function Reservations({
                     <InfoAcompte r={r} />
                   </td>
                   <td className="px-4 py-4">
-                    <BadgeStatut statut={r.statut} />
+                    <BadgeStatut statut={r.statut} r={r} />
+                    <ValidationDemande r={r} onStatut={onStatut} onRefresh={onRefresh} />
                   </td>
                   <td className="px-4 py-4 text-right">
                     <SelectStatut statut={r.statut} onChange={(s) => onStatut(r.id, s)} />
@@ -1308,6 +1396,71 @@ function Demandes({ leads }: { leads: Lead[] }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+const LIBELLE_CLE: Record<string, string> = {
+  ok: "trouvée",
+  absente: "absente : ajoutez STRIPE_SECRET_KEY dans Lovable Cloud → Secrets, puis republiez",
+  cle_publique:
+    "c'est la clé publique (pk_…) : il faut la clé SECRÈTE (sk_test_… en test), dans Stripe → Développeurs → Clés API",
+  secret_webhook:
+    "c'est le secret du webhook (whsec_…) : mettez-le dans STRIPE_WEBHOOK_SECRET, et la clé secrète sk_test_… dans STRIPE_SECRET_KEY",
+  inconnue: "format inattendu : la clé secrète commence par sk_test_ (test) ou sk_live_ (réel)",
+};
+
+/** État du paiement en ligne : secrets Stripe et connexion réelle, sans aucune clé affichée. */
+function ReglagesPaiement() {
+  const verifier = useServerFn(adminDiagnosticPaiement);
+  const [envoi, setEnvoi] = useState(false);
+  const [d, setD] = useState<Awaited<ReturnType<typeof adminDiagnosticPaiement>> | null>(null);
+
+  const lancer = async () => {
+    setEnvoi(true);
+    try {
+      setD(await verifier({}));
+    } catch (e) {
+      toast.error((e as Error).message || "Vérification impossible");
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  const actif = d?.etatCle === "ok" && d.connexion?.ok;
+  return (
+    <section className={cn(carte, "space-y-4")}>
+      <h2 className="font-display text-lg text-ink">Paiement de l'acompte (Stripe)</h2>
+      <p className="text-sm text-taupe">
+        Vérifie que le site voit vos secrets Stripe et qu'il arrive à se connecter à votre compte.
+        Aucune clé n'est affichée.
+      </p>
+      <button type="button" onClick={lancer} disabled={envoi} className={btnPrimaire}>
+        {envoi ? "Vérification…" : "Vérifier le paiement en ligne"}
+      </button>
+      {d && (
+        <ul className="space-y-1.5 text-sm">
+          <li className={actif ? "font-semibold text-emerald" : "font-semibold text-bordeaux"}>
+            {actif
+              ? `Paiement en ligne ACTIF${d.modeTest ? " (mode test : aucun vrai paiement)" : " (paiements réels)"}`
+              : "Paiement en ligne INACTIF : les clientes ne voient pas d'étape de paiement"}
+          </li>
+          <li className="text-ink">Clé secrète Stripe : {LIBELLE_CLE[d.etatCle]}</li>
+          {d.connexion && (
+            <li className={d.connexion.ok ? "text-emerald" : "text-bordeaux"}>
+              Connexion à Stripe : {d.connexion.ok ? "réussie" : `refusée — ${d.connexion.erreur}`}
+            </li>
+          )}
+          <li className={d.webhook === "ok" ? "text-ink" : "text-bordeaux"}>
+            Secret du webhook :{" "}
+            {d.webhook === "ok"
+              ? "trouvé"
+              : d.webhook === "absent"
+                ? "absent (STRIPE_WEBHOOK_SECRET) — le paiement est quand même vérifié au retour de la cliente"
+                : "format inattendu (il commence par whsec_)"}
+          </li>
+        </ul>
+      )}
+    </section>
   );
 }
 
