@@ -15,7 +15,7 @@ export const faq = [
   },
   {
     q: "Faut-il verser un acompte ?",
-    a: `Oui. Un acompte de 30 % du montant de la prestation se règle en ligne, par carte bancaire, au moment de la réservation : c'est lui qui valide le rendez-vous. Il est déduit du montant total, et le reste se règle sur place. ${REGLE_ACOMPTE_TEXTE}`,
+    a: `Oui. Un acompte de 30 % du montant total du rendez-vous (toutes prestations comprises) se règle en ligne, par carte bancaire, au moment de la réservation : c'est lui qui valide le rendez-vous. Il est déduit du montant total, et le reste se règle sur place. ${REGLE_ACOMPTE_TEXTE}`,
   },
   {
     q: "Quelles sont les conditions d’annulation ?",

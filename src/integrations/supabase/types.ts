@@ -240,6 +240,7 @@ export type Database = {
           acompte_paye_le: string | null;
           acompte_statut: string;
           prix_total: number | null;
+          prestations_detail: Json | null;
           stripe_payment_intent: string | null;
           stripe_session_id: string | null;
           cliente_email: string;
@@ -262,6 +263,7 @@ export type Database = {
           acompte_paye_le?: string | null;
           acompte_statut?: string;
           prix_total?: number | null;
+          prestations_detail?: Json | null;
           stripe_payment_intent?: string | null;
           stripe_session_id?: string | null;
           cliente_email: string;
@@ -284,6 +286,7 @@ export type Database = {
           acompte_paye_le?: string | null;
           acompte_statut?: string;
           prix_total?: number | null;
+          prestations_detail?: Json | null;
           stripe_payment_intent?: string | null;
           stripe_session_id?: string | null;
           cliente_email?: string;
@@ -339,6 +342,12 @@ export type Database = {
       annuler_reservation: { Args: { p_token: string }; Returns: boolean };
       get_creneaux_disponibles: {
         Args: { date_recherche: string; prestation_id: string };
+        Returns: {
+          heure_debut: string;
+        }[];
+      };
+      get_creneaux_disponibles_duree: {
+        Args: { date_recherche: string; p_duree: number };
         Returns: {
           heure_debut: string;
         }[];

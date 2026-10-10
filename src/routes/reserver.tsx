@@ -5,8 +5,9 @@ import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
-import { ACOMPTE_TEXTE, acompteFormate, POURCENT_ACOMPTE } from "@/lib/acompte";
+import { ACOMPTE_TEXTE, acompteFormate, montantAcompte, POURCENT_ACOMPTE } from "@/lib/acompte";
 import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
+import { MAX_PRESTATIONS, nomsPrestations, totaux } from "@/lib/selection";
 
 /** Temps laissé à la cliente pour payer (identique au serveur, voir acompte.server.ts). */
 const DELAI_PAIEMENT_AFFICHE = 30;
@@ -100,7 +101,11 @@ function ReserverPage() {
   const [etape, setEtape] = useState(1);
   const [prestations, setPrestations] = useState<Prestation[]>([]);
   const [chargement, setChargement] = useState(true);
-  const [prestation, setPrestation] = useState<Prestation | null>(null);
+  // Prestations choisies, dans l'ordre où la cliente les a ajoutées.
+  const [selection, setSelection] = useState<Prestation[]>([]);
+  const cle = selection.map((p) => p.id).join(",");
+  const total = useMemo(() => totaux(selection), [selection]);
+  const noms = nomsPrestations(selection);
 
   const aujourdhui = todayParisISO();
   const dernierJour = addDaysISO(aujourdhui, REGLES.maxJoursAvance);
@@ -140,11 +145,9 @@ function ReserverPage() {
       try {
         const rows = (await chargerPrestations({})) as unknown as Prestation[];
         setPrestations(rows);
+        // Bouton « Choisir » d'une fiche : prestation déjà cochée, d'autres peuvent s'ajouter.
         const demandee = rows.find((p) => p.id === prestationDemandee);
-        if (demandee) {
-          setPrestation(demandee);
-          setEtape(2);
-        }
+        if (demandee) setSelection([demandee]);
       } catch {
         toast.error("Impossible de charger les prestations.");
       } finally {
@@ -156,10 +159,10 @@ function ReserverPage() {
   }, [chargerPrestations]);
 
   useEffect(() => {
-    if (!prestation) return;
+    if (!cle || etape !== 2) return;
     let actif = true;
     setChargeMois(true);
-    chargerMois({ data: { prestationId: prestation.id, mois } })
+    chargerMois({ data: { prestationIds: cle.split(","), mois } })
       .then((rows) => {
         if (!actif) return;
         const map: Record<string, number> = {};
@@ -171,21 +174,21 @@ function ReserverPage() {
     return () => {
       actif = false;
     };
-  }, [prestation, mois, chargerMois]);
+  }, [cle, etape, mois, chargerMois]);
 
   useEffect(() => {
-    if (!prestation || !date) return;
+    if (!cle || !date) return;
     let actif = true;
     setChargeCreneaux(true);
     setHeure(null);
-    chargerCreneaux({ data: { prestationId: prestation.id, date } })
+    chargerCreneaux({ data: { prestationIds: cle.split(","), date } })
       .then((rows) => actif && setCreneaux(rows as string[]))
       .catch(() => actif && toast.error("Impossible de charger les créneaux."))
       .finally(() => actif && setChargeCreneaux(false));
     return () => {
       actif = false;
     };
-  }, [prestation, date, chargerCreneaux]);
+  }, [cle, date, chargerCreneaux]);
 
   const grille = useMemo(() => {
     const [y, m] = mois.split("-").map(Number);
@@ -199,13 +202,25 @@ function ReserverPage() {
     return cases;
   }, [mois]);
 
+  /** Ajoute ou retire une prestation ; le créneau est à rechoisir car la durée change. */
+  const basculer = (p: Prestation) => {
+    const dejaChoisie = selection.some((x) => x.id === p.id);
+    if (!dejaChoisie && selection.length >= MAX_PRESTATIONS) {
+      toast.error(`${MAX_PRESTATIONS} prestations maximum par rendez-vous.`);
+      return;
+    }
+    setSelection(dejaChoisie ? selection.filter((x) => x.id !== p.id) : [...selection, p]);
+    setDate(null);
+    setHeure(null);
+  };
+
   const soumettre = async () => {
-    if (!prestation || !date || !heure) return;
+    if (!selection.length || !date || !heure) return;
     setEnvoi(true);
     try {
       const res = await enregistrer({
         data: {
-          prestationId: prestation.id,
+          prestationIds: selection.map((p) => p.id),
           date,
           heure,
           prenom: form.prenom,
@@ -310,46 +325,90 @@ function ReserverPage() {
               .
             </p>
           ) : (
-            prestations.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => {
-                  setPrestation(p);
-                  setDate(null);
-                  setHeure(null);
-                  setEtape(2);
-                }}
-                className={cn(
-                  "flex w-full items-start gap-4 rounded-sm border p-5 text-left transition-colors",
-                  prestation?.id === p.id
-                    ? "border-ink bg-linen/40"
-                    : "border-border bg-card hover:border-ink/40",
+            <>
+              <p className="text-sm text-taupe">
+                Choisissez une ou plusieurs prestations (par exemple une dépose et une nouvelle
+                pose) : les prix et les durées s'additionnent.
+              </p>
+              {prestations.map((p) => {
+                const choisie = selection.some((x) => x.id === p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    aria-pressed={choisie}
+                    onClick={() => basculer(p)}
+                    className={cn(
+                      "flex w-full items-start gap-4 rounded-sm border p-5 text-left transition-colors",
+                      choisie
+                        ? "border-ink bg-linen/40"
+                        : "border-border bg-card hover:border-ink/40",
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "mt-1 grid size-5 shrink-0 place-items-center rounded-sm border",
+                        choisie
+                          ? "border-ink bg-ink text-porcelain"
+                          : "border-border bg-background",
+                      )}
+                    >
+                      {choisie && <Check className="size-3.5" />}
+                    </span>
+                    <span className="flex-1">
+                      <span className="block font-display text-lg text-ink">{p.nom}</span>
+                      {p.description && (
+                        <span className="mt-1 block text-sm text-taupe">{p.description}</span>
+                      )}
+                      <span className="mt-2 block font-mono text-[11px] uppercase tracking-widest text-taupe">
+                        {formatDuree(p.duree_minutes)} · {formatEuros(p.prix)}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+
+              {/* Total de la sélection, toujours visible en bas de l'écran */}
+              <div className="sticky bottom-24 z-10 rounded-sm border border-ink/20 bg-card p-4 shadow-[0_20px_50px_-30px_rgba(28,25,23,0.45)] md:bottom-4">
+                {selection.length === 0 ? (
+                  <p className="text-sm text-taupe">Aucune prestation choisie pour le moment.</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-ink">{noms}</p>
+                    <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-taupe">
+                      {selection.length} prestation{selection.length > 1 ? "s" : ""} · durée totale{" "}
+                      {formatDuree(total.duree)} · total {formatEuros(total.prix)}
+                    </p>
+                    <p className="mt-1 text-sm text-taupe">
+                      Acompte ({POURCENT_ACOMPTE} %) : {acompteFormate(total.prix)}
+                    </p>
+                  </>
                 )}
-              >
-                <span
-                  aria-hidden
-                  className="mt-1 size-3 shrink-0 rounded-full"
-                  style={{ backgroundColor: p.couleur }}
-                />
-                <span className="flex-1">
-                  <span className="block font-display text-lg text-ink">{p.nom}</span>
-                  {p.description && (
-                    <span className="mt-1 block text-sm text-taupe">{p.description}</span>
-                  )}
-                  <span className="mt-2 block font-mono text-[11px] uppercase tracking-widest text-taupe">
-                    {formatDuree(p.duree_minutes)} · {formatEuros(p.prix)}
-                  </span>
-                </span>
-              </button>
-            ))
+                <button
+                  type="button"
+                  disabled={selection.length === 0}
+                  onClick={() => setEtape(2)}
+                  className="mt-3 w-full rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-40"
+                >
+                  Continuer
+                </button>
+              </div>
+            </>
           )}
         </section>
       )}
 
       {/* ÉTAPE 2 — DATE & HEURE */}
-      {etape === 2 && prestation && (
+      {etape === 2 && selection.length > 0 && (
         <section aria-label="Choix de la date et de l'heure" className="space-y-6">
+          <div className="rounded-sm border border-border bg-linen/40 p-4 text-sm">
+            <p className="text-ink">{noms}</p>
+            <p className="mt-1 text-taupe">
+              Durée totale {formatDuree(total.duree)} · {formatEuros(total.prix)} — les créneaux
+              proposés tiennent compte de la durée totale.
+            </p>
+          </div>
           <div className="rounded-sm border border-border bg-card p-4 sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <button
@@ -434,7 +493,8 @@ function ReserverPage() {
                 </p>
               ) : creneaux.length === 0 ? (
                 <p className="py-4 text-sm text-taupe">
-                  Plus de créneau disponible ce jour-là pour cette prestation.
+                  Plus de créneau disponible ce jour-là pour une durée de {formatDuree(total.duree)}
+                  .
                 </p>
               ) : (
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -484,17 +544,30 @@ function ReserverPage() {
       )}
 
       {/* ÉTAPE 3 — COORDONNÉES */}
-      {etape === 3 && prestation && date && heure && (
+      {etape === 3 && selection.length > 0 && date && heure && (
         <section aria-label="Vos coordonnées" className="space-y-6">
           <div className="rounded-sm border border-border bg-linen/40 p-5">
-            <p className="font-display text-lg text-ink">{prestation.nom}</p>
-            <p className="mt-1 text-sm text-taupe">
-              {parisLongDate(`${date}T12:00:00Z`)} à {heure} ·{" "}
-              {formatDuree(prestation.duree_minutes)} · {formatEuros(prestation.prix)}
+            <p className="font-display text-lg text-ink">
+              {parisLongDate(`${date}T12:00:00Z`)} à {heure}
             </p>
-            <p className="mt-2 text-sm text-ink">
-              Acompte pour valider le rendez-vous : {acompteFormate(prestation.prix)} (
-              {POURCENT_ACOMPTE} %), déduit du montant total.
+            <ul className="mt-3 space-y-1 text-sm">
+              {selection.map((p) => (
+                <li key={p.id} className="flex justify-between gap-4 text-taupe">
+                  <span>
+                    {p.nom} · {formatDuree(p.duree_minutes)}
+                  </span>
+                  <span className="text-ink">{formatEuros(p.prix)}</span>
+                </li>
+              ))}
+              <li className="flex justify-between gap-4 border-t border-border pt-2 font-medium text-ink">
+                <span>Total · {formatDuree(total.duree)}</span>
+                <span>{formatEuros(total.prix)}</span>
+              </li>
+            </ul>
+            <p className="mt-3 text-sm text-ink">
+              Acompte pour valider le rendez-vous : {acompteFormate(total.prix)} ({POURCENT_ACOMPTE}{" "}
+              % du total), déduit du montant total. Reste à régler sur place :{" "}
+              {formatEuros(Math.max(0, total.prix - montantAcompte(total.prix)))}.
             </p>
             <p className="mt-2 text-sm text-taupe">{ANNULATION_TEXTE}</p>
             <p className="mt-2 text-sm text-taupe">{REGLE_ACOMPTE_TEXTE}</p>
@@ -595,7 +668,7 @@ function ReserverPage() {
                 {envoi
                   ? "Enregistrement…"
                   : paiement.actif
-                    ? `Payer l'acompte de ${acompteFormate(prestation.prix)}`
+                    ? `Payer l'acompte de ${acompteFormate(total.prix)}`
                     : "Confirmer ma demande"}
               </button>
             </div>

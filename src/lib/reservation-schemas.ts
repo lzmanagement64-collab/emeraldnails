@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { champsAntiSpam } from "./anti-spam";
+import { MAX_PRESTATIONS } from "./selection";
 
 const txt = (max: number) => z.string().trim().max(max);
 
@@ -12,8 +13,15 @@ export const telephoneFR = z
     message: "Numéro de téléphone français invalide (ex. 06 12 34 56 78)",
   });
 
+/** Une ou plusieurs prestations, sans doublon. */
+const prestationIds = z
+  .array(z.string().uuid("Prestation invalide"))
+  .min(1, "Choisissez au moins une prestation")
+  .max(MAX_PRESTATIONS, `${MAX_PRESTATIONS} prestations maximum par rendez-vous`)
+  .refine((ids) => new Set(ids).size === ids.length, "Prestation en double");
+
 export const reservationPubliqueSchema = z.object({
-  prestationId: z.string().uuid("Prestation invalide"),
+  prestationIds,
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide"),
   heure: z.string().regex(/^\d{2}:\d{2}$/, "Heure invalide"),
   prenom: txt(60).min(1, "Le prénom est obligatoire"),
@@ -29,12 +37,12 @@ export const reservationPubliqueSchema = z.object({
 export type ReservationPubliqueInput = z.infer<typeof reservationPubliqueSchema>;
 
 export const creneauxSchema = z.object({
-  prestationId: z.string().uuid(),
+  prestationIds,
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 export const moisSchema = z.object({
-  prestationId: z.string().uuid(),
+  prestationIds,
   mois: z.string().regex(/^\d{4}-\d{2}$/),
 });
 

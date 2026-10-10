@@ -20,6 +20,7 @@ import {
   adminSupprimerIndisponibilite,
 } from "@/lib/reservation.functions";
 import { STATUTS, STATUT_LABEL, type Statut } from "@/lib/reservation-schemas";
+import { lignesDuRendezVous, nomsPrestations, totaux } from "@/lib/selection";
 import {
   formatDuree,
   formatEuros,
@@ -57,6 +58,7 @@ type Reservation = {
   commentaire: string | null;
   cree_le: string;
   prix_total: number | null;
+  prestations_detail: unknown;
   acompte_montant: number | null;
   acompte_statut: "non_requis" | "en_attente" | "paye" | "rembourse" | "expire";
   acompte_expire_le: string | null;
@@ -64,9 +66,38 @@ type Reservation = {
   prestations: { nom: string; duree_minutes: number; prix: number; couleur: string } | null;
 };
 
+/** Montant total d'un rendez-vous (toutes prestations comprises). */
+const totalRdv = (r: Reservation) =>
+  Number(r.prix_total ?? totaux(lignesDuRendezVous(r)).prix ?? 0);
+
+/** Liste des prestations d'un rendez-vous, avec le prix de chacune et le total. */
+function DetailPrestations({ r }: { r: Reservation }) {
+  const lignes = lignesDuRendezVous(r);
+  const { duree } = totaux(lignes);
+  return (
+    <div>
+      <ul className="space-y-0.5">
+        {lignes.map((l, i) => (
+          <li key={`${l.id}-${i}`} className="flex justify-between gap-3">
+            <span className="text-ink">{l.nom}</span>
+            <span className="text-taupe">{formatEuros(l.prix)}</span>
+          </li>
+        ))}
+      </ul>
+      {lignes.length > 1 && (
+        <p className="mt-1 flex justify-between gap-3 border-t border-border pt-1 text-ink">
+          <span>Total · {formatDuree(duree)}</span>
+          <span>{formatEuros(totalRdv(r))}</span>
+        </p>
+      )}
+      {lignes.length === 1 && <p className="text-taupe">{formatDuree(duree)}</p>}
+    </div>
+  );
+}
+
 /** Acompte d'un rendez-vous : payé ou non, montant payé, reste à payer sur place. */
 function InfoAcompte({ r }: { r: Reservation }) {
-  const prix = Number(r.prix_total ?? r.prestations?.prix ?? 0);
+  const prix = totalRdv(r);
   const acompte = Number(r.acompte_montant ?? 0);
   switch (r.acompte_statut) {
     case "paye": {
@@ -312,7 +343,7 @@ function AdminPage() {
             },
             {
               l: "Chiffre à venir",
-              v: formatEuros(aVenir.reduce((s, r) => s + Number(r.prestations?.prix ?? 0), 0)),
+              v: formatEuros(aVenir.reduce((s, r) => s + totalRdv(r), 0)),
             },
             { l: "Demandes", v: leads.length },
           ].map((s) => (
@@ -427,7 +458,9 @@ function Planning({
                   className="size-2.5 rounded-full"
                   style={{ backgroundColor: r.prestations?.couleur ?? "#1f6b43" }}
                 />
-                <span className="text-ink">{r.prestations?.nom}</span>
+                <span className="text-ink">
+                  {nomsPrestations(lignesDuRendezVous(r))} · {formatEuros(totalRdv(r))}
+                </span>
                 <span className="text-taupe">
                   {r.cliente_prenom} {r.cliente_nom} · {r.cliente_telephone}
                 </span>
@@ -646,11 +679,7 @@ function Reservations({
                     <p className="text-taupe">{r.cliente_email}</p>
                   </td>
                   <td className="px-4 py-4 text-ink">
-                    <p>{r.prestations?.nom}</p>
-                    <p className="text-taupe">
-                      {formatDuree(r.prestations?.duree_minutes ?? 0)} ·{" "}
-                      {formatEuros(Number(r.prestations?.prix ?? 0))}
-                    </p>
+                    <DetailPrestations r={r} />
                     {r.commentaire && (
                       <p className="mt-1 text-xs text-taupe">« {r.commentaire} »</p>
                     )}
@@ -697,7 +726,7 @@ function Clientes({ reservations }: { reservations: Reservation[] }) {
         email: r.cliente_email,
         total: (prec?.total ?? 0) + 1,
         derniere: !prec || r.date_debut > prec.derniere ? r.date_debut : prec.derniere,
-        ca: (prec?.ca ?? 0) + (honore ? Number(r.prestations?.prix ?? 0) : 0),
+        ca: (prec?.ca ?? 0) + (honore ? totalRdv(r) : 0),
       });
     }
     return [...map.values()].sort((a, b) => b.derniere.localeCompare(a.derniere));
