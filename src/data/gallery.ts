@@ -1,3 +1,4 @@
+import type { PhotoGalerie } from "@/lib/galerie";
 import lilasFleursAsset from "@/assets/nails-lilas-fleurs.png.asset.json";
 import lilasMilkyAsset from "@/assets/nails-lilas-milky.png.asset.json";
 import vertLeopardAsset from "@/assets/nails-vert-leopard.png.asset.json";
@@ -17,13 +18,7 @@ const blueFlower3d = blueFlower3dAsset as { url: string };
 const pinkOrange = pinkOrangeAsset as { url: string };
 
 export type GalleryCategory =
-  | "tout"
-  | "nude"
-  | "french"
-  | "nail-art"
-  | "couleur"
-  | "long"
-  | "court";
+  "tout" | "nude" | "french" | "nail-art" | "couleur" | "long" | "court";
 
 export const galleryCategories: { id: GalleryCategory; label: string }[] = [
   { id: "tout", label: "Tout" },
@@ -78,14 +73,6 @@ export const galleryItems: GalleryItem[] = [
     placeholder: "linear-gradient(135deg, #faf9f6, #e6d1d4)",
   },
   {
-    id: "5",
-    categories: ["french", "nail-art", "long"],
-    title: "French lilas · fleurs violettes",
-    image: lilasFleurs.url,
-    ratio: "wide",
-    placeholder: "linear-gradient(135deg, #d8c6e2, #a377c4)",
-  },
-  {
     id: "6",
     categories: ["french", "nail-art", "long"],
     title: "French blanche · fleurs bleues peintes",
@@ -118,3 +105,18 @@ export const galleryItems: GalleryItem[] = [
     placeholder: "linear-gradient(135deg, #ffc7e2, #ff6a1f)",
   },
 ];
+
+/**
+ * Photos d'origine, au format de la galerie gérée dans l'admin.
+ * Utilisées seulement si la base de données ne répond pas.
+ */
+export const photosParDefaut: PhotoGalerie[] = galleryItems.map((g, i) => ({
+  id: `defaut-${g.id}`,
+  titre: g.title,
+  categorie: g.categories[0],
+  src: g.image,
+  vignette: g.image,
+  accueil: i < 6,
+  visible: true,
+  ordre: i + 1,
+}));

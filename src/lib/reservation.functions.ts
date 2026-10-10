@@ -25,7 +25,7 @@ export const listPrestations = createServerFn({ method: "GET" }).handler(async (
   const { supabasePublic } = await import("./reservation.server");
   const { data, error } = await supabasePublic()
     .from("prestations")
-    .select("id, nom, description, duree_minutes, prix, couleur, ordre")
+    .select("id, nom, description, categorie, duree_minutes, prix, couleur, ordre")
     .eq("actif", true)
     .order("ordre", { ascending: true });
   if (error) throw new Error("Impossible de charger les prestations.");
@@ -441,6 +441,7 @@ export const adminEnregistrerPrestation = createServerFn({ method: "POST" })
     const row = {
       nom: data.nom,
       description: data.description,
+      categorie: data.categorie,
       duree_minutes: data.dureeMinutes,
       prix: data.prix,
       couleur: data.couleur,

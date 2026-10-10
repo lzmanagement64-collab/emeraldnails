@@ -8,6 +8,45 @@ export type Database = {
   };
   public: {
     Tables: {
+      galerie_photos: {
+        Row: {
+          accueil: boolean;
+          categorie: string;
+          chemin: string | null;
+          created_at: string;
+          id: string;
+          ordre: number;
+          titre: string;
+          updated_at: string;
+          url_statique: string | null;
+          visible: boolean;
+        };
+        Insert: {
+          accueil?: boolean;
+          categorie?: string;
+          chemin?: string | null;
+          created_at?: string;
+          id?: string;
+          ordre?: number;
+          titre?: string;
+          updated_at?: string;
+          url_statique?: string | null;
+          visible?: boolean;
+        };
+        Update: {
+          accueil?: boolean;
+          categorie?: string;
+          chemin?: string | null;
+          created_at?: string;
+          id?: string;
+          ordre?: number;
+          titre?: string;
+          updated_at?: string;
+          url_statique?: string | null;
+          visible?: boolean;
+        };
+        Relationships: [];
+      };
       bookings: {
         Row: {
           appointment_date: string;
@@ -197,6 +236,7 @@ export type Database = {
       prestations: {
         Row: {
           actif: boolean;
+          categorie: string;
           couleur: string;
           created_at: string;
           description: string;
@@ -209,6 +249,7 @@ export type Database = {
         };
         Insert: {
           actif?: boolean;
+          categorie?: string;
           couleur?: string;
           created_at?: string;
           description?: string;
@@ -221,6 +262,7 @@ export type Database = {
         };
         Update: {
           actif?: boolean;
+          categorie?: string;
           couleur?: string;
           created_at?: string;
           description?: string;

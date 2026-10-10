@@ -4,11 +4,15 @@
 // horaires_ouverture), la même que celle gérée depuis /admin.
 // ============================================================
 import { listHoraires, listPrestations } from "./reservation.functions";
+import { listGalerie } from "./galerie.functions";
+import type { PhotoGalerie } from "./galerie";
+import { photosParDefaut } from "@/data/gallery";
 
 export type PrestationPublique = {
   id: string;
   nom: string;
   description: string;
+  categorie: string;
   duree_minutes: number;
   prix: number;
   couleur: string;
@@ -31,6 +35,17 @@ export async function chargerPrestations(): Promise<PrestationPublique[]> {
   } catch (e) {
     console.error("[chargerPrestations]", e);
     return [];
+  }
+}
+
+/** Photos visibles de la galerie (photos d'origine si la base ne répond pas). */
+export async function chargerGalerie(): Promise<PhotoGalerie[]> {
+  try {
+    const photos = (await listGalerie()) as PhotoGalerie[];
+    return photos.length ? photos : photosParDefaut;
+  } catch (e) {
+    console.error("[chargerGalerie]", e);
+    return photosParDefaut;
   }
 }
 

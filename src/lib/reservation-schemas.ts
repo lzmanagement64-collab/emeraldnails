@@ -70,6 +70,7 @@ export const prestationSchema = z.object({
   id: z.string().uuid().optional(),
   nom: txt(120).min(1, "Le nom est obligatoire"),
   description: txt(600).optional().default(""),
+  categorie: txt(60).min(1).default("Autres"),
   dureeMinutes: z.number().int().min(5).max(600),
   prix: z.number().min(0).max(2000),
   couleur: z
