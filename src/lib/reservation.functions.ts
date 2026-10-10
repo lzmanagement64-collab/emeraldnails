@@ -158,6 +158,7 @@ export const creerReservation = createServerFn({ method: "POST" })
         // Paiement en ligne actif : réservation provisoire, créneau bloqué le temps du paiement.
         acompte_statut: paiement.actif ? "en_attente" : "non_requis",
         acompte_expire_le: paiement.actif ? finBlocageProvisoire().toISOString() : null,
+        fin_bloquee: fin.toISOString(),
       })
       .select(SELECT_AVEC_PRESTATION)
       .single();
@@ -595,6 +596,7 @@ export const adminCreerReservation = createServerFn({ method: "POST" })
       cliente_email: data.email || "non-communique@local",
       commentaire: data.commentaire || null,
       statut: data.statut,
+      fin_bloquee: fin.toISOString(),
     });
     if (error) {
       if (error.code === "23P01") throw new Error("Ce créneau chevauche un rendez-vous existant.");
