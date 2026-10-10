@@ -1,10 +1,31 @@
+import { useEffect, useState } from "react";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { Clock, Instagram, Mail, MapPin, Phone } from "lucide-react";
 import { business } from "@/config/business";
 import { areas } from "@/data/areas";
 import { lignesHoraires } from "@/lib/site-data";
+import { supabase } from "@/integrations/supabase/client";
 
 const rootRoute = getRouteApi("__root__");
+
+/** Lien discret vers l'espace de gestion : connexion, ou admin directement si déjà connectée. */
+function LienEspacePro() {
+  const [connectee, setConnectee] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setConnectee(!!data.session));
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => setConnectee(!!session));
+    return () => data.subscription.unsubscribe();
+  }, []);
+  return (
+    <Link
+      to={connectee ? "/admin" : "/auth"}
+      rel="nofollow"
+      className="text-taupe/70 hover:text-ink"
+    >
+      Espace pro
+    </Link>
+  );
+}
 
 export function Footer() {
   const { horaires } = rootRoute.useLoaderData();
@@ -91,6 +112,7 @@ export function Footer() {
             <Link to="/conditions" className="hover:text-ink">
               Conditions
             </Link>
+            <LienEspacePro />
           </div>
         </div>
       </div>

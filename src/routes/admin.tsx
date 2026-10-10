@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, LogOut, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { business } from "@/config/business";
 import { cn } from "@/lib/utils";
@@ -332,8 +332,12 @@ function AdminPage() {
             <Link to="/" className={btnSecondaire}>
               Voir le site
             </Link>
-            <button onClick={deconnexion} className={btnSecondaire}>
-              Déconnexion
+            <button
+              onClick={deconnexion}
+              className="inline-flex items-center gap-2 rounded-xl border border-bordeaux/40 bg-bordeaux/5 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-bordeaux transition-colors hover:bg-bordeaux hover:text-porcelain"
+            >
+              <LogOut className="size-4" strokeWidth={1.6} />
+              Se déconnecter
             </button>
           </div>
         </div>
