@@ -1,22 +1,22 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { MapPin, Clock, Star, ArrowRight } from "lucide-react";
+import { createFileRoute, getRouteApi, Link, notFound } from "@tanstack/react-router";
+import { MapPin, Clock, ArrowRight } from "lucide-react";
 import { Section } from "@/components/site/Section";
 import { areas } from "@/data/areas";
 import { business, SITE_URL } from "@/config/business";
-import { services } from "@/data/services";
+import { chargerPrestations, resumeJoursOuverture } from "@/lib/site-data";
 
 export const Route = createFileRoute("/onglerie/$ville")({
   component: AreaPage,
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const area = areas.find((a) => a.slug === params.ville);
     if (!area) throw notFound();
-    return { area };
+    return { area, prestations: await chargerPrestations() };
   },
   head: ({ params, loaderData }) => {
     const area = loaderData?.area;
     if (!area) return {};
     const title = `Prothésiste ongulaire ${area.city} (${area.postalCode}) — Pose gel & nail art | ${business.name}`;
-    const description = `Onglerie près de ${area.city} : extension gel, Gel X, semi-permanent et nail art par Maria. Studio à Lons, à ${area.travelTime} de ${area.city}. Réservation en ligne 24/7.`;
+    const description = `Onglerie près de ${area.city} : extension gel, Gel X, semi-permanent et nail art par Maria, prothésiste ongulaire à Lons, à ${area.travelTime} de ${area.city}. Réservation en ligne 24/7.`;
     const url = `${SITE_URL}/onglerie/${params.ville}`;
     return {
       meta: [
@@ -47,7 +47,6 @@ export const Route = createFileRoute("/onglerie/$ville")({
               addressCountry: "FR",
             },
             areaServed: { "@type": "City", name: area.city },
-            aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "10" },
           }),
         },
         {
@@ -72,8 +71,11 @@ export const Route = createFileRoute("/onglerie/$ville")({
   },
 });
 
+const rootRoute = getRouteApi("__root__");
+
 function AreaPage() {
-  const { area } = Route.useLoaderData();
+  const { area, prestations } = Route.useLoaderData();
+  const { horaires } = rootRoute.useLoaderData();
   const others = areas.filter((a) => a.slug !== area.slug);
 
   return (
@@ -94,23 +96,20 @@ function AreaPage() {
               Nos prestations pour les clientes de {area.city}
             </h2>
             <ul className="grid gap-2 sm:grid-cols-2">
-              {services.slice(0, 8).map((s) => (
+              {prestations.slice(0, 8).map((s) => (
                 <li key={s.id} className="flex justify-between gap-4 border-b border-border py-2">
-                  <span className="text-ink">{s.name}</span>
-                  <span>{s.basePrice} €</span>
+                  <span className="text-ink">{s.nom}</span>
+                  <span>{s.prix} €</span>
                 </li>
               ))}
             </ul>
 
-            <p>
-              Toutes les prestations se réservent en ligne avec un acompte de 20 % qui sécurise
-              votre créneau et se déduit du montant final.
-            </p>
+            <p>Toutes les prestations se réservent en ligne, en quelques minutes.</p>
 
             <h2 className="pt-4 font-display text-2xl text-ink">Venir depuis {area.city}</h2>
             <p>
-              Le studio est situé au {business.address}, soit {area.distance} et environ{" "}
-              {area.travelTime} depuis {area.city}. Stationnement gratuit devant le studio.
+              Emerald Beauty se trouve au {business.address}, soit {area.distance} et environ{" "}
+              {area.travelTime} depuis {area.city}. Stationnement gratuit devant l'établissement.
             </p>
             <ul className="flex flex-wrap gap-2">
               {area.landmarks.map((l: string) => (
@@ -122,20 +121,16 @@ function AreaPage() {
           </div>
 
           <aside className="h-fit space-y-5 rounded-sm border border-border bg-card p-6">
-            <div className="flex items-center gap-2 text-sm">
-              <Star className="size-4 text-gold" />
-              <span className="text-ink">4,8/5 — clientes de l'agglomération paloise</span>
-            </div>
             <div className="flex items-start gap-2 text-sm text-taupe">
               <MapPin className="mt-0.5 size-4 shrink-0" />
               <span>{business.address}</span>
             </div>
             <div className="flex items-start gap-2 text-sm text-taupe">
               <Clock className="mt-0.5 size-4 shrink-0" />
-              <span>Mardi au samedi, jusqu'à 22h en semaine</span>
+              <span>{resumeJoursOuverture(horaires)}</span>
             </div>
             <Link
-              to="/reservation"
+              to="/reserver"
               className="block rounded-sm bg-ink px-5 py-3 text-center font-mono text-[11px] uppercase tracking-widest text-porcelain"
             >
               Réserver depuis {area.city}

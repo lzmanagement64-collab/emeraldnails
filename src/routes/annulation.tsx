@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CalendarX, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
+import { ANNULATION_TEXTE } from "@/lib/annulation";
 import { annulerReservation } from "@/lib/reservation.functions";
 import { parisDateTime } from "@/lib/tz";
 
@@ -68,6 +69,7 @@ function AnnulationPage() {
             Confirmez l'annulation de votre rendez-vous. Le créneau sera immédiatement libéré pour
             une autre cliente.
           </p>
+          <p className="mt-3 text-sm text-taupe">{ANNULATION_TEXTE}</p>
           <button
             type="button"
             onClick={confirmer}

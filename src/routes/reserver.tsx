@@ -1,15 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
+import { ChampPiege } from "@/components/site/ChampPiege";
+import { ACOMPTE_TEXTE, acompteFormate, POURCENT_ACOMPTE } from "@/lib/acompte";
+import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
+
+/** Temps laissé à la cliente pour payer (identique au serveur, voir acompte.server.ts). */
+const DELAI_PAIEMENT_AFFICHE = 30;
 import { cn } from "@/lib/utils";
 import {
   listPrestations,
   getCreneaux,
   getDisponibilitesMois,
   creerReservation,
+  infosPaiement,
 } from "@/lib/reservation.functions";
 import {
   formatDuree,
@@ -23,19 +30,22 @@ import { REGLES } from "@/lib/reservation-schemas";
 
 export const Route = createFileRoute("/reserver")({
   component: ReserverPage,
+  // ?prestation=<id> : présélection depuis le bouton « Choisir » d'une fiche prestation.
+  validateSearch: (search: Record<string, unknown>): { prestation?: string } =>
+    typeof search.prestation === "string" ? { prestation: search.prestation } : {},
   head: () => ({
     meta: [
       { title: "Réserver en ligne — Emerald Beauty, prothésiste ongulaire à Lons" },
       {
         name: "description",
         content:
-          "Réservez votre rendez-vous ongles en ligne chez Emerald Beauty à Lons (64) : choisissez votre prestation, votre créneau et recevez votre confirmation par email.",
+          "Réservez votre rendez-vous ongles en ligne chez Emerald Beauty à Lons (64) : choisissez votre prestation et votre créneau, Maria confirme ensuite votre rendez-vous.",
       },
       { property: "og:title", content: "Réserver en ligne — Emerald Beauty" },
       {
         property: "og:description",
         content:
-          "Prise de rendez-vous en ligne en 4 étapes chez Emerald Beauty, studio d'ongles à Lons.",
+          "Prise de rendez-vous en ligne en 4 étapes chez Emerald Beauty, prothésiste ongulaire à Lons.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -73,10 +83,19 @@ function moisCourant(dateISO: string) {
 }
 
 function ReserverPage() {
+  const { prestation: prestationDemandee } = Route.useSearch();
   const chargerPrestations = useServerFn(listPrestations);
   const chargerCreneaux = useServerFn(getCreneaux);
   const chargerMois = useServerFn(getDisponibilitesMois);
   const enregistrer = useServerFn(creerReservation);
+  const lirePaiement = useServerFn(infosPaiement);
+  // Paiement de l'acompte en ligne actif ? (déterminé par le serveur)
+  const [paiement, setPaiement] = useState({ actif: false, modeTest: false });
+  useEffect(() => {
+    lirePaiement({})
+      .then(setPaiement)
+      .catch(() => undefined);
+  }, [lirePaiement]);
 
   const [etape, setEtape] = useState(1);
   const [prestations, setPrestations] = useState<Prestation[]>([]);
@@ -102,6 +121,12 @@ function ReserverPage() {
     consentement: false,
   });
   const [envoi, setEnvoi] = useState(false);
+  // Anti-spam : champ piège + temps passé sur la page avant l'envoi.
+  const [piege, setPiege] = useState("");
+  const ouvertA = useRef(0);
+  useEffect(() => {
+    ouvertA.current = performance.now();
+  }, []);
   const [confirmation, setConfirmation] = useState<{
     dateDebut: string;
     dateFin: string;
@@ -113,14 +138,21 @@ function ReserverPage() {
   useEffect(() => {
     (async () => {
       try {
-        const rows = await chargerPrestations({});
-        setPrestations(rows as unknown as Prestation[]);
+        const rows = (await chargerPrestations({})) as unknown as Prestation[];
+        setPrestations(rows);
+        const demandee = rows.find((p) => p.id === prestationDemandee);
+        if (demandee) {
+          setPrestation(demandee);
+          setEtape(2);
+        }
       } catch {
         toast.error("Impossible de charger les prestations.");
       } finally {
         setChargement(false);
       }
     })();
+    // Présélection uniquement au premier chargement de la page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chargerPrestations]);
 
   useEffect(() => {
@@ -182,8 +214,15 @@ function ReserverPage() {
           email: form.email,
           commentaire: form.commentaire,
           consentement: form.consentement as true,
+          siteWeb: piege,
+          dureeMs: Math.round(performance.now() - ouvertA.current),
         },
       });
+      if (res.paiementUrl) {
+        // Paiement de l'acompte sur la page sécurisée Stripe.
+        window.location.assign(res.paiementUrl);
+        return;
+      }
       setConfirmation({
         dateDebut: res.dateDebut,
         dateFin: res.dateFin,
@@ -225,8 +264,7 @@ function ReserverPage() {
         <p className="eyebrow">Prise de rendez-vous</p>
         <h1 className="mt-2 font-display text-3xl text-ink sm:text-4xl">Réserver en ligne</h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-taupe">
-          Quatre étapes, deux minutes. Vous recevez un email récapitulatif immédiatement, puis la
-          confirmation définitive de Maria.
+          Quatre étapes, deux minutes. Maria confirme ensuite votre rendez-vous. {ACOMPTE_TEXTE}
         </p>
       </header>
 
@@ -454,6 +492,25 @@ function ReserverPage() {
               {parisLongDate(`${date}T12:00:00Z`)} à {heure} ·{" "}
               {formatDuree(prestation.duree_minutes)} · {formatEuros(prestation.prix)}
             </p>
+            <p className="mt-2 text-sm text-ink">
+              Acompte pour valider le rendez-vous : {acompteFormate(prestation.prix)} (
+              {POURCENT_ACOMPTE} %), déduit du montant total.
+            </p>
+            <p className="mt-2 text-sm text-taupe">{ANNULATION_TEXTE}</p>
+            <p className="mt-2 text-sm text-taupe">{REGLE_ACOMPTE_TEXTE}</p>
+            {paiement.actif && (
+              <p className="mt-2 text-sm text-taupe">
+                L'acompte se règle en ligne sur la page sécurisée de Stripe. Le créneau vous est
+                réservé {DELAI_PAIEMENT_AFFICHE} minutes le temps du paiement ; sans paiement, il
+                est libéré.
+              </p>
+            )}
+            {paiement.modeTest && (
+              <p className="mt-2 rounded-sm border border-border bg-card p-3 text-xs text-taupe">
+                Mode test : aucun paiement réel n'est encaissé. Carte de test : 4242 4242 4242 4242,
+                date future, code 123.
+              </p>
+            )}
           </div>
 
           <form
@@ -501,6 +558,8 @@ function ReserverPage() {
               />
             </div>
 
+            <ChampPiege id="reserver-ref" value={piege} onChange={setPiege} />
+
             <label className="flex items-start gap-3 text-sm text-taupe">
               <input
                 type="checkbox"
@@ -533,7 +592,11 @@ function ReserverPage() {
                 className="flex flex-1 items-center justify-center gap-2 rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
               >
                 {envoi && <Loader2 className="size-4 animate-spin" />}
-                {envoi ? "Enregistrement…" : "Confirmer ma demande"}
+                {envoi
+                  ? "Enregistrement…"
+                  : paiement.actif
+                    ? `Payer l'acompte de ${acompteFormate(prestation.prix)}`
+                    : "Confirmer ma demande"}
               </button>
             </div>
           </form>
@@ -549,8 +612,8 @@ function ReserverPage() {
           <div>
             <h2 className="font-display text-2xl text-ink">Demande enregistrée</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-taupe">
-              Un email récapitulatif vient de vous être envoyé à <strong>{form.email}</strong>.
-              Maria vous adresse la confirmation définitive très rapidement.
+              Votre demande a bien été transmise. Maria vous contacte pour confirmer le rendez-vous.{" "}
+              {ACOMPTE_TEXTE}
             </p>
           </div>
 
@@ -562,6 +625,10 @@ function ReserverPage() {
             <p className="mt-1 text-sm text-taupe">
               {formatDuree(confirmation.dureeMinutes)} · {formatEuros(confirmation.prix)}
             </p>
+            <p className="mt-1 text-sm text-ink">
+              Acompte : {acompteFormate(confirmation.prix)} ({POURCENT_ACOMPTE} %)
+            </p>
+            <p className="mt-3 text-sm text-taupe">{ANNULATION_TEXTE}</p>
             <p className="mt-3 text-sm text-taupe">{business.address}</p>
           </div>
 

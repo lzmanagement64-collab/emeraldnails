@@ -5,12 +5,14 @@ import { business, SITE_URL } from "@/config/business";
 
 const TITLE = "Ouvrir un salon Emerald Beauty — Réseau onglerie Pyrénées-Atlantiques";
 const DESC =
-  "Rejoignez le réseau Emerald Beauty : ouvrez votre studio d'onglerie dans le 64 avec un concept éprouvé, une formation Maria et un système de réservation en ligne clé en main.";
+  "Projet de réseau Emerald Beauty : vous êtes prothésiste ongulaire et souhaitez ouvrir votre établissement dans le 64 ? Parlons-en.";
 
 export const Route = createFileRoute("/ouvrir-un-salon")({
   component: FranchisePage,
   head: () => ({
     meta: [
+      // Page retirée de la navigation : non référencée en attendant une décision.
+      { name: "robots", content: "noindex, nofollow" },
       { title: TITLE },
       { name: "description", content: DESC },
       { property: "og:title", content: TITLE },
@@ -24,16 +26,16 @@ export const Route = createFileRoute("/ouvrir-un-salon")({
 
 const PILLARS = [
   {
-    title: "Un concept déjà validé",
-    body: "Studio individuel, rendez-vous unique, hygiène irréprochable et une note de 4,8/5. Le modèle Emerald Beauty tourne à Lons avec un taux de remplissage élevé et un panier moyen maîtrisé.",
+    title: "Un fonctionnement déjà en place",
+    body: "Prestations sur rendez-vous et réservation en ligne : le fonctionnement d'Emerald Beauty à Lons sert de base au projet.",
   },
   {
-    title: "Formation par Maria",
-    body: "Prise en main complète : gestes techniques (gel, Gel X, nail art), protocole d'hygiène, gestion du planning, conseil client et vente additionnelle. Accompagnement les premiers mois d'ouverture.",
+    title: "Accompagnement",
+    body: "Les modalités d'accompagnement (organisation, planning, outils) seront définies avec chaque partenaire.",
   },
   {
     title: "Acquisition digitale incluse",
-    body: "Site optimisé SEO local, pages ville dédiées, fiche Google Business, réservation en ligne avec acompte et suivi des demandes. Vous héritez d'un système d'acquisition, pas seulement d'une enseigne.",
+    body: "Site optimisé SEO local, pages ville dédiées, fiche Google Business, réservation en ligne et suivi des demandes. Vous héritez d'un système d'acquisition, pas seulement d'une enseigne.",
   },
   {
     title: "Un maillage sur tout le 64",
@@ -45,19 +47,19 @@ const STEPS = [
   [
     "01",
     "Prise de contact",
-    "Vous remplissez le formulaire ci-dessous. Nous répondons sous 24 h ouvrées.",
+    "Vous remplissez le formulaire ci-dessous. Nous revenons vers vous dès que possible.",
   ],
   [
     "02",
     "Échange & projet",
     "Un entretien pour comprendre votre expérience, votre zone visée et votre capacité d'investissement.",
   ],
-  ["03", "Immersion au studio", "Une journée à Lons pour vivre le concept de l'intérieur."],
   [
-    "04",
-    "Formation & ouverture",
-    "Formation technique et commerciale, aide au choix du local, lancement digital.",
+    "03",
+    "Rencontre à Lons",
+    "Un rendez-vous à Lons pour découvrir le fonctionnement d'Emerald Beauty.",
   ],
+  ["04", "Ouverture", "Aide au choix du local et au lancement en ligne."],
 ];
 
 function FranchisePage() {
@@ -67,7 +69,7 @@ function FranchisePage() {
         as="h1"
         eyebrow="Expansion"
         title="Ouvrir un salon Emerald Beauty"
-        description="Nous cherchons des prothésistes ongulaires passionnées pour dupliquer le studio Emerald Beauty dans les Pyrénées-Atlantiques. Concept, formation, outils digitaux : tout est déjà construit."
+        description="Emerald Beauty étudie l'ouverture d'autres établissements dans les Pyrénées-Atlantiques. Vous êtes prothésiste ongulaire et le projet vous intéresse ? Laissez vos coordonnées."
       >
         <div className="grid gap-6 sm:grid-cols-2">
           {PILLARS.map((p) => (

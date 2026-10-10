@@ -56,8 +56,53 @@ type Reservation = {
   cliente_email: string;
   commentaire: string | null;
   cree_le: string;
+  prix_total: number | null;
+  acompte_montant: number | null;
+  acompte_statut: "non_requis" | "en_attente" | "paye" | "rembourse" | "expire";
+  acompte_expire_le: string | null;
+  acompte_paye_le: string | null;
   prestations: { nom: string; duree_minutes: number; prix: number; couleur: string } | null;
 };
+
+/** Acompte d'un rendez-vous : payé ou non, montant payé, reste à payer sur place. */
+function InfoAcompte({ r }: { r: Reservation }) {
+  const prix = Number(r.prix_total ?? r.prestations?.prix ?? 0);
+  const acompte = Number(r.acompte_montant ?? 0);
+  switch (r.acompte_statut) {
+    case "paye": {
+      // Annulation à moins de 72 h ou absence : l'acompte est conservé.
+      const conserve = r.statut === "absente" || r.statut === "annulee";
+      return (
+        <p className="text-xs">
+          <span className="text-emerald-800">Acompte payé : {formatEuros(acompte)}</span>
+          <span className="text-taupe">
+            {conserve
+              ? " · conservé"
+              : ` · reste à payer sur place : ${formatEuros(Math.max(0, prix - acompte))}`}
+          </span>
+        </p>
+      );
+    }
+    case "en_attente":
+      return (
+        <p className="text-xs text-amber-800">
+          Acompte non payé (réservation provisoire
+          {r.acompte_expire_le ? ` jusqu'à ${parisTime(r.acompte_expire_le)}` : ""}) · à payer sur
+          place si confirmé : {formatEuros(prix)}
+        </p>
+      );
+    case "rembourse":
+      return <p className="text-xs text-taupe">Acompte remboursé : {formatEuros(acompte)}</p>;
+    case "expire":
+      return <p className="text-xs text-taupe">Acompte non payé dans le délai (créneau libéré)</p>;
+    default:
+      return (
+        <p className="text-xs text-taupe">
+          Pas d'acompte en ligne · à payer sur place : {formatEuros(prix)}
+        </p>
+      );
+  }
+}
 
 type Prestation = {
   id: string;
@@ -186,9 +231,7 @@ function AdminPage() {
     setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, statut } : r)));
     try {
       await changerStatut({ data: { id, statut } });
-      toast.success(
-        statut === "confirmee" ? "Rendez-vous confirmé, email envoyé." : "Statut mis à jour.",
-      );
+      toast.success(statut === "confirmee" ? "Rendez-vous confirmé." : "Statut mis à jour.");
     } catch (e) {
       toast.error((e as Error).message || "Mise à jour impossible");
     }
@@ -198,7 +241,17 @@ function AdminPage() {
   const aVenir = useMemo(
     () =>
       reservations
-        .filter((r) => parisDateISO(r.date_debut) >= aujourdhui && r.statut !== "annulee")
+        .filter(
+          (r) =>
+            parisDateISO(r.date_debut) >= aujourdhui &&
+            r.statut !== "annulee" &&
+            // Réservation provisoire dont le délai de paiement est passé : créneau libéré.
+            !(
+              r.acompte_statut === "en_attente" &&
+              r.acompte_expire_le &&
+              new Date(r.acompte_expire_le).getTime() < Date.now()
+            ),
+        )
         .sort((a, b) => a.date_debut.localeCompare(b.date_debut)),
     [reservations, aujourdhui],
   );
@@ -382,6 +435,9 @@ function Planning({
                   <BadgeStatut statut={r.statut} />
                   <SelectStatut statut={r.statut} onChange={(s) => onStatut(r.id, s)} />
                 </span>
+                <div className="w-full">
+                  <InfoAcompte r={r} />
+                </div>
                 {r.commentaire && <p className="w-full text-xs text-taupe">« {r.commentaire} »</p>}
               </li>
             ))}
@@ -564,12 +620,13 @@ function Reservations({
         {liste.length === 0 ? (
           <p className="p-10 text-center text-taupe">Aucune réservation.</p>
         ) : (
-          <table className="w-full min-w-[46rem] text-sm">
+          <table className="w-full min-w-[56rem] text-sm">
             <thead className="bg-linen/50 text-left font-mono text-[10px] uppercase tracking-widest text-taupe">
               <tr>
                 <th className="px-4 py-3">Créneau</th>
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Prestation</th>
+                <th className="px-4 py-3">Acompte</th>
                 <th className="px-4 py-3">Statut</th>
                 <th className="px-4 py-3 text-right">Action</th>
               </tr>
@@ -597,6 +654,9 @@ function Reservations({
                     {r.commentaire && (
                       <p className="mt-1 text-xs text-taupe">« {r.commentaire} »</p>
                     )}
+                  </td>
+                  <td className="px-4 py-4">
+                    <InfoAcompte r={r} />
                   </td>
                   <td className="px-4 py-4">
                     <BadgeStatut statut={r.statut} />

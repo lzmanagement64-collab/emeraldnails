@@ -1,20 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Sparkles, Sprout, HeartHandshake } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 import { Section } from "@/components/site/Section";
 import { ServiceCard } from "@/components/site/ServiceCard";
-import { services } from "@/data/services";
+import { chargerPrestations } from "@/lib/site-data";
 import { testimonials, reviewsSummary } from "@/data/testimonials";
 import { galleryItems } from "@/data/gallery";
 import { areas } from "@/data/areas";
+import { SAVOIR_FAIRE, DEROULEMENT } from "@/data/savoir-faire";
 import { business, SITE_URL } from "@/config/business";
+import { ACOMPTE_TEXTE } from "@/lib/acompte";
 
 const TITLE = "Prothésiste ongulaire Pau & Lons (64) — Pose gel, Gel X & nail art | Emerald Beauty";
 const DESC =
-  "Studio d'onglerie à Lons près de Pau : extension gel, Gel X, semi-permanent et nail art par Maria. Noté 4,8/5. Réservation en ligne 24/7, acompte 20 %.";
+  "Prothésiste ongulaire à Lons près de Pau : semi-permanent, renforcement, extension gel, Gel X et nail art par Maria. Réservation en ligne 24/7.";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  loader: async () => ({ prestations: await chargerPrestations() }),
   head: () => ({
     meta: [
       { title: TITLE },
@@ -47,11 +50,6 @@ export const Route = createFileRoute("/")({
             addressCountry: "FR",
           },
           areaServed: business.serviceArea.map((c) => ({ "@type": "City", name: c })),
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: "4.8",
-            reviewCount: "10",
-          },
         }),
       },
     ],
@@ -59,7 +57,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const featured = services.slice(0, 3);
+  const { prestations } = Route.useLoaderData();
+  const featured = prestations.slice(0, 6);
   const heroGallery = galleryItems.slice(0, 4);
 
   return (
@@ -75,12 +74,12 @@ function Index() {
               <span className="italic">soignés et personnalisés</span> selon votre style.
             </h1>
             <p className="mt-6 max-w-md text-base text-taupe sm:text-lg">
-              Chaque prestation est réalisée avec précision, écoute et attention. Un studio
-              confidentiel où la beauté naturelle de l'ongle passe avant tout.
+              Chaque prestation est réalisée avec précision, écoute et attention, dans le respect de
+              l'ongle naturel.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/reservation"
+                to="/reserver"
                 className="rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain transition-opacity hover:opacity-90"
               >
                 Prendre rendez-vous
@@ -103,7 +102,7 @@ function Index() {
               />
             </div>
             <div className="absolute -bottom-6 -left-6 hidden max-w-[220px] rounded-sm border border-border bg-card p-5 shadow-[0_30px_60px_-30px_rgba(13,46,31,0.35)] md:block">
-              <p className="eyebrow mb-2">Studio à {business.city}</p>
+              <p className="eyebrow mb-2">Prothésiste ongulaire à {business.city}</p>
               <p className="font-display text-lg leading-tight text-ink">
                 L'art d'un ongle soigné, sans compromis.
               </p>
@@ -112,37 +111,8 @@ function Index() {
         </div>
       </section>
 
-      {/* VALEURS */}
-      <Section eyebrow="La signature">
-        <div className="grid gap-6 md:grid-cols-3">
-          {[
-            {
-              icon: Sparkles,
-              title: "Précision",
-              text: "Manucure russe, ligne parfaite au ras de la cuticule, finesse extrême.",
-            },
-            {
-              icon: Sprout,
-              title: "Hygiène irréprochable",
-              text: "Instruments stérilisés en autoclave, matériel à usage unique.",
-            },
-            {
-              icon: HeartHandshake,
-              title: "Écoute réelle",
-              text: "Un échange avant chaque prestation pour proposer ce qui vous va vraiment.",
-            },
-          ].map((v) => (
-            <div key={v.title} className="rounded-sm border border-border bg-card p-6">
-              <v.icon className="mb-5 size-5 text-bordeaux" />
-              <h3 className="font-display text-xl text-ink">{v.title}</h3>
-              <p className="mt-2 text-sm text-taupe">{v.text}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* PRESTATIONS APERÇU */}
-      <Section eyebrow="Prestations" title="Une sélection de soins">
+      {/* 1. PRESTATIONS */}
+      <Section eyebrow="Prestations" title="Nos prestations">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((s) => (
             <ServiceCard key={s.id} service={s} />
@@ -153,12 +123,12 @@ function Index() {
             to="/prestations"
             className="inline-flex items-center gap-2 border-b border-ink pb-1 font-mono text-[11px] uppercase tracking-widest"
           >
-            Toutes les prestations <ArrowUpRight className="size-3.5" />
+            Toutes les prestations et tarifs <ArrowUpRight className="size-3.5" />
           </Link>
         </div>
       </Section>
 
-      {/* GALERIE APERÇU */}
+      {/* 2. RÉALISATIONS */}
       <Section eyebrow="Portfolio" title="Réalisations récentes" className="bg-linen/40">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {heroGallery.map((g) => (
@@ -185,19 +155,19 @@ function Index() {
         </div>
       </Section>
 
-      {/* DÉROULEMENT */}
-      <Section eyebrow="Le rendez-vous" title="Comment ça se passe">
-        <ol className="grid gap-8 md:grid-cols-4">
-          {[
-            { n: "01", t: "Échange", d: "On discute forme, longueur, couleur et inspiration." },
-            {
-              n: "02",
-              t: "Préparation",
-              d: "Manucure russe et préparation minutieuse de l'ongle.",
-            },
-            { n: "03", t: "Pose", d: "Réalisation soignée dans une ambiance calme." },
-            { n: "04", t: "Finition", d: "Soin des cuticules, huile nourrissante et conseils." },
-          ].map((step) => (
+      {/* 3. SAVOIR-FAIRE */}
+      <Section eyebrow="Savoir-faire" title="Un travail soigné, à chaque étape">
+        <div className="grid gap-6 md:grid-cols-3">
+          {SAVOIR_FAIRE.map((v) => (
+            <div key={v.title} className="rounded-sm border border-border bg-card p-6">
+              <v.icon className="mb-5 size-5 text-bordeaux" />
+              <h3 className="font-display text-xl text-ink">{v.title}</h3>
+              <p className="mt-2 text-sm text-taupe">{v.text}</p>
+            </div>
+          ))}
+        </div>
+        <ol className="mt-14 grid gap-8 md:grid-cols-4">
+          {DEROULEMENT.map((step) => (
             <li key={step.n} className="border-t border-border pt-5">
               <p className="font-mono text-[10px] uppercase tracking-widest text-bordeaux">
                 {step.n}
@@ -209,26 +179,13 @@ function Index() {
         </ol>
       </Section>
 
-      {/* TÉMOIGNAGES */}
+      {/* AVIS (Planity) */}
       <Section
         eyebrow="Avis"
         title="Ce qu'elles en disent"
-        description={`${reviewsSummary.ratingValue}/5 sur ${reviewsSummary.reviewCount} avis clientes vérifiés (${reviewsSummary.source}).`}
+        description={`Avis laissés par des clientes sur ${reviewsSummary.source}.`}
         className="bg-ink text-porcelain"
       >
-        <ul className="mb-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {reviewsSummary.breakdown.map((b) => (
-            <li key={b.label} className="border-t border-porcelain/20 pt-4">
-              <p className="font-display text-2xl">
-                {b.value.toString().replace(".", ",")}
-                <span className="text-porcelain/50 text-base"> /5</span>
-              </p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-porcelain/60">
-                {b.label}
-              </p>
-            </li>
-          ))}
-        </ul>
         <div className="grid gap-8 md:grid-cols-2">
           {testimonials.slice(0, 4).map((t) => (
             <blockquote key={t.id} className="border-t border-porcelain/20 pt-6">
@@ -242,11 +199,30 @@ function Index() {
         </div>
       </Section>
 
+      {/* 4. PRISE DE RENDEZ-VOUS */}
+      <Section>
+        <div className="rounded-sm border border-border bg-linen/60 px-6 py-14 text-center sm:px-12">
+          <p className="eyebrow mb-4">Réservation</p>
+          <h2 className="mx-auto max-w-xl font-display text-3xl leading-tight sm:text-4xl">
+            Prête à réserver votre créneau ?
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-taupe">
+            Choisissez votre prestation et votre créneau en quelques étapes. {ACOMPTE_TEXTE}
+          </p>
+          <Link
+            to="/reserver"
+            className="mt-8 inline-block rounded-sm bg-ink px-8 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
+          >
+            Prendre rendez-vous
+          </Link>
+        </div>
+      </Section>
+
       {/* ZONES DESSERVIES — SEO LOCAL */}
       <Section
         eyebrow="Secteur 64"
-        title="Un studio pensé pour toute l'agglomération paloise"
-        description="Emerald Beauty reçoit les clientes de Pau et des communes voisines à Lons, avec stationnement gratuit et créneaux jusqu'à 22h en semaine."
+        title="Pour toute l'agglomération paloise"
+        description="Emerald Beauty reçoit les clientes de Pau et des communes voisines à Lons, avec stationnement gratuit."
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {areas.map((a) => (
@@ -265,33 +241,6 @@ function Index() {
               </p>
             </Link>
           ))}
-        </div>
-        <p className="mt-8 text-sm text-taupe">
-          Vous êtes prothésiste et souhaitez ouvrir un studio dans le 64 ?{" "}
-          <Link to="/ouvrir-un-salon" className="text-ink underline underline-offset-4">
-            Découvrez le projet d'expansion Emerald Beauty
-          </Link>
-          .
-        </p>
-      </Section>
-
-      {/* CTA FINAL */}
-
-      <Section>
-        <div className="rounded-sm border border-border bg-linen/60 px-6 py-14 text-center sm:px-12">
-          <p className="eyebrow mb-4">Réservation</p>
-          <h2 className="mx-auto max-w-xl font-display text-3xl leading-tight sm:text-4xl">
-            Prête à réserver votre créneau ?
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-taupe">
-            Un parcours simple en quelques étapes. Vous recevrez une confirmation par email.
-          </p>
-          <Link
-            to="/reservation"
-            className="mt-8 inline-block rounded-sm bg-ink px-8 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
-          >
-            Prendre rendez-vous
-          </Link>
         </div>
       </Section>
     </>

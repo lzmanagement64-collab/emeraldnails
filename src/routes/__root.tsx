@@ -16,11 +16,15 @@ import { Footer } from "@/components/site/Footer";
 import { MobileBar } from "@/components/site/MobileBar";
 import { Toaster } from "@/components/ui/sonner";
 import { business } from "@/config/business";
+import { chargerHoraires } from "@/lib/site-data";
 
 const SITE_TITLE = `${business.name} — Prothésiste ongulaire à ${business.city}`;
-const SITE_DESCRIPTION = `${business.name}, studio d'onglerie à ${business.city}. Pose gel, semi-permanent, gainage et nail art. Réservation en ligne.`;
+const SITE_DESCRIPTION = `${business.name}, prothésiste ongulaire à ${business.city}. Semi-permanent, renforcement, pose gel et nail art. Réservation en ligne.`;
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // Horaires d'ouverture (base de données) — affichés dans le pied de page.
+  loader: async () => ({ horaires: await chargerHoraires() }),
+  staleTime: 5 * 60_000,
   head: () => ({
     meta: [
       { charSet: "utf-8" },

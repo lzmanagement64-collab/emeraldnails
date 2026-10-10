@@ -5,7 +5,7 @@ import { business, SITE_URL } from "@/config/business";
 
 const TITLE = "Sécurité & confidentialité — Emerald Beauty";
 const DESC =
-  "Comment Emerald Beauty protège vos données : chiffrement HTTPS, hébergement européen, accès restreint, validation serveur des formulaires et paiement d'acompte sécurisé.";
+  "Comment Emerald Beauty protège vos données : connexion chiffrée, accès restreint, validation des formulaires et aucune donnée bancaire collectée.";
 
 export const Route = createFileRoute("/securite")({
   component: SecurityPage,
@@ -25,18 +25,18 @@ export const Route = createFileRoute("/securite")({
 const CONTROLS = [
   {
     icon: Lock,
-    title: "Connexion chiffrée de bout en bout",
+    title: "Connexion chiffrée",
     body: "L'intégralité du site est servie en HTTPS. Les informations saisies dans le formulaire de réservation ou de contact circulent chiffrées entre votre navigateur et nos serveurs.",
   },
   {
     icon: Server,
-    title: "Hébergement et base de données en Europe",
-    body: "Vos réservations sont enregistrées dans une base de données managée hébergée dans l'Union européenne, avec sauvegardes automatiques et isolation par projet.",
+    title: "Base de données protégée",
+    body: "Vos réservations sont enregistrées dans la base de données du site, chez notre hébergeur. Elles ne sont accessibles qu'au site lui-même et à la gérante.",
   },
   {
     icon: EyeOff,
     title: "Aucune lecture publique de vos données",
-    body: "La base applique une sécurité au niveau des lignes : aucun visiteur, même techniquement averti, ne peut lister ou consulter les réservations. Seuls les comptes du studio, authentifiés et dotés d'un rôle explicite, y accèdent.",
+    body: "La base applique une sécurité au niveau des lignes : aucun visiteur, même techniquement averti, ne peut lister ou consulter les réservations. Seul le compte de la gérante, protégé par mot de passe, y accède.",
   },
   {
     icon: FileCheck,
@@ -45,13 +45,13 @@ const CONTROLS = [
   },
   {
     icon: CreditCard,
-    title: "Acompte : aucune donnée bancaire chez nous",
-    body: "Le règlement de l'acompte de 20 % passera par un prestataire de paiement certifié PCI-DSS (Stripe). Le numéro de carte est saisi chez le prestataire : Emerald Beauty ne le voit jamais, ne le stocke jamais et ne peut pas y accéder.",
+    title: "Aucune donnée bancaire chez nous",
+    body: "Aucun paiement n'est effectué sur le site pour le moment : aucun numéro de carte ne transite par Emerald Beauty.",
   },
   {
     icon: ShieldCheck,
-    title: "Accès du studio protégé",
-    body: "L'espace d'administration est derrière une authentification par mot de passe, non indexé par les moteurs de recherche, et limité aux membres autorisés de l'équipe.",
+    title: "Espace de gestion protégé",
+    body: "L'espace de gestion est protégé par mot de passe, n'est pas référencé par les moteurs de recherche et n'est accessible qu'au compte de la gérante.",
   },
 ];
 

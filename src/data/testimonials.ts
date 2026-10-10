@@ -1,5 +1,5 @@
-// Avis réels — fiche Planity Emerald Beauty (Lons).
-// Note globale 4,8/5 sur 10 avis clients vérifiés.
+// Avis issus de la fiche Planity Emerald Beauty (Lons) — à garder identiques à Planity.
+// Pas de note chiffrée affichée sur le site (non vérifiable par la visiteuse).
 
 export type Testimonial = {
   id: string;
@@ -11,15 +11,7 @@ export type Testimonial = {
 };
 
 export const reviewsSummary = {
-  ratingValue: 4.8,
-  reviewCount: 10,
   source: "Planity",
-  breakdown: [
-    { label: "Accueil", value: 4.9 },
-    { label: "Propreté", value: 4.7 },
-    { label: "Cadre & ambiance", value: 4.7 },
-    { label: "Qualité de la prestation", value: 4.9 },
-  ],
 } as const;
 
 export const testimonials: Testimonial[] = [

@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
 import { business } from "@/config/business";
+import { ACOMPTE_TEXTE } from "@/lib/acompte";
+import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
 
 export const Route = createFileRoute("/conditions")({
   component: () => (
@@ -16,15 +18,12 @@ export const Route = createFileRoute("/conditions")({
         </p>
         <h3 className="font-display text-xl text-ink">Acompte</h3>
         <p>
-          Un acompte de 20 % du montant de la prestation est demandé pour confirmer le rendez-vous.
-          Il est déduit du montant total le jour de la prestation et reste acquis au studio en cas
-          d'annulation tardive (moins de 24h) ou d'absence.
+          {ACOMPTE_TEXTE} Il est déduit du montant total le jour de la prestation ; le reste se
+          règle sur place. Sans paiement de l'acompte dans les 30 minutes, le créneau est libéré.
         </p>
+        <p>{REGLE_ACOMPTE_TEXTE}</p>
         <h3 className="font-display text-xl text-ink">Annulation</h3>
-        <p>
-          Une annulation ou modification doit être effectuée au moins 24h avant le rendez-vous.
-          Passé ce délai, un dédommagement forfaitaire pourra être demandé.
-        </p>
+        <p>{ANNULATION_TEXTE}</p>
         <h3 className="font-display text-xl text-ink">Retard</h3>
         <p>Au-delà de 15 minutes, la prestation pourra être écourtée ou reprogrammée.</p>
         <h3 className="font-display text-xl text-ink">Prix</h3>

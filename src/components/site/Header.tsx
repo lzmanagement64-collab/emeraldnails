@@ -11,7 +11,7 @@ const links = [
   { to: "/", label: "Accueil" },
   { to: "/prestations", label: "Prestations" },
   { to: "/galerie", label: "Galerie" },
-  { to: "/a-propos", label: "L'atelier" },
+  { to: "/a-propos", label: "Savoir-faire" },
   { to: "/faq", label: "FAQ" },
   { to: "/contact", label: "Contact" },
 ];

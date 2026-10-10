@@ -1,8 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { Section } from "@/components/site/Section";
 import { LeadForm } from "@/components/site/LeadForm";
 import { business, SITE_URL } from "@/config/business";
+import { lignesHoraires } from "@/lib/site-data";
+
+const rootRoute = getRouteApi("__root__");
 
 const TITLE = `Contact — Onglerie à Lons près de Pau | ${business.name}`;
 const DESC = `Contactez Emerald Beauty, prothésiste ongulaire à Lons (64140), près de Pau : ${business.phoneDisplay}, adresse, horaires et formulaire de contact.`;
@@ -23,12 +26,13 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
+  const { horaires } = rootRoute.useLoaderData();
   return (
     <>
       <Section
         eyebrow="Contact"
         title="Parlons de vos ongles"
-        description={`Une question sur une prestation, un devis nail art ou un événement ? Écrivez-nous, réponse sous 24 h ouvrées.`}
+        description={`Une question sur une prestation, un devis nail art ou un événement ? Écrivez-nous, nous revenons vers vous dès que possible.`}
       >
         <div className="grid gap-10 md:grid-cols-[1fr_1.1fr]">
           <div className="space-y-6 text-sm">
@@ -64,7 +68,7 @@ function ContactPage() {
             <div className="flex gap-3">
               <Clock className="mt-0.5 size-4 shrink-0 text-taupe" />
               <ul className="space-y-1 text-taupe">
-                {business.hours.map((h) => (
+                {lignesHoraires(horaires).map((h) => (
                   <li key={h.day} className="flex justify-between gap-6">
                     <span>{h.day}</span>
                     <span className="text-ink">{h.value}</span>
