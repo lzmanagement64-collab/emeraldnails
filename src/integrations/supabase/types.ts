@@ -245,6 +245,8 @@ export type Database = {
           nom: string;
           ordre: number;
           prix: number;
+          en_option: boolean;
+          sur_devis: boolean;
           updated_at: string;
         };
         Insert: {
@@ -258,6 +260,8 @@ export type Database = {
           nom: string;
           ordre?: number;
           prix: number;
+          en_option?: boolean;
+          sur_devis?: boolean;
           updated_at?: string;
         };
         Update: {
@@ -271,6 +275,8 @@ export type Database = {
           nom?: string;
           ordre?: number;
           prix?: number;
+          en_option?: boolean;
+          sur_devis?: boolean;
           updated_at?: string;
         };
         Relationships: [];
@@ -293,6 +299,7 @@ export type Database = {
           cree_le: string;
           date_debut: string;
           date_fin: string;
+          fin_bloquee: string;
           id: string;
           prestation_id: string;
           statut: string;
@@ -316,6 +323,7 @@ export type Database = {
           cree_le?: string;
           date_debut: string;
           date_fin: string;
+          fin_bloquee?: string;
           id?: string;
           prestation_id: string;
           statut?: string;
@@ -339,6 +347,7 @@ export type Database = {
           cree_le?: string;
           date_debut?: string;
           date_fin?: string;
+          fin_bloquee?: string;
           id?: string;
           prestation_id?: string;
           statut?: string;
@@ -354,6 +363,24 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      reglages: {
+        Row: {
+          battement_minutes: number;
+          id: number;
+          updated_at: string;
+        };
+        Insert: {
+          battement_minutes?: number;
+          id?: number;
+          updated_at?: string;
+        };
+        Update: {
+          battement_minutes?: number;
+          id?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       user_roles: {
         Row: {

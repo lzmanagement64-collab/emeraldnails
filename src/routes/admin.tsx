@@ -19,9 +19,18 @@ import {
   adminAjouterIndisponibilite,
   adminSupprimerIndisponibilite,
   adminEmailTest,
+  adminReglages,
+  adminEnregistrerReglages,
 } from "@/lib/reservation.functions";
 import { STATUTS, STATUT_LABEL, type Statut } from "@/lib/reservation-schemas";
-import { lignesDuRendezVous, nomsPrestations, totaux } from "@/lib/selection";
+import {
+  devisAFaire,
+  lignesDuRendezVous,
+  nomComplet,
+  nomsPrestations,
+  prixAffiche,
+  totaux,
+} from "@/lib/selection";
 import { ORDRE_CATEGORIES } from "@/lib/categories";
 import { GalerieAdmin } from "@/components/admin/GalerieAdmin";
 import {
@@ -83,7 +92,9 @@ function DetailPrestations({ r }: { r: Reservation }) {
         {lignes.map((l, i) => (
           <li key={`${l.id}-${i}`} className="flex justify-between gap-3">
             <span className="text-ink">{l.nom}</span>
-            <span className="text-taupe">{formatEuros(l.prix)}</span>
+            <span className={l.sur_devis ? "font-semibold text-amber-800" : "text-taupe"}>
+              {prixAffiche(l)}
+            </span>
           </li>
         ))}
       </ul>
@@ -94,6 +105,11 @@ function DetailPrestations({ r }: { r: Reservation }) {
         </p>
       )}
       {lignes.length === 1 && <p className="text-taupe">{formatDuree(duree)}</p>}
+      {devisAFaire(lignes) && (
+        <p className="mt-1.5 inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+          Devis à faire : prix à fixer avec la cliente (non compté dans le total ni l'acompte)
+        </p>
+      )}
     </div>
   );
 }
@@ -148,6 +164,8 @@ type Prestation = {
   couleur: string;
   actif: boolean;
   ordre: number;
+  sur_devis: boolean;
+  en_option: boolean;
 };
 
 type Horaire = {
@@ -593,7 +611,7 @@ function Reservations({
             <option value="">Prestation…</option>
             {prestations.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.nom} — {formatDuree(p.duree_minutes)}
+                {nomComplet(p.nom, p.categorie)} — {formatDuree(p.duree_minutes)}
               </option>
             ))}
           </select>
@@ -807,6 +825,8 @@ function Prestations({
           couleur: edition.couleur ?? "#1f6b43",
           actif: edition.actif ?? true,
           ordre: Number(edition.ordre ?? 0),
+          surDevis: edition.sur_devis ?? false,
+          enOption: edition.en_option ?? false,
         },
       });
       toast.success("Prestation enregistrée.");
@@ -907,6 +927,24 @@ function Prestations({
             />
             Visible sur le site
           </label>
+          <label className="flex items-center gap-2 text-sm text-taupe">
+            <input
+              type="checkbox"
+              checked={edition.sur_devis ?? false}
+              onChange={(e) => setEdition({ ...edition, sur_devis: e.target.checked })}
+              className="size-4"
+            />
+            Sur devis (affiche « Sur devis », non compté dans le total ni l'acompte)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-taupe">
+            <input
+              type="checkbox"
+              checked={edition.en_option ?? false}
+              onChange={(e) => setEdition({ ...edition, en_option: e.target.checked })}
+              className="size-4"
+            />
+            En option (s'ajoute à une autre prestation, ne se réserve pas seule)
+          </label>
           <div className="flex gap-2 sm:col-span-2">
             <button type="submit" disabled={envoi} className={btnPrimaire}>
               {envoi ? "Enregistrement…" : "Enregistrer"}
@@ -930,8 +968,8 @@ function Prestations({
               <p className="font-display text-lg text-ink">{p.nom}</p>
               <p className="text-sm text-taupe">{p.description}</p>
               <p className="mt-1 text-[11px] uppercase tracking-widest text-taupe">
-                {p.categorie} · {formatDuree(p.duree_minutes)} · {formatEuros(Number(p.prix))} ·{" "}
-                {p.actif ? "visible" : "masquée"}
+                {p.categorie} · {formatDuree(p.duree_minutes)} · {prixAffiche(p)}
+                {p.en_option ? " · en option" : ""} · {p.actif ? "visible" : "masquée"}
               </p>
             </div>
             <button onClick={() => setEdition(p)} className={btnSecondaire}>
@@ -974,6 +1012,7 @@ function Horaires({
 
   return (
     <div className="space-y-3">
+      <ReglageBattement />
       {[1, 2, 3, 4, 5, 6, 0].map((jour) => {
         const h =
           horaires.find((x) => x.jour_semaine === jour) ??
@@ -989,6 +1028,67 @@ function Horaires({
         return <LigneHoraire key={jour} horaire={h} onSave={sauver} />;
       })}
     </div>
+  );
+}
+
+/** Temps de battement entre deux clientes (nettoyage, préparation). */
+function ReglageBattement() {
+  const lire = useServerFn(adminReglages);
+  const enregistrer = useServerFn(adminEnregistrerReglages);
+  const [minutes, setMinutes] = useState<number | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+
+  useEffect(() => {
+    lire({})
+      .then((r) => setMinutes(r.battementMinutes))
+      .catch(() => setMinutes(10));
+  }, [lire]);
+
+  const sauver = async () => {
+    if (minutes === null) return;
+    setEnvoi(true);
+    try {
+      await enregistrer({ data: { battementMinutes: minutes } });
+      toast.success("Temps entre deux clientes enregistré.");
+    } catch (e) {
+      toast.error((e as Error).message || "Enregistrement impossible");
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  return (
+    <section className={cn(carte, "space-y-3")}>
+      <h2 className="font-display text-lg text-ink">Temps entre deux clientes</h2>
+      <p className="text-sm text-taupe">
+        Nettoyage et préparation : aucun rendez-vous ne peut commencer avant la fin de ce temps.
+        S'applique aux créneaux proposés dès l'enregistrement.
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm text-ink">
+          <input
+            type="number"
+            min={0}
+            max={60}
+            step={5}
+            value={minutes ?? ""}
+            disabled={minutes === null}
+            onChange={(e) => setMinutes(Math.max(0, Math.min(60, Number(e.target.value))))}
+            className={cn(champ, "w-24")}
+            aria-label="Minutes entre deux clientes"
+          />
+          minutes
+        </label>
+        <button
+          type="button"
+          onClick={sauver}
+          disabled={envoi || minutes === null}
+          className={btnPrimaire}
+        >
+          {envoi ? "Enregistrement…" : "Enregistrer"}
+        </button>
+      </div>
+    </section>
   );
 }
 

@@ -1,3 +1,4 @@
+import { prixAffiche } from "@/lib/selection";
 import { createFileRoute, getRouteApi, Link, notFound } from "@tanstack/react-router";
 import { MapPin, Clock, ArrowRight } from "lucide-react";
 import { Section } from "@/components/site/Section";
@@ -99,7 +100,7 @@ function AreaPage() {
               {prestations.slice(0, 8).map((s) => (
                 <li key={s.id} className="flex justify-between gap-4 border-b border-border py-2">
                   <span className="text-ink">{s.nom}</span>
-                  <span>{s.prix} €</span>
+                  <span>{prixAffiche(s)}</span>
                 </li>
               ))}
             </ul>
