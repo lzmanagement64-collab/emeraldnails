@@ -6,7 +6,7 @@ import { Section } from "@/components/site/Section";
 import { GaleriePhotos } from "@/components/site/GaleriePhotos";
 import { chargerGalerie } from "@/lib/site-data";
 import { CATEGORIES_GALERIE } from "@/lib/galerie";
-import { business } from "@/config/business";
+import { business, SITE_URL } from "@/config/business";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/galerie")({
@@ -21,9 +21,9 @@ export const Route = createFileRoute("/galerie")({
           "Nail art, french, nude, ongles longs et courts : les réalisations Emerald Beauty.",
       },
       { property: "og:title", content: "Galerie — Emerald Beauty" },
-      { property: "og:url", content: "/galerie" },
+      { property: "og:url", content: `${SITE_URL}/galerie` },
     ],
-    links: [{ rel: "canonical", href: "/galerie" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/galerie` }],
   }),
 });
 

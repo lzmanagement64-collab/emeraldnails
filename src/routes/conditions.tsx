@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
-import { business } from "@/config/business";
+import { business, SITE_URL } from "@/config/business";
 import { ACOMPTE_TEXTE } from "@/lib/acompte";
 import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
 
@@ -36,6 +36,6 @@ export const Route = createFileRoute("/conditions")({
   ),
   head: () => ({
     meta: [{ title: "Conditions de réservation" }],
-    links: [{ rel: "canonical", href: "/conditions" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/conditions` }],
   }),
 });

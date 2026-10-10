@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
-import { business } from "@/config/business";
+import { business, SITE_URL } from "@/config/business";
 
 export const Route = createFileRoute("/mentions-legales")({
   component: () => (
@@ -23,6 +23,6 @@ export const Route = createFileRoute("/mentions-legales")({
   ),
   head: () => ({
     meta: [{ title: "Mentions légales" }, { name: "robots", content: "noindex" }],
-    links: [{ rel: "canonical", href: "/mentions-legales" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/mentions-legales` }],
   }),
 });

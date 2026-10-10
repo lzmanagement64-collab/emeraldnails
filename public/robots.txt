@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /auth
 
-Sitemap: https://emeraldnails.lovable.app/sitemap.xml
+Sitemap: https://emeraldbeauty.fr/sitemap.xml

@@ -4,8 +4,9 @@
 // crème/ivoire et touche dorée.
 // ============================================================
 
-// Adresse publique du site (liens de partage, référencement). À changer si un nom de domaine est ajouté.
-export const SITE_URL = "https://emeraldnails.lovable.app";
+// Adresse officielle du site (référencement, liens des e-mails, retour du paiement).
+// www.emeraldbeauty.fr et emeraldnails.lovable.app doivent rediriger ici (réglage Lovable).
+export const SITE_URL = "https://emeraldbeauty.fr";
 
 export const business = {
   siteUrl: SITE_URL,
