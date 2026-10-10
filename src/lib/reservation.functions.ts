@@ -310,6 +310,16 @@ export const annulerReservation = createServerFn({ method: "POST" })
 // ------------------------------------------------------------
 // BACK-OFFICE (gérante authentifiée)
 // ------------------------------------------------------------
+/** Envoie un e-mail de test à la gérante pour vérifier la configuration Resend. */
+export const adminEmailTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { assertGerante } = await import("./reservation.server");
+    await assertGerante(context as never);
+    const { emailTestGerante } = await import("./emails.server");
+    return emailTestGerante();
+  });
+
 export const adminReservations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

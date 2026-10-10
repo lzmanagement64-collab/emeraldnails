@@ -1,7 +1,7 @@
 // ============================================================
 // Rappels automatiques : à appeler une fois par heure (cron externe).
 // Sécurisé par un secret partagé (en-tête x-cron-secret).
-// Envoie un rappel aux clientes dont le RDV confirmé a lieu dans ~24 h.
+// Envoie un rappel aux clientes dont le RDV confirmé a lieu dans 24 à 25 h.
 // ============================================================
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -18,7 +18,8 @@ export const Route = createFileRoute("/api/public/rappels")({
         const { versEmail, SELECT_AVEC_PRESTATION } = await import("@/lib/reservation.server");
         const { emailRappelCliente } = await import("@/lib/emails.server");
 
-        const debut = new Date(Date.now() + 23 * 3600_000).toISOString();
+        // Fenêtre d'une heure : appelé une fois par heure, chaque cliente reçoit un seul rappel.
+        const debut = new Date(Date.now() + 24 * 3600_000).toISOString();
         const fin = new Date(Date.now() + 25 * 3600_000).toISOString();
 
         const { data, error } = await supabaseAdmin

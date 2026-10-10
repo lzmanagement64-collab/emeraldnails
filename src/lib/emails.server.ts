@@ -1,8 +1,15 @@
 // ============================================================
-// Envoi des emails via Resend (serveur uniquement).
+// Envoi des e-mails via Resend (serveur uniquement).
+// Secrets dans Lovable Cloud :
+//   RESEND_API_KEY  clé d'accès Resend (re_…) — obligatoire pour envoyer
+//   RESEND_FROM     expéditeur, ex. « Emerald Beauty <rendezvous@mon-domaine.fr> »
+//                   (adresse d'un domaine vérifié dans Resend)
+//   SITE_URL        facultatif : adresse du site utilisée dans les liens
+//                   (sinon, l'adresse par laquelle le site a été consulté)
 // Tant que RESEND_API_KEY n'est pas configurée, les envois sont
 // simplement journalisés : la réservation fonctionne quand même.
 // ============================================================
+import { getRequest } from "@tanstack/react-start/server";
 import { business } from "@/config/business";
 import { acompteFormate, POURCENT_ACOMPTE } from "./acompte";
 import { DELAI_ANNULATION_H } from "./annulation";
@@ -10,16 +17,34 @@ import { parisLongDate, parisTime, formatEuros, formatDuree } from "./tz";
 
 type Envoi = { to: string; subject: string; html: string };
 
+/** Adresse du site pour les liens des e-mails (annulation, back-office). */
 function siteUrl() {
-  return (process.env["SITE_URL"] || business.siteUrl).replace(/\/$/, "");
+  const configuree = process.env["SITE_URL"];
+  if (configuree) return configuree.replace(/\/$/, "");
+  try {
+    // Requête en cours (réservation, webhook Stripe, rappel…) : vraie adresse du site.
+    const url = new URL(getRequest().url);
+    const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    return `${local ? url.protocol : "https:"}//${url.host}`;
+  } catch {
+    return business.siteUrl.replace(/\/$/, "");
+  }
 }
 
-export async function envoyerEmail({ to, subject, html }: Envoi): Promise<boolean> {
+/** Envoie un e-mail et renvoie la raison précise en cas d'échec. */
+export async function envoyer({
+  to,
+  subject,
+  html,
+}: Envoi): Promise<{ ok: boolean; erreur?: string }> {
   const key = process.env["RESEND_API_KEY"];
   const from = process.env["RESEND_FROM"] || `${business.name} <onboarding@resend.dev>`;
   if (!key) {
     console.warn(`[email] RESEND_API_KEY absente — email non envoyé à ${to} (${subject})`);
-    return false;
+    return {
+      ok: false,
+      erreur: "Le secret RESEND_API_KEY n'est pas configuré dans Lovable Cloud.",
+    };
   }
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -28,17 +53,26 @@ export async function envoyerEmail({ to, subject, html }: Envoi): Promise<boolea
         "Content-Type": "application/json",
         Authorization: `Bearer ${key}`,
       },
+      // Les réponses des clientes arrivent sur l'adresse de contact publique.
       body: JSON.stringify({ from, to: [to], subject, html, reply_to: business.email }),
     });
     if (!res.ok) {
-      console.error(`[email] échec Resend [${res.status}]: ${await res.text()}`);
-      return false;
+      const detail = await res.text();
+      console.error(`[email] échec Resend [${res.status}]: ${detail}`);
+      return {
+        ok: false,
+        erreur: `Resend a refusé l'envoi (${res.status}) : ${detail.slice(0, 300)}`,
+      };
     }
-    return true;
+    return { ok: true };
   } catch (e) {
     console.error("[email] Resend injoignable", e);
-    return false;
+    return { ok: false, erreur: "Resend est injoignable pour le moment." };
   }
+}
+
+export async function envoyerEmail(envoi: Envoi): Promise<boolean> {
+  return (await envoyer(envoi)).ok;
 }
 
 // ------------------------------------------------------------
@@ -200,4 +234,20 @@ export async function emailAlerteGerante(r: ReservationEmail, message: string) {
       { url: `${siteUrl()}/admin`, label: "Ouvrir le back-office" },
     ),
   });
+}
+
+/** E-mail de test envoyé depuis l'admin pour vérifier la configuration. */
+export async function emailTestGerante() {
+  const from = process.env["RESEND_FROM"] || `${business.name} <onboarding@resend.dev>`;
+  const res = await envoyer({
+    to: business.ownerEmail,
+    subject: `E-mail de test — ${business.name}`,
+    html: gabarit(
+      "L'envoi d'e-mails fonctionne",
+      `<p style="font-size:15px;line-height:1.8;">Si vous lisez ce message, les e-mails du site partent correctement.</p>
+       <p style="font-size:14px;line-height:1.8;color:${TAUPE};">Expéditeur utilisé : ${from.replace(/</g, "&lt;")}<br />Liens du site : ${siteUrl()}</p>`,
+      { url: `${siteUrl()}/admin`, label: "Ouvrir le back-office" },
+    ),
+  });
+  return { ...res, destinataire: business.ownerEmail, expediteur: from };
 }

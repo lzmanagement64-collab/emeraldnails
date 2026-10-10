@@ -18,6 +18,7 @@ import {
   adminEnregistrerHoraire,
   adminAjouterIndisponibilite,
   adminSupprimerIndisponibilite,
+  adminEmailTest,
 } from "@/lib/reservation.functions";
 import { STATUTS, STATUT_LABEL, type Statut } from "@/lib/reservation-schemas";
 import {
@@ -156,6 +157,7 @@ const ONGLETS = [
   { id: "horaires", label: "Horaires" },
   { id: "indispos", label: "Absences" },
   { id: "leads", label: "Demandes" },
+  { id: "emails", label: "E-mails" },
 ] as const;
 
 type Onglet = (typeof ONGLETS)[number]["id"];
@@ -354,6 +356,7 @@ function AdminPage() {
         {onglet === "horaires" && <Horaires horaires={horaires} onRefresh={rafraichir} />}
         {onglet === "indispos" && <Absences indispos={indispos} onRefresh={rafraichir} />}
         {onglet === "leads" && <Demandes leads={leads} />}
+        {onglet === "emails" && <ReglagesEmails />}
       </div>
     </div>
   );
@@ -1152,5 +1155,54 @@ function Demandes({ leads }: { leads: Lead[] }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Vérification de l'envoi des e-mails (Resend), sans afficher aucun secret. */
+function ReglagesEmails() {
+  const tester = useServerFn(adminEmailTest);
+  const [envoi, setEnvoi] = useState(false);
+  const [resultat, setResultat] = useState<{
+    ok: boolean;
+    erreur?: string;
+    destinataire: string;
+    expediteur: string;
+  } | null>(null);
+
+  const lancer = async () => {
+    setEnvoi(true);
+    try {
+      setResultat(await tester({}));
+    } catch (e) {
+      toast.error((e as Error).message || "Test impossible");
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  return (
+    <section className={cn(carte, "space-y-4")}>
+      <h2 className="font-display text-lg text-ink">Envoi des e-mails</h2>
+      <p className="text-sm text-taupe">
+        Envoie un e-mail de test à l'adresse de notification de la gérante pour vérifier que les
+        confirmations, rappels et liens d'annulation partent bien.
+      </p>
+      <button type="button" onClick={lancer} disabled={envoi} className={btnPrimaire}>
+        {envoi ? "Envoi…" : "Envoyer un e-mail de test"}
+      </button>
+      {resultat && (
+        <div className="space-y-1 text-sm">
+          {resultat.ok ? (
+            <p className="text-emerald-800">
+              E-mail envoyé à {resultat.destinataire}. Vérifiez la boîte de réception (et les
+              courriers indésirables).
+            </p>
+          ) : (
+            <p className="text-bordeaux">Échec : {resultat.erreur}</p>
+          )}
+          <p className="text-taupe">Expéditeur utilisé : {resultat.expediteur}</p>
+        </div>
+      )}
+    </section>
   );
 }
