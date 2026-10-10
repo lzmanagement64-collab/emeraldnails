@@ -51,7 +51,7 @@ function Confirmation() {
         </p>
 
         {(service || prettyDate || time) && (
-          <div className="mx-auto mt-10 rounded-sm border border-border bg-card p-6 text-left">
+          <div className="mx-auto mt-10 rounded-2xl border border-border bg-card p-6 text-left">
             <p className="eyebrow mb-4">Votre demande</p>
             <dl className="space-y-3 text-sm">
               {service && (
@@ -77,17 +77,14 @@ function Confirmation() {
         )}
 
         <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link
-            to="/"
-            className="rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
-          >
+          <Link to="/" className="btn-primaire">
             Retour à l'accueil
           </Link>
           <a
             href={business.instagramUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-sm border border-border px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-ink"
+            className="btn-secondaire"
           >
             <Instagram className="size-4" /> Nous suivre
           </a>

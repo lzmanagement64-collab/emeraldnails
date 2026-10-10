@@ -73,7 +73,7 @@ function FranchisePage() {
       >
         <div className="grid gap-6 sm:grid-cols-2">
           {PILLARS.map((p) => (
-            <article key={p.title} className="rounded-sm border border-border bg-card p-6">
+            <article key={p.title} className="rounded-2xl border border-border bg-card p-6">
               <h2 className="font-display text-xl text-ink">{p.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-taupe">{p.body}</p>
             </article>
@@ -85,7 +85,7 @@ function FranchisePage() {
         <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map(([n, t, d]) => (
             <li key={n}>
-              <p className="font-mono text-[11px] tracking-widest text-gold">{n}</p>
+              <p className="text-[11px] tracking-widest text-gold">{n}</p>
               <p className="mt-2 font-display text-lg text-ink">{t}</p>
               <p className="mt-2 text-sm leading-relaxed text-taupe">{d}</p>
             </li>

@@ -20,6 +20,9 @@ import {
   adminSupprimerIndisponibilite,
 } from "@/lib/reservation.functions";
 import { STATUTS, STATUT_LABEL, type Statut } from "@/lib/reservation-schemas";
+import { lignesDuRendezVous, nomsPrestations, totaux } from "@/lib/selection";
+import { ORDRE_CATEGORIES } from "@/lib/categories";
+import { GalerieAdmin } from "@/components/admin/GalerieAdmin";
 import {
   formatDuree,
   formatEuros,
@@ -57,6 +60,7 @@ type Reservation = {
   commentaire: string | null;
   cree_le: string;
   prix_total: number | null;
+  prestations_detail: unknown;
   acompte_montant: number | null;
   acompte_statut: "non_requis" | "en_attente" | "paye" | "rembourse" | "expire";
   acompte_expire_le: string | null;
@@ -64,9 +68,38 @@ type Reservation = {
   prestations: { nom: string; duree_minutes: number; prix: number; couleur: string } | null;
 };
 
+/** Montant total d'un rendez-vous (toutes prestations comprises). */
+const totalRdv = (r: Reservation) =>
+  Number(r.prix_total ?? totaux(lignesDuRendezVous(r)).prix ?? 0);
+
+/** Liste des prestations d'un rendez-vous, avec le prix de chacune et le total. */
+function DetailPrestations({ r }: { r: Reservation }) {
+  const lignes = lignesDuRendezVous(r);
+  const { duree } = totaux(lignes);
+  return (
+    <div>
+      <ul className="space-y-0.5">
+        {lignes.map((l, i) => (
+          <li key={`${l.id}-${i}`} className="flex justify-between gap-3">
+            <span className="text-ink">{l.nom}</span>
+            <span className="text-taupe">{formatEuros(l.prix)}</span>
+          </li>
+        ))}
+      </ul>
+      {lignes.length > 1 && (
+        <p className="mt-1 flex justify-between gap-3 border-t border-border pt-1 text-ink">
+          <span>Total · {formatDuree(duree)}</span>
+          <span>{formatEuros(totalRdv(r))}</span>
+        </p>
+      )}
+      {lignes.length === 1 && <p className="text-taupe">{formatDuree(duree)}</p>}
+    </div>
+  );
+}
+
 /** Acompte d'un rendez-vous : payé ou non, montant payé, reste à payer sur place. */
 function InfoAcompte({ r }: { r: Reservation }) {
-  const prix = Number(r.prix_total ?? r.prestations?.prix ?? 0);
+  const prix = totalRdv(r);
   const acompte = Number(r.acompte_montant ?? 0);
   switch (r.acompte_statut) {
     case "paye": {
@@ -108,6 +141,7 @@ type Prestation = {
   id: string;
   nom: string;
   description: string;
+  categorie: string;
   duree_minutes: number;
   prix: number;
   couleur: string;
@@ -153,6 +187,7 @@ const ONGLETS = [
   { id: "reservations", label: "Réservations" },
   { id: "clientes", label: "Clientes" },
   { id: "prestations", label: "Prestations" },
+  { id: "galerie", label: "Galerie" },
   { id: "horaires", label: "Horaires" },
   { id: "indispos", label: "Absences" },
   { id: "leads", label: "Demandes" },
@@ -160,12 +195,12 @@ const ONGLETS = [
 
 type Onglet = (typeof ONGLETS)[number]["id"];
 
-const champ = "w-full rounded-sm border border-border bg-background px-3 py-2 text-sm";
+const champ = "w-full rounded-xl border border-border bg-background px-3 py-2 text-sm";
 const btnPrimaire =
-  "rounded-sm bg-ink px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-porcelain disabled:opacity-50";
+  "rounded-xl bg-ink px-4 py-2.5 text-[10px] uppercase tracking-widest text-porcelain disabled:opacity-50";
 const btnSecondaire =
-  "rounded-sm border border-border px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest";
-const carte = "rounded-sm border border-border bg-card p-5";
+  "rounded-xl border border-border px-4 py-2.5 text-[10px] uppercase tracking-widest";
+const carte = "rounded-xl border border-border bg-card p-5";
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -312,7 +347,7 @@ function AdminPage() {
             },
             {
               l: "Chiffre à venir",
-              v: formatEuros(aVenir.reduce((s, r) => s + Number(r.prestations?.prix ?? 0), 0)),
+              v: formatEuros(aVenir.reduce((s, r) => s + totalRdv(r), 0)),
             },
             { l: "Demandes", v: leads.length },
           ].map((s) => (
@@ -329,7 +364,7 @@ function AdminPage() {
               key={t.id}
               onClick={() => setOnglet(t.id)}
               className={cn(
-                "rounded-sm px-4 py-2 font-mono text-[10px] uppercase tracking-widest",
+                "rounded-xl px-4 py-2 text-[10px] uppercase tracking-widest",
                 onglet === t.id ? "bg-ink text-porcelain" : "border border-border text-taupe",
               )}
             >
@@ -351,6 +386,7 @@ function AdminPage() {
         {onglet === "prestations" && (
           <Prestations prestations={prestations} onRefresh={rafraichir} />
         )}
+        {onglet === "galerie" && <GalerieAdmin />}
         {onglet === "horaires" && <Horaires horaires={horaires} onRefresh={rafraichir} />}
         {onglet === "indispos" && <Absences indispos={indispos} onRefresh={rafraichir} />}
         {onglet === "leads" && <Demandes leads={leads} />}
@@ -364,7 +400,7 @@ function BadgeStatut({ statut }: { statut: Statut }) {
   return (
     <span
       className={cn(
-        "inline-block rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-widest",
+        "inline-block rounded-full px-3 py-1 text-[10px] uppercase tracking-widest",
         STATUT_COULEUR[statut],
       )}
     >
@@ -379,7 +415,7 @@ function SelectStatut({ statut, onChange }: { statut: Statut; onChange: (s: Stat
       value={statut}
       onChange={(e) => onChange(e.target.value as Statut)}
       aria-label="Changer le statut"
-      className="rounded-sm border border-border bg-background px-2 py-1 text-xs"
+      className="rounded-xl border border-border bg-background px-2 py-1 text-xs"
     >
       {STATUTS.map((s) => (
         <option key={s} value={s}>
@@ -421,13 +457,15 @@ function Planning({
                 key={r.id}
                 className="flex flex-wrap items-center gap-3 border-t border-border pt-3 text-sm"
               >
-                <span className="font-mono text-ink">{parisTime(r.date_debut)}</span>
+                <span className="text-ink">{parisTime(r.date_debut)}</span>
                 <span
                   aria-hidden
                   className="size-2.5 rounded-full"
                   style={{ backgroundColor: r.prestations?.couleur ?? "#1f6b43" }}
                 />
-                <span className="text-ink">{r.prestations?.nom}</span>
+                <span className="text-ink">
+                  {nomsPrestations(lignesDuRendezVous(r))} · {formatEuros(totalRdv(r))}
+                </span>
                 <span className="text-taupe">
                   {r.cliente_prenom} {r.cliente_nom} · {r.cliente_telephone}
                 </span>
@@ -506,7 +544,7 @@ function Reservations({
           value={filtre}
           onChange={(e) => setFiltre(e.target.value as typeof filtre)}
           aria-label="Filtrer par statut"
-          className="rounded-sm border border-border bg-background px-3 py-2 text-sm"
+          className="rounded-xl border border-border bg-background px-3 py-2 text-sm"
         >
           <option value="tous">Tous les statuts</option>
           {STATUTS.map((s) => (
@@ -520,7 +558,7 @@ function Reservations({
           onChange={(e) => setRecherche(e.target.value)}
           placeholder="Rechercher une cliente…"
           aria-label="Rechercher une cliente"
-          className="flex-1 rounded-sm border border-border bg-background px-3 py-2 text-sm sm:max-w-xs"
+          className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm sm:max-w-xs"
         />
         <button
           onClick={() => setOuvert((v) => !v)}
@@ -616,12 +654,12 @@ function Reservations({
         </form>
       )}
 
-      <div className="overflow-x-auto rounded-sm border border-border bg-card">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         {liste.length === 0 ? (
           <p className="p-10 text-center text-taupe">Aucune réservation.</p>
         ) : (
           <table className="w-full min-w-[56rem] text-sm">
-            <thead className="bg-linen/50 text-left font-mono text-[10px] uppercase tracking-widest text-taupe">
+            <thead className="bg-linen/50 text-left text-[10px] uppercase tracking-widest text-taupe">
               <tr>
                 <th className="px-4 py-3">Créneau</th>
                 <th className="px-4 py-3">Cliente</th>
@@ -646,11 +684,7 @@ function Reservations({
                     <p className="text-taupe">{r.cliente_email}</p>
                   </td>
                   <td className="px-4 py-4 text-ink">
-                    <p>{r.prestations?.nom}</p>
-                    <p className="text-taupe">
-                      {formatDuree(r.prestations?.duree_minutes ?? 0)} ·{" "}
-                      {formatEuros(Number(r.prestations?.prix ?? 0))}
-                    </p>
+                    <DetailPrestations r={r} />
                     {r.commentaire && (
                       <p className="mt-1 text-xs text-taupe">« {r.commentaire} »</p>
                     )}
@@ -697,7 +731,7 @@ function Clientes({ reservations }: { reservations: Reservation[] }) {
         email: r.cliente_email,
         total: (prec?.total ?? 0) + 1,
         derniere: !prec || r.date_debut > prec.derniere ? r.date_debut : prec.derniere,
-        ca: (prec?.ca ?? 0) + (honore ? Number(r.prestations?.prix ?? 0) : 0),
+        ca: (prec?.ca ?? 0) + (honore ? totalRdv(r) : 0),
       });
     }
     return [...map.values()].sort((a, b) => b.derniere.localeCompare(a.derniere));
@@ -708,9 +742,9 @@ function Clientes({ reservations }: { reservations: Reservation[] }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-sm border border-border bg-card">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card">
       <table className="w-full min-w-[40rem] text-sm">
-        <thead className="bg-linen/50 text-left font-mono text-[10px] uppercase tracking-widest text-taupe">
+        <thead className="bg-linen/50 text-left text-[10px] uppercase tracking-widest text-taupe">
           <tr>
             <th className="px-4 py-3">Cliente</th>
             <th className="px-4 py-3">Contact</th>
@@ -760,6 +794,7 @@ function Prestations({
           ...(edition.id ? { id: edition.id } : {}),
           nom: edition.nom ?? "",
           description: edition.description ?? "",
+          categorie: (edition.categorie ?? "").trim() || "Autres",
           dureeMinutes: Number(edition.duree_minutes ?? 60),
           prix: Number(edition.prix ?? 0),
           couleur: edition.couleur ?? "#1f6b43",
@@ -814,6 +849,20 @@ function Prestations({
             onChange={(e) => setEdition({ ...edition, description: e.target.value })}
             className={champ}
           />
+          {/* Catégorie de la grille de prix (choisir dans la liste ou en créer une nouvelle) */}
+          <input
+            required
+            list="categories-prestations"
+            placeholder="Catégorie (ex. Semi-permanent)"
+            value={edition.categorie ?? ""}
+            onChange={(e) => setEdition({ ...edition, categorie: e.target.value })}
+            className={champ}
+          />
+          <datalist id="categories-prestations">
+            {ORDRE_CATEGORIES.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
           <input
             type="number"
             min={5}
@@ -840,7 +889,7 @@ function Prestations({
             value={edition.couleur ?? "#1f6b43"}
             onChange={(e) => setEdition({ ...edition, couleur: e.target.value })}
             aria-label="Couleur"
-            className="h-10 w-full rounded-sm border border-border"
+            className="h-10 w-full rounded-xl border border-border"
           />
           <label className="flex items-center gap-2 text-sm text-taupe">
             <input
@@ -873,8 +922,8 @@ function Prestations({
             <div className="flex-1">
               <p className="font-display text-lg text-ink">{p.nom}</p>
               <p className="text-sm text-taupe">{p.description}</p>
-              <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-taupe">
-                {formatDuree(p.duree_minutes)} · {formatEuros(Number(p.prix))} ·{" "}
+              <p className="mt-1 text-[11px] uppercase tracking-widest text-taupe">
+                {p.categorie} · {formatDuree(p.duree_minutes)} · {formatEuros(Number(p.prix))} ·{" "}
                 {p.actif ? "visible" : "masquée"}
               </p>
             </div>
@@ -965,7 +1014,7 @@ function LigneHoraire({
             value={h.heure_debut.slice(0, 5)}
             onChange={(e) => setH({ ...h, heure_debut: e.target.value })}
             aria-label="Ouverture"
-            className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+            className="rounded-xl border border-border bg-background px-2 py-1.5 text-sm"
           />
           <span className="text-taupe">→</span>
           <input
@@ -973,7 +1022,7 @@ function LigneHoraire({
             value={h.heure_fin.slice(0, 5)}
             onChange={(e) => setH({ ...h, heure_fin: e.target.value })}
             aria-label="Fermeture"
-            className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+            className="rounded-xl border border-border bg-background px-2 py-1.5 text-sm"
           />
           <span className="text-xs text-taupe">Pause</span>
           <input
@@ -981,14 +1030,14 @@ function LigneHoraire({
             value={h.pause_debut?.slice(0, 5) ?? ""}
             onChange={(e) => setH({ ...h, pause_debut: e.target.value })}
             aria-label="Début de pause"
-            className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+            className="rounded-xl border border-border bg-background px-2 py-1.5 text-sm"
           />
           <input
             type="time"
             value={h.pause_fin?.slice(0, 5) ?? ""}
             onChange={(e) => setH({ ...h, pause_fin: e.target.value })}
             aria-label="Fin de pause"
-            className="rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+            className="rounded-xl border border-border bg-background px-2 py-1.5 text-sm"
           />
         </>
       )}
@@ -1122,9 +1171,9 @@ function Demandes({ leads }: { leads: Lead[] }) {
     return <p className={cn(carte, "text-center text-taupe")}>Aucune demande pour le moment.</p>;
   }
   return (
-    <div className="overflow-x-auto rounded-sm border border-border bg-card">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card">
       <table className="w-full min-w-[40rem] text-sm">
-        <thead className="bg-linen/50 text-left font-mono text-[10px] uppercase tracking-widest text-taupe">
+        <thead className="bg-linen/50 text-left text-[10px] uppercase tracking-widest text-taupe">
           <tr>
             <th className="px-4 py-3">Date</th>
             <th className="px-4 py-3">Type</th>

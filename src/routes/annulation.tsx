@@ -70,11 +70,7 @@ function AnnulationPage() {
             une autre cliente.
           </p>
           <p className="mt-3 text-sm text-taupe">{ANNULATION_TEXTE}</p>
-          <button
-            type="button"
-            onClick={confirmer}
-            className="mt-8 w-full rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain"
-          >
+          <button type="button" onClick={confirmer} className="btn-primaire mt-8 w-full">
             Confirmer l'annulation
           </button>
         </>
@@ -105,15 +101,12 @@ function AnnulationPage() {
       )}
 
       <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-        <Link
-          to="/reserver"
-          className="rounded-sm border border-border px-5 py-3 font-mono text-[11px] uppercase tracking-widest"
-        >
+        <Link to="/reserver" className="btn-secondaire">
           Reprendre un rendez-vous
         </Link>
         <Link
           to="/"
-          className="rounded-sm border border-transparent px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-taupe"
+          className="rounded-2xl border border-transparent px-5 py-3 text-[11px] uppercase tracking-widest text-taupe"
         >
           Retour à l'accueil
         </Link>

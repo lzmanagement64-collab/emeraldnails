@@ -105,7 +105,7 @@ function PaiementPage() {
 
         {!chargement && etat && (
           <>
-            <div className="rounded-sm border border-border bg-linen/40 p-5">
+            <div className="rounded-2xl border border-border bg-linen/40 p-5">
               <p className="font-display text-lg text-ink">{etat.prestation}</p>
               <p className="mt-1 text-sm text-taupe">
                 {parisLongDate(etat.dateDebut)} à {parisTime(etat.dateDebut)} ·{" "}
@@ -145,12 +145,7 @@ function PaiementPage() {
                     {etat.expireLe ? ` jusqu'à ${parisTime(etat.expireLe)}` : ""}. Sans paiement de
                     l'acompte ({formatEuros(etat.acompte ?? 0)}), il sera libéré automatiquement.
                   </p>
-                  <button
-                    type="button"
-                    onClick={payer}
-                    disabled={envoi}
-                    className="inline-flex items-center gap-2 rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
-                  >
+                  <button type="button" onClick={payer} disabled={envoi} className="btn-primaire">
                     <Lock className="size-3.5" />
                     {envoi
                       ? "Ouverture du paiement…"
@@ -166,10 +161,7 @@ function PaiementPage() {
                   L'acompte n'a pas été réglé dans le délai : la réservation n'a pas été validée.
                   Vous pouvez choisir un nouveau créneau.
                 </p>
-                <Link
-                  to="/reserver"
-                  className="inline-block rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
-                >
+                <Link to="/reserver" className="btn-primaire">
                   Reprendre un rendez-vous
                 </Link>
               </div>

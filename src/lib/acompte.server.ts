@@ -63,6 +63,7 @@ type RowPaiement = {
   cliente_email: string;
   acompte_montant: number | null;
   stripe_session_id: string | null;
+  prestations_detail?: unknown;
   prestations: { nom: string } | null;
 };
 
@@ -78,7 +79,13 @@ export async function creerSessionPaiement(admin: Admin, row: RowPaiement, origi
   }
 
   const { finPaiement, finBlocage } = echeances();
-  const nom = row.prestations?.nom ?? "Prestation";
+  // Toutes les prestations du rendez-vous, ex. « Dépose semi-permanent + Semi-permanent ».
+  const detail = Array.isArray(row.prestations_detail)
+    ? (row.prestations_detail as { nom: string }[])
+    : [];
+  const nom = detail.length
+    ? detail.map((l) => l.nom).join(" + ")
+    : (row.prestations?.nom ?? "Prestation");
   const quand = `${parisLongDate(row.date_debut)} à ${parisTime(row.date_debut)}`;
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
