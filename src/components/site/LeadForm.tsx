@@ -54,7 +54,7 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
 
   if (done) {
     return (
-      <div className="rounded-sm border border-border bg-card p-8 text-center">
+      <div className="rounded-2xl border border-border bg-card p-8 text-center">
         <p className="font-display text-xl text-ink">Merci !</p>
         <p className="mt-2 text-sm text-taupe">
           Votre demande est bien enregistrée. Nous revenons vers vous dès que possible.
@@ -63,12 +63,12 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
     );
   }
 
-  const field = "w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm";
+  const field = "w-full rounded-2xl border border-border bg-background px-3 py-2.5 text-sm";
 
   return (
     <form
       onSubmit={submit}
-      className="space-y-4 rounded-sm border border-border bg-card p-6 sm:p-8"
+      className="space-y-4 rounded-2xl border border-border bg-card p-6 sm:p-8"
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -139,11 +139,7 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
         />
       </div>
       <ChampPiege id={`${type}-ref`} value={piege} onChange={setPiege} />
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-sm bg-ink px-6 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
-      >
+      <button type="submit" disabled={loading} className="btn-primaire w-full">
         {loading ? "Envoi…" : submitLabel}
       </button>
       <p className="text-xs text-taupe">

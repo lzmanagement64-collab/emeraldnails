@@ -66,7 +66,7 @@ function SecurityPage() {
       >
         <div className="grid gap-6 sm:grid-cols-2">
           {CONTROLS.map((c) => (
-            <article key={c.title} className="rounded-sm border border-border bg-card p-6">
+            <article key={c.title} className="rounded-2xl border border-border bg-card p-6">
               <c.icon className="size-5 text-gold" aria-hidden />
               <h2 className="mt-4 font-display text-xl text-ink">{c.title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-taupe">{c.body}</p>
@@ -91,7 +91,7 @@ function SecurityPage() {
               Nous n'utilisons aucun traceur publicitaire et ne revendons aucune donnée à des tiers.
             </p>
           </div>
-          <div className="rounded-sm border border-border bg-card p-6 text-sm">
+          <div className="rounded-2xl border border-border bg-card p-6 text-sm">
             <p className="eyebrow mb-3">Contact données personnelles</p>
             <p className="text-taupe">
               Écrivez à{" "}

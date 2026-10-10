@@ -25,7 +25,7 @@ export const listPrestations = createServerFn({ method: "GET" }).handler(async (
   const { supabasePublic } = await import("./reservation.server");
   const { data, error } = await supabasePublic()
     .from("prestations")
-    .select("id, nom, description, duree_minutes, prix, couleur, ordre")
+    .select("id, nom, description, categorie, duree_minutes, prix, couleur, ordre")
     .eq("actif", true)
     .order("ordre", { ascending: true });
   if (error) throw new Error("Impossible de charger les prestations.");
@@ -45,10 +45,13 @@ export const listHoraires = createServerFn({ method: "GET" }).handler(async () =
 export const getCreneaux = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => creneauxSchema.parse(d))
   .handler(async ({ data }) => {
-    const { supabasePublic } = await import("./reservation.server");
-    const { data: rows, error } = await supabasePublic().rpc("get_creneaux_disponibles", {
+    const { supabasePublic, chargerSelection } = await import("./reservation.server");
+    const client = supabasePublic();
+    // Créneaux calculés sur la durée totale des prestations choisies.
+    const { duree } = await chargerSelection(client, data.prestationIds);
+    const { data: rows, error } = await client.rpc("get_creneaux_disponibles_duree", {
       date_recherche: data.date,
-      prestation_id: data.prestationId,
+      p_duree: duree,
     });
     if (error) throw new Error("Impossible de charger les créneaux.");
     return (rows ?? []).map((r) => String(r.heure_debut).slice(0, 5));
@@ -58,8 +61,9 @@ export const getCreneaux = createServerFn({ method: "POST" })
 export const getDisponibilitesMois = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => moisSchema.parse(d))
   .handler(async ({ data }) => {
-    const { supabasePublic } = await import("./reservation.server");
+    const { supabasePublic, chargerSelection } = await import("./reservation.server");
     const client = supabasePublic();
+    const { duree } = await chargerSelection(client, data.prestationIds);
     const [y, m] = data.mois.split("-").map(Number);
     const jours = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const dates = Array.from(
@@ -68,9 +72,9 @@ export const getDisponibilitesMois = createServerFn({ method: "POST" })
     );
     const res = await Promise.all(
       dates.map(async (date) => {
-        const { data: rows } = await client.rpc("get_creneaux_disponibles", {
+        const { data: rows } = await client.rpc("get_creneaux_disponibles_duree", {
           date_recherche: date,
-          prestation_id: data.prestationId,
+          p_duree: duree,
         });
         return { date, creneaux: rows?.length ?? 0 };
       }),
@@ -82,7 +86,9 @@ export const creerReservation = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => reservationPubliqueSchema.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { versEmail, SELECT_AVEC_PRESTATION } = await import("./reservation.server");
+    const { versEmail, SELECT_AVEC_PRESTATION, chargerSelection } =
+      await import("./reservation.server");
+    const { nomsPrestations } = await import("./selection");
     const { parisToUtc } = await import("./tz");
     const { emailDemandeCliente, emailNouvelleDemandeGerante } = await import("./emails.server");
     const { semblableHumain, limiterReservations } = await import("./anti-spam.server");
@@ -96,21 +102,16 @@ export const creerReservation = createServerFn({ method: "POST" })
     }
     await limiterReservations(supabaseAdmin, { email: data.email, telephone: data.telephone });
 
-    const { data: prestation } = await supabaseAdmin
-      .from("prestations")
-      .select("id, nom, duree_minutes, prix")
-      .eq("id", data.prestationId)
-      .eq("actif", true)
-      .maybeSingle();
-    if (!prestation) throw new Error("Cette prestation n'est plus disponible.");
+    // Prix et durées relus en base, puis additionnés.
+    const selection = await chargerSelection(supabaseAdmin, data.prestationIds);
 
     // Libère d'abord les réservations provisoires dont le délai de paiement est dépassé.
     await libererReservationsExpirees(supabaseAdmin);
 
     // Vérification finale de disponibilité côté serveur
-    const { data: libres } = await supabaseAdmin.rpc("get_creneaux_disponibles", {
+    const { data: libres } = await supabaseAdmin.rpc("get_creneaux_disponibles_duree", {
       date_recherche: data.date,
-      prestation_id: data.prestationId,
+      p_duree: selection.duree,
     });
     const dispo = (libres ?? []).some((r) => String(r.heure_debut).slice(0, 5) === data.heure);
     if (!dispo) {
@@ -118,14 +119,16 @@ export const creerReservation = createServerFn({ method: "POST" })
     }
 
     const debut = parisToUtc(data.date, data.heure);
-    const fin = new Date(debut.getTime() + prestation.duree_minutes * 60000);
-    const prix = Number(prestation.prix);
+    const fin = new Date(debut.getTime() + selection.duree * 60000);
+    const prix = selection.prix;
     const paiement = configPaiement();
 
     const { data: row, error } = await supabaseAdmin
       .from("reservations")
       .insert({
-        prestation_id: data.prestationId,
+        // Première prestation (compatibilité) + liste complète figée.
+        prestation_id: selection.lignes[0].id,
+        prestations_detail: selection.lignes,
         date_debut: debut.toISOString(),
         date_fin: fin.toISOString(),
         cliente_prenom: data.prenom,
@@ -156,8 +159,8 @@ export const creerReservation = createServerFn({ method: "POST" })
       dateDebut: row.date_debut,
       dateFin: row.date_fin,
       token: row.token_annulation,
-      prestation: prestation.nom,
-      dureeMinutes: prestation.duree_minutes,
+      prestation: nomsPrestations(selection.lignes),
+      dureeMinutes: selection.duree,
       prix,
     };
 
@@ -195,10 +198,11 @@ export const etatAcompte = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => idSchema.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { nomsPrestations, lignesDuRendezVous } = await import("./selection");
     const { data: row } = await supabaseAdmin
       .from("reservations")
       .select(
-        "statut, date_debut, prix_total, acompte_montant, acompte_statut, acompte_expire_le, prestations(nom, prix)",
+        "statut, date_debut, prix_total, prestations_detail, acompte_montant, acompte_statut, acompte_expire_le, prestations(nom, prix, duree_minutes)",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -208,7 +212,7 @@ export const etatAcompte = createServerFn({ method: "POST" })
       !!row.acompte_expire_le &&
       new Date(row.acompte_expire_le).getTime() < Date.now();
     return {
-      prestation: row.prestations?.nom ?? "Prestation",
+      prestation: nomsPrestations(lignesDuRendezVous(row)) || "Prestation",
       dateDebut: row.date_debut,
       prix: Number(row.prix_total ?? row.prestations?.prix ?? 0),
       acompte: row.acompte_montant == null ? null : Number(row.acompte_montant),
@@ -227,7 +231,7 @@ export const relancerPaiement = createServerFn({ method: "POST" })
     const { data: row } = await supabaseAdmin
       .from("reservations")
       .select(
-        "id, statut, date_debut, cliente_email, acompte_montant, acompte_statut, acompte_expire_le, stripe_session_id, prestations(nom)",
+        "id, statut, date_debut, cliente_email, acompte_montant, acompte_statut, acompte_expire_le, stripe_session_id, prestations_detail, prestations(nom)",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -404,7 +408,7 @@ export const adminCreerReservation = createServerFn({ method: "POST" })
 
     const { data: prestation } = await context.supabase
       .from("prestations")
-      .select("duree_minutes")
+      .select("id, nom, prix, duree_minutes")
       .eq("id", data.prestationId)
       .maybeSingle();
     if (!prestation) throw new Error("Prestation introuvable.");
@@ -413,6 +417,15 @@ export const adminCreerReservation = createServerFn({ method: "POST" })
     const fin = new Date(debut.getTime() + prestation.duree_minutes * 60000);
     const { error } = await context.supabase.from("reservations").insert({
       prestation_id: data.prestationId,
+      prix_total: Number(prestation.prix),
+      prestations_detail: [
+        {
+          id: prestation.id,
+          nom: prestation.nom,
+          prix: Number(prestation.prix),
+          duree_minutes: prestation.duree_minutes,
+        },
+      ],
       date_debut: debut.toISOString(),
       date_fin: fin.toISOString(),
       cliente_prenom: data.prenom,
@@ -438,6 +451,7 @@ export const adminEnregistrerPrestation = createServerFn({ method: "POST" })
     const row = {
       nom: data.nom,
       description: data.description,
+      categorie: data.categorie,
       duree_minutes: data.dureeMinutes,
       prix: data.prix,
       couleur: data.couleur,
