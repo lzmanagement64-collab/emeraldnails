@@ -36,6 +36,8 @@ export const business = {
     slotStepMinutes: 30,
     bufferMinutes: 15,
     depositRate: 0.3,
+    /** Annulation gratuite (et possible en ligne) jusqu'à ce délai avant le rendez-vous. */
+    annulationGratuiteHeures: 72,
   },
   serviceArea: ["Pau", "Lons", "Billère", "Jurançon", "Lescar", "Bizanos", "Idron", "Gan"],
 } as const;

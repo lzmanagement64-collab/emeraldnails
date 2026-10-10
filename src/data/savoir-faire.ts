@@ -11,7 +11,7 @@ export const SAVOIR_FAIRE = [
   {
     icon: Sprout,
     title: "Hygiène",
-    text: "Une attention particulière portée à l'hygiène et au matériel.",
+    text: "Instruments stérilisés en autoclave, matériel à usage unique, produits professionnels certifiés.",
   },
   {
     icon: HeartHandshake,

@@ -222,7 +222,7 @@ function Index() {
       <Section
         eyebrow="Secteur 64"
         title="Pour toute l'agglomération paloise"
-        description="Emerald Beauty reçoit les clientes de Pau et des communes voisines à Lons."
+        description="Emerald Beauty reçoit les clientes de Pau et des communes voisines à Lons, avec stationnement gratuit."
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {areas.map((a) => (

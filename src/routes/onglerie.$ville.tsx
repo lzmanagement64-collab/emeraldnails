@@ -109,7 +109,7 @@ function AreaPage() {
             <h2 className="pt-4 font-display text-2xl text-ink">Venir depuis {area.city}</h2>
             <p>
               Emerald Beauty se trouve au {business.address}, soit {area.distance} et environ{" "}
-              {area.travelTime} depuis {area.city}.
+              {area.travelTime} depuis {area.city}. Stationnement gratuit devant l'établissement.
             </p>
             <ul className="flex flex-wrap gap-2">
               {area.landmarks.map((l: string) => (

@@ -6,6 +6,7 @@ import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
 import { ACOMPTE_TEXTE, acompteFormate, POURCENT_ACOMPTE } from "@/lib/acompte";
+import { ANNULATION_TEXTE } from "@/lib/annulation";
 import { cn } from "@/lib/utils";
 import {
   listPrestations,
@@ -478,6 +479,7 @@ function ReserverPage() {
               Acompte pour valider le rendez-vous : {acompteFormate(prestation.prix)} (
               {POURCENT_ACOMPTE} %), déduit du montant total.
             </p>
+            <p className="mt-2 text-sm text-taupe">{ANNULATION_TEXTE}</p>
           </div>
 
           <form
@@ -591,6 +593,7 @@ function ReserverPage() {
             <p className="mt-1 text-sm text-ink">
               Acompte : {acompteFormate(confirmation.prix)} ({POURCENT_ACOMPTE} %)
             </p>
+            <p className="mt-3 text-sm text-taupe">{ANNULATION_TEXTE}</p>
             <p className="mt-3 text-sm text-taupe">{business.address}</p>
           </div>
 

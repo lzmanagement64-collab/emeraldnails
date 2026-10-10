@@ -5,6 +5,7 @@
 // ============================================================
 import { business } from "@/config/business";
 import { acompteFormate, POURCENT_ACOMPTE } from "./acompte";
+import { DELAI_ANNULATION_H } from "./annulation";
 import { parisLongDate, parisTime, formatEuros, formatDuree } from "./tz";
 
 type Envoi = { to: string; subject: string; html: string };
@@ -95,7 +96,7 @@ const lienAnnulation = (r: ReservationEmail) =>
   `${siteUrl()}/annulation?token=${r.tokenAnnulation}`;
 
 const phraseAnnulation = (r: ReservationEmail) =>
-  `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? Vous pouvez <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. Merci de prévenir au moins 24 h à l'avance.</p>`;
+  `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? L'annulation est gratuite jusqu'à ${DELAI_ANNULATION_H} h avant le rendez-vous : <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. À moins de ${DELAI_ANNULATION_H} h, merci de nous appeler au ${business.phoneDisplay}.</p>`;
 
 export async function emailDemandeCliente(r: ReservationEmail) {
   return envoyerEmail({
@@ -133,7 +134,7 @@ export async function emailRappelCliente(r: ReservationEmail) {
       `À demain, ${r.prenom}`,
       `<p style="font-size:15px;line-height:1.8;">Petit rappel de votre rendez-vous :</p>
        ${recap(r)}
-       ${phraseAnnulation(r)}`,
+       <p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? Votre rendez-vous a lieu dans moins de ${DELAI_ANNULATION_H} h : merci de nous prévenir par téléphone au ${business.phoneDisplay}.</p>`,
     ),
   });
 }

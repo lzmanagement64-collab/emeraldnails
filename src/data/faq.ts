@@ -1,3 +1,5 @@
+import { ANNULATION_TEXTE } from "@/lib/annulation";
+
 export const faq = [
   {
     q: "Combien de temps dure une pose ?",
@@ -5,7 +7,7 @@ export const faq = [
   },
   {
     q: "Comment préparer mes ongles avant le rendez-vous ?",
-    a: "Retirez tout vernis classique avant le rendez-vous. Si votre pose actuelle a été réalisée dans un autre salon, une dépose sera facturée 5 € en supplément.",
+    a: "Retirez tout vernis classique avant le rendez-vous. Si une dépose est nécessaire avant une nouvelle pose, elle est facturée 5 € en supplément. La dépose seule, sans nouvelle pose, coûte 10 € (semi-permanent) ou 15 € (renforcement).",
   },
   {
     q: "Comment choisir la bonne prestation ?",
@@ -17,7 +19,7 @@ export const faq = [
   },
   {
     q: "Quelles sont les conditions d’annulation ?",
-    a: "Toute annulation ou demande de modification doit être effectuée au minimum 72 heures avant le rendez-vous.",
+    a: ANNULATION_TEXTE,
   },
   {
     q: "Et si je suis en retard ?",

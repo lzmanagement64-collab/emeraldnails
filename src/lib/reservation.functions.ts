@@ -157,6 +157,7 @@ export const annulerReservation = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { versEmail, SELECT_AVEC_PRESTATION } = await import("./reservation.server");
     const { emailAnnulationGerante } = await import("./emails.server");
+    const { ANNULATION_TROP_TARD } = await import("./annulation");
 
     const { data: row } = await supabaseAdmin
       .from("reservations")
@@ -172,7 +173,10 @@ export const annulerReservation = createServerFn({ method: "POST" })
         message:
           row.statut === "annulee"
             ? "Ce rendez-vous est déjà annulé."
-            : "Ce rendez-vous ne peut plus être annulé en ligne. Merci de nous appeler.",
+            : ["en_attente", "confirmee"].includes(row.statut) &&
+                new Date(row.date_debut).getTime() > Date.now()
+              ? ANNULATION_TROP_TARD
+              : "Ce rendez-vous ne peut plus être annulé.",
         dateDebut: row.date_debut,
       };
     }

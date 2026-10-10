@@ -24,7 +24,7 @@ export const areas: Area[] = [
     intro:
       "Vous cherchez une prothésiste ongulaire près de Pau (64000) ? Emerald Beauty vous accueille à Lons, à une dizaine de minutes du centre-ville, pour vos poses gel, Gel X, semi-permanent et nail art.",
     paragraphs: [
-      "Installée à Lons, aux portes de Pau, Emerald Beauty est facilement accessible depuis le centre-ville, Trespoey ou le quartier de l'université : comptez une dizaine de minutes en voiture.",
+      "Installée à Lons, aux portes de Pau, Emerald Beauty est facilement accessible depuis le centre-ville, Trespoey ou le quartier de l'université : comptez une dizaine de minutes en voiture, avec un stationnement gratuit devant l'établissement.",
       "Chaque rendez-vous commence par un échange sur vos envies — forme, longueur, couleur — puis la prestation est réalisée avec soin, dans le respect de l'ongle naturel.",
       "Semi-permanent, renforcement, extension gel, Gel X et nail art : les prestations et les tarifs sont affichés en ligne, et le rendez-vous se réserve en quelques minutes.",
     ],
@@ -42,7 +42,7 @@ export const areas: Area[] = [
     paragraphs: [
       "Emerald Beauty se trouve impasse d'Ossau à Lons, à quelques minutes de la mairie et de la zone commerciale.",
       "Habitantes de Lons, vous êtes à deux pas : la réservation en ligne affiche les créneaux disponibles, et il suffit de quelques minutes pour choisir le vôtre.",
-      "Chaque prestation est réalisée avec minutie, avec une attention particulière portée à l'hygiène et à la santé de l'ongle naturel.",
+      "Hygiène : instruments stérilisés en autoclave, limes et embouts à usage unique ou désinfectés à chaque cliente, produits professionnels certifiés. La santé de l'ongle naturel passe avant tout.",
     ],
     landmarks: ["Mairie de Lons", "Zone commerciale de Lons", "Stade du Hameau", "Quartier Perlic"],
   },
@@ -72,7 +72,7 @@ export const areas: Area[] = [
     intro:
       "Onglerie proche de Jurançon (64110) : Emerald Beauty, prothésiste ongulaire à Lons, propose extension gel, Gel X, semi-permanent et nail art sur rendez-vous, à une douzaine de minutes du centre de Jurançon.",
     paragraphs: [
-      "Depuis Jurançon, Emerald Beauty est accessible en une douzaine de minutes en voiture, et le rendez-vous se réserve en ligne à tout moment.",
+      "Depuis Jurançon, Emerald Beauty est accessible en une douzaine de minutes en voiture, avec un stationnement gratuit sur place, et le rendez-vous se réserve en ligne à tout moment.",
       "Semi-permanent nude ou pose complète avec un design travaillé : la démarche reste la même, avec un échange sur votre quotidien et le choix d'une forme et d'une longueur adaptées.",
       "Vous pouvez découvrir les dernières réalisations sur Instagram avant votre rendez-vous, puis décrire vos inspirations dans le formulaire de réservation.",
     ],
