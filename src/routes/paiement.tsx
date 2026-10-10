@@ -1,192 +1,203 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { Loader2, Lock, ShieldCheck } from "lucide-react";
+import { Check, Loader2, Lock } from "lucide-react";
 
 import { Section } from "@/components/site/Section";
-import { PaymentTestModeBanner } from "@/components/site/PaymentTestModeBanner";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createDepositCheckout, getDepositStatus } from "@/lib/payments.functions";
 import { business } from "@/config/business";
+import { etatAcompte, relancerPaiement } from "@/lib/reservation.functions";
+import { formatEuros, parisLongDate, parisTime } from "@/lib/tz";
+import { ANNULATION_TEXTE } from "@/lib/annulation";
 
+// Page de retour après la page de paiement Stripe (payé ou abandonné).
 const searchSchema = z.object({
-  booking: z.string().uuid().optional(),
+  reservation: z.string().uuid().optional(),
+  retour: z.enum(["ok", "annule"]).optional(),
 });
 
 export const Route = createFileRoute("/paiement")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Paiement sécurisé de l'acompte — Emerald Beauty" },
-      {
-        name: "description",
-        content:
-          "Réglez l'acompte de 30 % de votre rendez-vous Emerald Beauty en carte bancaire, Apple Pay ou PayPal. Paiement chiffré, aucune donnée bancaire stockée par Emerald Beauty.",
-      },
+      { title: "Paiement de l'acompte — Emerald Beauty" },
       { name: "robots", content: "noindex, nofollow" },
-      { property: "og:title", content: "Paiement sécurisé — Emerald Beauty" },
-      {
-        property: "og:description",
-        content: "Acompte de 30 % en carte bancaire, Apple Pay ou PayPal — paiement chiffré.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: PaymentPage,
+  component: PaiementPage,
 });
 
-type Summary = Awaited<ReturnType<typeof getDepositStatus>>;
+type Etat = Awaited<ReturnType<typeof etatAcompte>>;
 
-function PaymentPage() {
-  const { booking } = Route.useSearch();
-  const [summary, setSummary] = useState<Summary>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function PaiementPage() {
+  const { reservation, retour } = Route.useSearch();
+  const lireEtat = useServerFn(etatAcompte);
+  const relancer = useServerFn(relancerPaiement);
+  const [etat, setEtat] = useState<Etat>(null);
+  const [chargement, setChargement] = useState(true);
+  const [envoi, setEnvoi] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
+  const charger = useCallback(async () => {
+    if (!reservation) return null;
+    const res = await lireEtat({ data: { id: reservation } });
+    setEtat(res);
+    return res;
+  }, [reservation, lireEtat]);
+
+  // Au retour de Stripe, la confirmation du paiement peut prendre quelques secondes.
   useEffect(() => {
-    let active = true;
-    if (!booking) {
-      setLoading(false);
-      return;
-    }
-    getDepositStatus({ data: { bookingId: booking } })
-      .then((res) => {
-        if (!active) return;
-        setSummary(res);
-        if (!res) setError("Réservation introuvable.");
-      })
-      .catch(() => active && setError("Impossible de charger votre réservation."))
-      .finally(() => active && setLoading(false));
+    let actif = true;
+    let essais = 0;
+    const tourner = async () => {
+      try {
+        const res = await charger();
+        essais += 1;
+        if (actif && retour === "ok" && res?.acompteStatut === "en_attente" && essais < 20) {
+          setTimeout(tourner, 2000);
+          return;
+        }
+      } catch {
+        if (actif) setErreur("Impossible de charger votre réservation.");
+      }
+      if (actif) setChargement(false);
+    };
+    tourner();
     return () => {
-      active = false;
+      actif = false;
     };
-  }, [booking]);
+  }, [charger, retour]);
 
-  const options = useMemo(() => {
-    if (!booking) return null;
-    return {
-      fetchClientSecret: async () => {
-        const result = await createDepositCheckout({
-          data: {
-            bookingId: booking,
-            returnUrl: `${window.location.origin}/confirmation?booking=${booking}&session_id={CHECKOUT_SESSION_ID}`,
-            environment: getStripeEnvironment(),
-          },
-        });
-        if ("error" in result) throw new Error(result.error);
-        return result.clientSecret;
-      },
-    };
-  }, [booking]);
+  const payer = async () => {
+    if (!reservation) return;
+    setEnvoi(true);
+    setErreur(null);
+    try {
+      const { url } = await relancer({ data: { id: reservation } });
+      window.location.assign(url);
+    } catch (e) {
+      setErreur((e as Error).message.replace(/^Error:\s*/, ""));
+      setEnvoi(false);
+      await charger().catch(() => undefined);
+    }
+  };
+
+  const reste = etat && etat.acompte != null ? Math.max(0, etat.prix - etat.acompte) : null;
 
   return (
-    <>
-      <PaymentTestModeBanner />
-      <Section
-        eyebrow="Étape finale"
-        title="Paiement sécurisé de l'acompte"
-        description="Carte bancaire, Apple Pay, Google Pay ou PayPal. Le paiement est traité sur une page chiffrée de notre prestataire bancaire : Emerald Beauty ne voit ni ne conserve vos coordonnées bancaires."
-        as="h1"
-      >
-        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-          <div className="order-2 min-h-[420px] rounded-sm border border-border bg-card p-4 sm:p-6 lg:order-1">
-            {loading && (
-              <div className="grid h-64 place-items-center text-taupe">
-                <Loader2 className="size-5 animate-spin" />
+    <Section eyebrow="Réservation" title="Acompte de votre rendez-vous" as="h1">
+      <div className="mx-auto max-w-xl space-y-6">
+        {chargement && (
+          <p className="flex items-center justify-center gap-2 py-16 text-sm text-taupe">
+            <Loader2 className="size-4 animate-spin" />
+            {retour === "ok" ? "Confirmation du paiement en cours…" : "Chargement…"}
+          </p>
+        )}
+
+        {!chargement && !etat && (
+          <div className="space-y-3 text-sm text-taupe">
+            <p className="font-display text-xl text-ink">Réservation introuvable</p>
+            <Link to="/reserver" className="inline-block underline underline-offset-4">
+              Prendre rendez-vous
+            </Link>
+          </div>
+        )}
+
+        {!chargement && etat && (
+          <>
+            <div className="rounded-sm border border-border bg-linen/40 p-5">
+              <p className="font-display text-lg text-ink">{etat.prestation}</p>
+              <p className="mt-1 text-sm text-taupe">
+                {parisLongDate(etat.dateDebut)} à {parisTime(etat.dateDebut)} ·{" "}
+                {formatEuros(etat.prix)}
+              </p>
+              <p className="mt-1 text-sm text-taupe">{business.address}</p>
+            </div>
+
+            {etat.acompteStatut === "paye" && (
+              <div className="space-y-3 text-center">
+                <div className="mx-auto grid size-14 place-items-center rounded-full bg-ink/10">
+                  <Check className="size-6 text-ink" />
+                </div>
+                <p className="font-display text-2xl text-ink">Rendez-vous confirmé</p>
+                <p className="text-sm text-taupe">
+                  Acompte réglé : {formatEuros(etat.acompte ?? 0)}. Reste à régler sur place :{" "}
+                  {formatEuros(reste ?? 0)}.
+                </p>
+                <p className="text-sm text-taupe">{ANNULATION_TEXTE}</p>
               </div>
             )}
 
-            {!loading && !booking && (
-              <div className="space-y-3 text-sm text-taupe">
-                <p className="font-display text-xl text-ink">Aucune réservation à régler</p>
-                <p>Commencez par choisir votre prestation et votre créneau.</p>
-                <Link to="/reserver" className="inline-block underline underline-offset-4">
-                  Prendre rendez-vous
+            {etat.acompteStatut === "en_attente" && retour === "ok" && (
+              <p className="text-center text-sm text-taupe">
+                Votre paiement est en cours de confirmation. Vous pouvez actualiser cette page dans
+                quelques instants.
+              </p>
+            )}
+
+            {etat.acompteStatut === "en_attente" &&
+              etat.statut !== "annulee" &&
+              retour !== "ok" && (
+                <div className="space-y-4 text-center">
+                  <p className="font-display text-xl text-ink">Acompte non réglé</p>
+                  <p className="text-sm text-taupe">
+                    Votre créneau est réservé provisoirement
+                    {etat.expireLe ? ` jusqu'à ${parisTime(etat.expireLe)}` : ""}. Sans paiement de
+                    l'acompte ({formatEuros(etat.acompte ?? 0)}), il sera libéré automatiquement.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={payer}
+                    disabled={envoi}
+                    className="inline-flex items-center gap-2 rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
+                  >
+                    <Lock className="size-3.5" />
+                    {envoi
+                      ? "Ouverture du paiement…"
+                      : `Payer l'acompte de ${formatEuros(etat.acompte ?? 0)}`}
+                  </button>
+                </div>
+              )}
+
+            {etat.acompteStatut === "expire" && (
+              <div className="space-y-3 text-center">
+                <p className="font-display text-xl text-ink">Créneau libéré</p>
+                <p className="text-sm text-taupe">
+                  L'acompte n'a pas été réglé dans le délai : la réservation n'a pas été validée.
+                  Vous pouvez choisir un nouveau créneau.
+                </p>
+                <Link
+                  to="/reserver"
+                  className="inline-block rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
+                >
+                  Reprendre un rendez-vous
                 </Link>
               </div>
             )}
 
-            {!loading && error && <p className="text-sm text-bordeaux">{error}</p>}
-
-            {!loading && summary?.depositStatus === "paid" && (
-              <div className="space-y-2 text-sm text-taupe">
-                <p className="font-display text-xl text-ink">Acompte déjà réglé</p>
-                <p>Votre rendez-vous est confirmé. À très vite !</p>
-              </div>
-            )}
-
-            {!loading && booking && options && summary && summary.depositStatus !== "paid" && (
-              <div id="checkout">
-                <EmbeddedCheckoutProvider stripe={getStripe()} options={options}>
-                  <EmbeddedCheckout />
-                </EmbeddedCheckoutProvider>
-              </div>
-            )}
-          </div>
-
-          <aside className="order-1 space-y-4 lg:order-2">
-            {summary && (
-              <div className="rounded-sm border border-border bg-card p-6">
-                <p className="eyebrow mb-4">Votre rendez-vous</p>
-                <dl className="space-y-3 text-sm">
-                  <div>
-                    <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">
-                      Prestation
-                    </dt>
-                    <dd className="text-ink">{summary.serviceName}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">
-                      Date
-                    </dt>
-                    <dd className="text-ink">
-                      {new Date(`${summary.appointmentDate}T${summary.startTime}`).toLocaleString(
-                        "fr-FR",
-                        {
-                          weekday: "long",
-                          day: "numeric",
-                          month: "long",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        },
-                      )}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="font-mono text-[10px] uppercase tracking-widest text-taupe">
-                      Acompte à régler
-                    </dt>
-                    <dd className="font-display text-2xl text-bordeaux">
-                      {summary.depositAmount} €
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            )}
-
-            <div className="space-y-3 rounded-sm border border-border bg-linen/40 p-5 text-sm text-taupe">
-              <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-ink">
-                <ShieldCheck className="size-4" /> Sécurité maximale
+            {etat.acompteStatut === "rembourse" && (
+              <p className="text-center text-sm text-taupe">
+                Ce rendez-vous est annulé et l'acompte a été remboursé.
               </p>
-              <ul className="space-y-2">
-                <li>Connexion chiffrée TLS et page de paiement certifiée PCI-DSS niveau 1.</li>
-                <li>Authentification forte 3D Secure imposée par votre banque.</li>
-                <li>
-                  Montant recalculé côté serveur : il ne peut pas être modifié depuis le navigateur.
-                </li>
-                <li>
-                  Aucune donnée de carte n'est transmise, affichée ni stockée par {business.name}.
-                </li>
-              </ul>
-              <p className="flex items-center gap-2 pt-1 text-xs">
-                <Lock className="size-3.5" /> Le solde est réglé sur place le jour du rendez-vous.
+            )}
+
+            {etat.acompteStatut === "non_requis" && (
+              <p className="text-center text-sm text-taupe">
+                Votre demande de rendez-vous est enregistrée. Maria vous contacte pour la confirmer.
               </p>
-            </div>
-          </aside>
-        </div>
-      </Section>
-    </>
+            )}
+
+            {erreur && <p className="text-center text-sm text-bordeaux">{erreur}</p>}
+
+            <p className="text-center text-sm text-taupe">
+              Une question ?{" "}
+              <a href={`tel:${business.phone}`} className="underline">
+                {business.phoneDisplay}
+              </a>
+            </p>
+          </>
+        )}
+      </div>
+    </Section>
   );
 }

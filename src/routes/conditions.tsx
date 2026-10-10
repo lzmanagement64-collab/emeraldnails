@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
 import { business } from "@/config/business";
 import { ACOMPTE_TEXTE } from "@/lib/acompte";
-import { ANNULATION_TEXTE } from "@/lib/annulation";
+import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
 
 export const Route = createFileRoute("/conditions")({
   component: () => (
@@ -17,7 +17,11 @@ export const Route = createFileRoute("/conditions")({
           délai minimum de {business.bookingRules.minLeadHours}h est nécessaire.
         </p>
         <h3 className="font-display text-xl text-ink">Acompte</h3>
-        <p>{ACOMPTE_TEXTE} Il est déduit du montant total le jour de la prestation.</p>
+        <p>
+          {ACOMPTE_TEXTE} Il est déduit du montant total le jour de la prestation ; le reste se
+          règle sur place. Sans paiement de l'acompte dans les 30 minutes, le créneau est libéré.
+        </p>
+        <p>{REGLE_ACOMPTE_TEXTE}</p>
         <h3 className="font-display text-xl text-ink">Annulation</h3>
         <p>{ANNULATION_TEXTE}</p>
         <h3 className="font-display text-xl text-ink">Retard</h3>

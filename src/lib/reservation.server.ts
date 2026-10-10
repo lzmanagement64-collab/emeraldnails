@@ -32,18 +32,23 @@ type RowAvecPrestation = {
   cliente_email: string;
   commentaire: string | null;
   token_annulation: string;
+  prix_total: number | null;
+  acompte_montant: number | null;
+  acompte_statut: string;
   prestations: { nom: string; duree_minutes: number; prix: number } | null;
 };
 
 export const SELECT_AVEC_PRESTATION =
-  "id, prestation_id, date_debut, date_fin, statut, cliente_prenom, cliente_nom, cliente_telephone, cliente_email, commentaire, token_annulation, cree_le, prestations(nom, duree_minutes, prix, couleur)";
+  "id, prestation_id, date_debut, date_fin, statut, cliente_prenom, cliente_nom, cliente_telephone, cliente_email, commentaire, token_annulation, cree_le, prix_total, acompte_montant, acompte_statut, acompte_expire_le, acompte_paye_le, stripe_session_id, stripe_payment_intent, prestations(nom, duree_minutes, prix, couleur)";
 
 export function versEmail(row: RowAvecPrestation): ReservationEmail {
   return {
     id: row.id,
     prestation: row.prestations?.nom ?? "Prestation",
     dureeMinutes: row.prestations?.duree_minutes ?? 60,
-    prix: Number(row.prestations?.prix ?? 0),
+    prix: Number(row.prix_total ?? row.prestations?.prix ?? 0),
+    acompteMontant: row.acompte_montant == null ? null : Number(row.acompte_montant),
+    acompteStatut: row.acompte_statut,
     dateDebut: row.date_debut,
     prenom: row.cliente_prenom,
     nom: row.cliente_nom,

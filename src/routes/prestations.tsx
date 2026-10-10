@@ -3,6 +3,7 @@ import { Section } from "@/components/site/Section";
 import { ServiceCard } from "@/components/site/ServiceCard";
 import { chargerPrestations } from "@/lib/site-data";
 import { ACOMPTE_TEXTE } from "@/lib/acompte";
+import { REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
 
 export const Route = createFileRoute("/prestations")({
   component: PrestationsPage,
@@ -32,7 +33,8 @@ function PrestationsPage() {
           art ou la longueur souhaitée. Chaque prestation inclut la manucure.
         </p>
         <p className="mt-4 max-w-2xl rounded-sm border border-border bg-card p-4 text-sm text-taupe">
-          {ACOMPTE_TEXTE} Il est déduit du montant total le jour du rendez-vous.
+          {ACOMPTE_TEXTE} Il est déduit du montant total le jour du rendez-vous.{" "}
+          {REGLE_ACOMPTE_TEXTE}
         </p>
       </Section>
 

@@ -6,13 +6,17 @@ import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
 import { ACOMPTE_TEXTE, acompteFormate, POURCENT_ACOMPTE } from "@/lib/acompte";
-import { ANNULATION_TEXTE } from "@/lib/annulation";
+import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
+
+/** Temps laissé à la cliente pour payer (identique au serveur, voir acompte.server.ts). */
+const DELAI_PAIEMENT_AFFICHE = 30;
 import { cn } from "@/lib/utils";
 import {
   listPrestations,
   getCreneaux,
   getDisponibilitesMois,
   creerReservation,
+  infosPaiement,
 } from "@/lib/reservation.functions";
 import {
   formatDuree,
@@ -84,6 +88,14 @@ function ReserverPage() {
   const chargerCreneaux = useServerFn(getCreneaux);
   const chargerMois = useServerFn(getDisponibilitesMois);
   const enregistrer = useServerFn(creerReservation);
+  const lirePaiement = useServerFn(infosPaiement);
+  // Paiement de l'acompte en ligne actif ? (déterminé par le serveur)
+  const [paiement, setPaiement] = useState({ actif: false, modeTest: false });
+  useEffect(() => {
+    lirePaiement({})
+      .then(setPaiement)
+      .catch(() => undefined);
+  }, [lirePaiement]);
 
   const [etape, setEtape] = useState(1);
   const [prestations, setPrestations] = useState<Prestation[]>([]);
@@ -206,6 +218,11 @@ function ReserverPage() {
           dureeMs: Math.round(performance.now() - ouvertA.current),
         },
       });
+      if (res.paiementUrl) {
+        // Paiement de l'acompte sur la page sécurisée Stripe.
+        window.location.assign(res.paiementUrl);
+        return;
+      }
       setConfirmation({
         dateDebut: res.dateDebut,
         dateFin: res.dateFin,
@@ -480,6 +497,20 @@ function ReserverPage() {
               {POURCENT_ACOMPTE} %), déduit du montant total.
             </p>
             <p className="mt-2 text-sm text-taupe">{ANNULATION_TEXTE}</p>
+            <p className="mt-2 text-sm text-taupe">{REGLE_ACOMPTE_TEXTE}</p>
+            {paiement.actif && (
+              <p className="mt-2 text-sm text-taupe">
+                L'acompte se règle en ligne sur la page sécurisée de Stripe. Le créneau vous est
+                réservé {DELAI_PAIEMENT_AFFICHE} minutes le temps du paiement ; sans paiement, il
+                est libéré.
+              </p>
+            )}
+            {paiement.modeTest && (
+              <p className="mt-2 rounded-sm border border-border bg-card p-3 text-xs text-taupe">
+                Mode test : aucun paiement réel n'est encaissé. Carte de test : 4242 4242 4242 4242,
+                date future, code 123.
+              </p>
+            )}
           </div>
 
           <form
@@ -561,7 +592,11 @@ function ReserverPage() {
                 className="flex flex-1 items-center justify-center gap-2 rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
               >
                 {envoi && <Loader2 className="size-4 animate-spin" />}
-                {envoi ? "Enregistrement…" : "Confirmer ma demande"}
+                {envoi
+                  ? "Enregistrement…"
+                  : paiement.actif
+                    ? `Payer l'acompte de ${acompteFormate(prestation.prix)}`
+                    : "Confirmer ma demande"}
               </button>
             </div>
           </form>

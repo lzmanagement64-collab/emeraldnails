@@ -86,6 +86,10 @@ export const creerReservation = createServerFn({ method: "POST" })
     const { parisToUtc } = await import("./tz");
     const { emailDemandeCliente, emailNouvelleDemandeGerante } = await import("./emails.server");
     const { semblableHumain, limiterReservations } = await import("./anti-spam.server");
+    const { configPaiement } = await import("./stripe.server");
+    const { libererReservationsExpirees, finBlocageProvisoire, creerSessionPaiement, origineSite } =
+      await import("./acompte.server");
+    const { montantAcompte } = await import("./acompte");
 
     if (!semblableHumain(data)) {
       throw new Error("Envoi refusé. Merci de patienter quelques secondes puis de réessayer.");
@@ -100,6 +104,9 @@ export const creerReservation = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!prestation) throw new Error("Cette prestation n'est plus disponible.");
 
+    // Libère d'abord les réservations provisoires dont le délai de paiement est dépassé.
+    await libererReservationsExpirees(supabaseAdmin);
+
     // Vérification finale de disponibilité côté serveur
     const { data: libres } = await supabaseAdmin.rpc("get_creneaux_disponibles", {
       date_recherche: data.date,
@@ -112,6 +119,8 @@ export const creerReservation = createServerFn({ method: "POST" })
 
     const debut = parisToUtc(data.date, data.heure);
     const fin = new Date(debut.getTime() + prestation.duree_minutes * 60000);
+    const prix = Number(prestation.prix);
+    const paiement = configPaiement();
 
     const { data: row, error } = await supabaseAdmin
       .from("reservations")
@@ -125,6 +134,11 @@ export const creerReservation = createServerFn({ method: "POST" })
         cliente_email: data.email,
         commentaire: data.commentaire || null,
         statut: "en_attente",
+        prix_total: prix,
+        acompte_montant: montantAcompte(prix),
+        // Paiement en ligne actif : réservation provisoire, créneau bloqué le temps du paiement.
+        acompte_statut: paiement.actif ? "en_attente" : "non_requis",
+        acompte_expire_le: paiement.actif ? finBlocageProvisoire().toISOString() : null,
       })
       .select(SELECT_AVEC_PRESTATION)
       .single();
@@ -137,18 +151,103 @@ export const creerReservation = createServerFn({ method: "POST" })
       throw new Error("Impossible d'enregistrer la réservation. Merci de réessayer.");
     }
 
-    const mail = versEmail(row as never);
-    await Promise.allSettled([emailDemandeCliente(mail), emailNouvelleDemandeGerante(mail)]);
-
-    return {
+    const resume = {
       id: row.id,
       dateDebut: row.date_debut,
       dateFin: row.date_fin,
       token: row.token_annulation,
       prestation: prestation.nom,
       dureeMinutes: prestation.duree_minutes,
-      prix: Number(prestation.prix),
+      prix,
     };
+
+    if (paiement.actif) {
+      try {
+        const url = await creerSessionPaiement(supabaseAdmin, row as never, origineSite());
+        // Les e-mails partent une fois l'acompte payé (webhook Stripe).
+        return { ...resume, paiementUrl: url };
+      } catch (e) {
+        console.error("[creerReservation] Stripe", e);
+        // Le créneau est aussitôt libéré : rien n'est bloqué sans paiement possible.
+        await supabaseAdmin
+          .from("reservations")
+          .update({ statut: "annulee", acompte_statut: "expire" })
+          .eq("id", row.id);
+        throw new Error(
+          "Le paiement en ligne est momentanément indisponible. Merci de réessayer dans quelques minutes.",
+        );
+      }
+    }
+
+    const mail = versEmail(row as never);
+    await Promise.allSettled([emailDemandeCliente(mail), emailNouvelleDemandeGerante(mail)]);
+    return { ...resume, paiementUrl: null };
+  });
+
+/** Paiement en ligne actif ? (aucune clé n'est renvoyée au navigateur) */
+export const infosPaiement = createServerFn({ method: "GET" }).handler(async () => {
+  const { configPaiement } = await import("./stripe.server");
+  return configPaiement();
+});
+
+/** État de l'acompte d'un rendez-vous, pour la page de retour du paiement. */
+export const etatAcompte = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("reservations")
+      .select(
+        "statut, date_debut, prix_total, acompte_montant, acompte_statut, acompte_expire_le, prestations(nom, prix)",
+      )
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row) return null;
+    const expire =
+      row.acompte_statut === "en_attente" &&
+      !!row.acompte_expire_le &&
+      new Date(row.acompte_expire_le).getTime() < Date.now();
+    return {
+      prestation: row.prestations?.nom ?? "Prestation",
+      dateDebut: row.date_debut,
+      prix: Number(row.prix_total ?? row.prestations?.prix ?? 0),
+      acompte: row.acompte_montant == null ? null : Number(row.acompte_montant),
+      acompteStatut: expire ? "expire" : row.acompte_statut,
+      statut: row.statut,
+      expireLe: row.acompte_expire_le,
+    };
+  });
+
+/** Nouvelle page de paiement pour une réservation provisoire encore valable. */
+export const relancerPaiement = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { creerSessionPaiement, origineSite } = await import("./acompte.server");
+    const { data: row } = await supabaseAdmin
+      .from("reservations")
+      .select(
+        "id, statut, date_debut, cliente_email, acompte_montant, acompte_statut, acompte_expire_le, stripe_session_id, prestations(nom)",
+      )
+      .eq("id", data.id)
+      .maybeSingle();
+    if (
+      !row ||
+      row.acompte_statut !== "en_attente" ||
+      row.statut === "annulee" ||
+      !row.acompte_expire_le ||
+      new Date(row.acompte_expire_le).getTime() < Date.now()
+    ) {
+      throw new Error(
+        "Le délai de paiement est dépassé et le créneau a été libéré. Merci de refaire une réservation.",
+      );
+    }
+    try {
+      return { url: await creerSessionPaiement(supabaseAdmin, row as never, origineSite()) };
+    } catch (e) {
+      console.error("[relancerPaiement]", e);
+      throw new Error("Le paiement en ligne est momentanément indisponible. Merci de réessayer.");
+    }
   });
 
 export const annulerReservation = createServerFn({ method: "POST" })
@@ -156,8 +255,10 @@ export const annulerReservation = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { versEmail, SELECT_AVEC_PRESTATION } = await import("./reservation.server");
-    const { emailAnnulationGerante } = await import("./emails.server");
+    const { emailAnnulationGerante, emailAlerteGerante } = await import("./emails.server");
     const { ANNULATION_TROP_TARD } = await import("./annulation");
+    const { rembourserAcompte } = await import("./acompte.server");
+    const { formatEuros } = await import("./tz");
 
     const { data: row } = await supabaseAdmin
       .from("reservations")
@@ -166,6 +267,7 @@ export const annulerReservation = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Lien d'annulation inconnu ou expiré.");
 
+    // La base n'accepte l'annulation en ligne qu'à plus de 72 h du rendez-vous.
     const { data: ok } = await supabaseAdmin.rpc("annuler_reservation", { p_token: data.token });
     if (!ok) {
       return {
@@ -181,12 +283,28 @@ export const annulerReservation = createServerFn({ method: "POST" })
       };
     }
 
-    await Promise.allSettled([emailAnnulationGerante(versEmail(row as never))]);
-    return {
-      annulee: true,
-      message: "Votre rendez-vous a bien été annulé.",
-      dateDebut: row.date_debut,
-    };
+    // Plus de 72 h avant : l'acompte payé est remboursé.
+    let message = "Votre rendez-vous a bien été annulé.";
+    let etatAcompteMail = row.acompte_statut;
+    if (row.acompte_statut === "paye") {
+      const rembourse = await rembourserAcompte(supabaseAdmin, row);
+      const montant = formatEuros(Number(row.acompte_montant ?? 0));
+      if (rembourse) {
+        etatAcompteMail = "rembourse";
+        message += ` Votre acompte de ${montant} est remboursé : il apparaît en général sous 5 à 10 jours sur votre compte.`;
+      } else {
+        message += ` Votre acompte de ${montant} vous sera remboursé : Emerald Beauty s'en occupe.`;
+        await emailAlerteGerante(
+          versEmail(row as never),
+          "Rendez-vous annulé en ligne plus de 72 h avant : le remboursement automatique de l'acompte a échoué. Remboursez-le depuis le tableau de bord Stripe.",
+        );
+      }
+    }
+
+    await Promise.allSettled([
+      emailAnnulationGerante(versEmail({ ...row, acompte_statut: etatAcompteMail } as never)),
+    ]);
+    return { annulee: true, message, dateDebut: row.date_debut };
   });
 
 // ------------------------------------------------------------

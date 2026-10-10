@@ -1,4 +1,4 @@
-import { ANNULATION_TEXTE } from "@/lib/annulation";
+import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
 
 export const faq = [
   {
@@ -15,7 +15,7 @@ export const faq = [
   },
   {
     q: "Faut-il verser un acompte ?",
-    a: "Oui. Un acompte de 30 % du montant de la prestation est demandé pour valider le rendez-vous. Il est déduit du montant total le jour de la prestation.",
+    a: `Oui. Un acompte de 30 % du montant de la prestation se règle en ligne, par carte bancaire, au moment de la réservation : c'est lui qui valide le rendez-vous. Il est déduit du montant total, et le reste se règle sur place. ${REGLE_ACOMPTE_TEXTE}`,
   },
   {
     q: "Quelles sont les conditions d’annulation ?",

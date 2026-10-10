@@ -80,14 +80,28 @@ export type ReservationEmail = {
   email: string;
   commentaire?: string | null;
   tokenAnnulation: string;
+  acompteMontant?: number | null;
+  acompteStatut?: string;
 };
+
+/** Ligne « acompte » du récapitulatif, selon l'état du paiement. */
+function ligneAcompte(r: ReservationEmail) {
+  if (r.acompteStatut === "paye" && r.acompteMontant != null) {
+    const reste = Math.max(0, Math.round((r.prix - r.acompteMontant) * 100) / 100);
+    return `Acompte réglé : ${formatEuros(r.acompteMontant)} · Reste à régler sur place : ${formatEuros(reste)}`;
+  }
+  if (r.acompteStatut === "rembourse" && r.acompteMontant != null) {
+    return `Acompte de ${formatEuros(r.acompteMontant)} remboursé`;
+  }
+  return `Acompte pour valider le rendez-vous : ${acompteFormate(r.prix)} (${POURCENT_ACOMPTE} %)`;
+}
 
 function recap(r: ReservationEmail) {
   return `<table style="width:100%;border-collapse:collapse;background-color:${CREME};border-radius:4px;">
     <tr><td style="padding:16px 18px 6px;font-size:15px;color:${ENCRE};"><strong>${r.prestation}</strong></td></tr>
     <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">${parisLongDate(r.dateDebut)} à ${parisTime(r.dateDebut)}</td></tr>
     <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">Durée : ${formatDuree(r.dureeMinutes)} · Tarif : ${formatEuros(r.prix)}</td></tr>
-    <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">Acompte pour valider le rendez-vous : ${acompteFormate(r.prix)} (${POURCENT_ACOMPTE} %)</td></tr>
+    <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">${ligneAcompte(r)}</td></tr>
     <tr><td style="padding:0 18px 16px;font-size:14px;color:${TAUPE};">${business.address}</td></tr>
   </table>`;
 }
@@ -96,7 +110,7 @@ const lienAnnulation = (r: ReservationEmail) =>
   `${siteUrl()}/annulation?token=${r.tokenAnnulation}`;
 
 const phraseAnnulation = (r: ReservationEmail) =>
-  `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? L'annulation est gratuite jusqu'à ${DELAI_ANNULATION_H} h avant le rendez-vous : <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. À moins de ${DELAI_ANNULATION_H} h, merci de nous appeler au ${business.phoneDisplay}.</p>`;
+  `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? L'annulation est gratuite jusqu'à ${DELAI_ANNULATION_H} h avant le rendez-vous, et l'acompte est alors remboursé : <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. À moins de ${DELAI_ANNULATION_H} h, ou en cas d'absence, l'acompte est conservé ; merci de nous appeler au ${business.phoneDisplay}.</p>`;
 
 export async function emailDemandeCliente(r: ReservationEmail) {
   return envoyerEmail({
@@ -142,9 +156,11 @@ export async function emailRappelCliente(r: ReservationEmail) {
 export async function emailNouvelleDemandeGerante(r: ReservationEmail) {
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `Nouvelle demande de rendez-vous — ${r.prenom} ${r.nom}`,
+    subject: `${r.acompteStatut === "paye" ? "Nouveau rendez-vous, acompte payé" : "Nouvelle demande de rendez-vous"} — ${r.prenom} ${r.nom}`,
     html: gabarit(
-      "Nouvelle demande de rendez-vous",
+      r.acompteStatut === "paye"
+        ? "Nouveau rendez-vous (acompte payé)"
+        : "Nouvelle demande de rendez-vous",
       `${recap(r)}
        <p style="font-size:14px;line-height:1.8;">
          <strong>${r.prenom} ${r.nom}</strong><br />
@@ -167,6 +183,21 @@ export async function emailAnnulationGerante(r: ReservationEmail) {
        ${recap(r)}
        <p style="font-size:14px;line-height:1.8;">${r.telephone} · ${r.email}</p>`,
       { url: `${siteUrl()}/admin`, label: "Voir le planning" },
+    ),
+  });
+}
+
+/** Alerte à la gérante quand une action manuelle est nécessaire (ex. remboursement). */
+export async function emailAlerteGerante(r: ReservationEmail, message: string) {
+  return envoyerEmail({
+    to: business.ownerEmail,
+    subject: `Action requise — ${r.prenom} ${r.nom}`,
+    html: gabarit(
+      "Action requise",
+      `<p style="font-size:15px;line-height:1.8;">${message}</p>
+       ${recap(r)}
+       <p style="font-size:14px;line-height:1.8;">${r.telephone} · ${r.email}</p>`,
+      { url: `${siteUrl()}/admin`, label: "Ouvrir le back-office" },
     ),
   });
 }

@@ -36,11 +36,14 @@ export async function limiterReservations(
 ) {
   const compter = () => admin.from("reservations").select("id", { count: "exact", head: true });
   const [parEmail, parTel, total] = await Promise.all([
+    // Les réservations provisoires abandonnées (paiement non fait) ne comptent pas.
     compter()
       .eq("cliente_email", contact.email)
+      .neq("acompte_statut", "expire")
       .gte("cree_le", ilYa(24 * HEURE)),
     compter()
       .eq("cliente_telephone", contact.telephone)
+      .neq("acompte_statut", "expire")
       .gte("cree_le", ilYa(24 * HEURE)),
     compter().gte("cree_le", ilYa(HEURE)),
   ]);
