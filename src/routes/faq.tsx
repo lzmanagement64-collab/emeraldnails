@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/config/business";
 import { createFileRoute } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
 import {
@@ -18,9 +19,9 @@ export const Route = createFileRoute("/faq")({
         content: "Durée d'une pose, préparation, remplissage, annulation, moyens de paiement...",
       },
       { property: "og:title", content: "Questions fréquentes" },
-      { property: "og:url", content: "/faq" },
+      { property: "og:url", content: `${SITE_URL}/faq` },
     ],
-    links: [{ rel: "canonical", href: "/faq" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/faq` }],
     scripts: [
       {
         type: "application/ld+json",

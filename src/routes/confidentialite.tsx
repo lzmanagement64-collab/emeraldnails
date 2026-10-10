@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/config/business";
 import { createFileRoute } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
 
@@ -26,6 +27,6 @@ export const Route = createFileRoute("/confidentialite")({
   ),
   head: () => ({
     meta: [{ title: "Politique de confidentialité" }],
-    links: [{ rel: "canonical", href: "/confidentialite" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/confidentialite` }],
   }),
 });

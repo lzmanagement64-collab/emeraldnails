@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/config/business";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarHeart, Layers, ShieldCheck } from "lucide-react";
 import { Section } from "@/components/site/Section";
@@ -18,9 +19,9 @@ export const Route = createFileRoute("/prestations")({
           "Semi-permanent, renforcement, remplissage, déposes, extension gel, Gel-X et nail art. Tarifs et durées.",
       },
       { property: "og:title", content: "Prestations & tarifs" },
-      { property: "og:url", content: "/prestations" },
+      { property: "og:url", content: `${SITE_URL}/prestations` },
     ],
-    links: [{ rel: "canonical", href: "/prestations" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/prestations` }],
   }),
 });
 

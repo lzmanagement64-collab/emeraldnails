@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarHeart } from "lucide-react";
 import { Section } from "@/components/site/Section";
-import { business } from "@/config/business";
+import { business, SITE_URL } from "@/config/business";
 import { cn } from "@/lib/utils";
 import { DEROULEMENT, SAVOIR_FAIRE } from "@/data/savoir-faire";
 import { chargerGalerie } from "@/lib/site-data";
@@ -17,9 +17,9 @@ export const Route = createFileRoute("/a-propos")({
         content: `Le savoir-faire d'${business.name}, prothésiste ongulaire à ${business.city} : écoute, précision et soin de l'ongle naturel.`,
       },
       { property: "og:title", content: "Savoir-faire — Emerald Beauty" },
-      { property: "og:url", content: "/a-propos" },
+      { property: "og:url", content: `${SITE_URL}/a-propos` },
     ],
-    links: [{ rel: "canonical", href: "/a-propos" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/a-propos` }],
   }),
 });
 
