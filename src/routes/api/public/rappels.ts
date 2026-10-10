@@ -9,7 +9,8 @@ export const Route = createFileRoute("/api/public/rappels")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["CRON_SECRET"];
+        const { lireSecret } = await import("@/lib/secrets.server");
+        const secret = lireSecret("CRON_SECRET");
         if (!secret || request.headers.get("x-cron-secret") !== secret) {
           return new Response("Unauthorized", { status: 401 });
         }

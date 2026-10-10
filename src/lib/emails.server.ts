@@ -9,13 +9,27 @@
 // Tant que RESEND_API_KEY n'est pas configurée, les envois sont
 // simplement journalisés : la réservation fonctionne quand même.
 // ============================================================
+import { getRequest } from "@tanstack/react-start/server";
 import { adresseSite } from "./adresse-site.server";
+import { diagnosticSecrets, lireSecret } from "./secrets.server";
 import { business } from "@/config/business";
 import { acompteFormate, POURCENT_ACOMPTE } from "./acompte";
 import { DELAI_ANNULATION_H } from "./annulation";
 import { parisLongDate, parisTime, formatEuros, formatDuree } from "./tz";
 
 type Envoi = { to: string; subject: string; html: string };
+
+/** Expéditeur : secret RESEND_FROM, sinon l'adresse de test de Resend. */
+const expediteur = () => lireSecret("RESEND_FROM") || `${business.name} <onboarding@resend.dev>`;
+
+/** Adresse par laquelle l'admin a été ouverte (site publié ou aperçu Lovable). */
+function adresseConsultee() {
+  try {
+    return new URL(getRequest().url).host;
+  } catch {
+    return "";
+  }
+}
 
 /** Adresse du site pour les liens des e-mails (annulation, back-office). */
 const siteUrl = adresseSite;
@@ -26,13 +40,14 @@ export async function envoyer({
   subject,
   html,
 }: Envoi): Promise<{ ok: boolean; erreur?: string }> {
-  const key = process.env["RESEND_API_KEY"];
-  const from = process.env["RESEND_FROM"] || `${business.name} <onboarding@resend.dev>`;
+  const key = lireSecret("RESEND_API_KEY");
+  const from = expediteur();
   if (!key) {
     console.warn(`[email] RESEND_API_KEY absente — email non envoyé à ${to} (${subject})`);
     return {
       ok: false,
-      erreur: "Le secret RESEND_API_KEY n'est pas configuré dans Lovable Cloud.",
+      erreur:
+        "Le site ne voit pas le secret RESEND_API_KEY. S'il est déjà dans Lovable Cloud → Secrets, republiez le site (Publier → Mettre à jour), puis refaites ce test sur le site publié.",
     };
   }
   try {
@@ -256,7 +271,7 @@ export async function emailAlerteGerante(brut: ReservationEmail, message: string
 
 /** E-mail de test envoyé depuis l'admin pour vérifier la configuration. */
 export async function emailTestGerante() {
-  const from = process.env["RESEND_FROM"] || `${business.name} <onboarding@resend.dev>`;
+  const from = expediteur();
   const res = await envoyer({
     to: business.ownerEmail,
     subject: `E-mail de test — ${business.name}`,
@@ -267,5 +282,12 @@ export async function emailTestGerante() {
       { url: `${siteUrl()}/admin`, label: "Ouvrir le back-office" },
     ),
   });
-  return { ...res, destinataire: business.ownerEmail, expediteur: from };
+  return {
+    ...res,
+    destinataire: business.ownerEmail,
+    expediteur: from,
+    // Ce que le site voit réellement (noms seulement, jamais les valeurs)
+    secrets: diagnosticSecrets(),
+    adresseConsultee: adresseConsultee(),
+  };
 }
