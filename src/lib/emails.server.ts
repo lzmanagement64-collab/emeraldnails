@@ -1,8 +1,15 @@
 // ============================================================
-// Envoi des emails via Resend (serveur uniquement).
+// Envoi des e-mails via Resend (serveur uniquement).
+// Secrets dans Lovable Cloud :
+//   RESEND_API_KEY  clé d'accès Resend (re_…) — obligatoire pour envoyer
+//   RESEND_FROM     expéditeur, ex. « Emerald Beauty <rendezvous@mon-domaine.fr> »
+//                   (adresse d'un domaine vérifié dans Resend)
+//   SITE_URL        facultatif : adresse du site utilisée dans les liens
+//                   (sinon, l'adresse par laquelle le site a été consulté)
 // Tant que RESEND_API_KEY n'est pas configurée, les envois sont
 // simplement journalisés : la réservation fonctionne quand même.
 // ============================================================
+import { adresseSite } from "./adresse-site.server";
 import { business } from "@/config/business";
 import { acompteFormate, POURCENT_ACOMPTE } from "./acompte";
 import { DELAI_ANNULATION_H } from "./annulation";
@@ -10,16 +17,23 @@ import { parisLongDate, parisTime, formatEuros, formatDuree } from "./tz";
 
 type Envoi = { to: string; subject: string; html: string };
 
-function siteUrl() {
-  return (process.env["SITE_URL"] || business.siteUrl).replace(/\/$/, "");
-}
+/** Adresse du site pour les liens des e-mails (annulation, back-office). */
+const siteUrl = adresseSite;
 
-export async function envoyerEmail({ to, subject, html }: Envoi): Promise<boolean> {
+/** Envoie un e-mail et renvoie la raison précise en cas d'échec. */
+export async function envoyer({
+  to,
+  subject,
+  html,
+}: Envoi): Promise<{ ok: boolean; erreur?: string }> {
   const key = process.env["RESEND_API_KEY"];
   const from = process.env["RESEND_FROM"] || `${business.name} <onboarding@resend.dev>`;
   if (!key) {
     console.warn(`[email] RESEND_API_KEY absente — email non envoyé à ${to} (${subject})`);
-    return false;
+    return {
+      ok: false,
+      erreur: "Le secret RESEND_API_KEY n'est pas configuré dans Lovable Cloud.",
+    };
   }
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -28,17 +42,26 @@ export async function envoyerEmail({ to, subject, html }: Envoi): Promise<boolea
         "Content-Type": "application/json",
         Authorization: `Bearer ${key}`,
       },
+      // Les réponses des clientes arrivent sur l'adresse de contact publique.
       body: JSON.stringify({ from, to: [to], subject, html, reply_to: business.email }),
     });
     if (!res.ok) {
-      console.error(`[email] échec Resend [${res.status}]: ${await res.text()}`);
-      return false;
+      const detail = await res.text();
+      console.error(`[email] échec Resend [${res.status}]: ${detail}`);
+      return {
+        ok: false,
+        erreur: `Resend a refusé l'envoi (${res.status}) : ${detail.slice(0, 300)}`,
+      };
     }
-    return true;
+    return { ok: true };
   } catch (e) {
     console.error("[email] Resend injoignable", e);
-    return false;
+    return { ok: false, erreur: "Resend est injoignable pour le moment." };
   }
+}
+
+export async function envoyerEmail(envoi: Envoi): Promise<boolean> {
+  return (await envoyer(envoi)).ok;
 }
 
 // ------------------------------------------------------------
@@ -84,6 +107,29 @@ export type ReservationEmail = {
   acompteStatut?: string;
 };
 
+/** Rend un texte saisi par une cliente inoffensif dans un e-mail (pas de balises ni de liens cachés). */
+function echapper(texte: string) {
+  return texte
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** Copie du rendez-vous dont tous les champs saisis sont échappés, pour le contenu HTML. */
+function sur(r: ReservationEmail): ReservationEmail {
+  return {
+    ...r,
+    prestation: echapper(r.prestation),
+    prenom: echapper(r.prenom),
+    nom: echapper(r.nom),
+    telephone: echapper(r.telephone),
+    email: echapper(r.email),
+    commentaire: r.commentaire ? echapper(r.commentaire) : r.commentaire,
+  };
+}
+
 /** Ligne « acompte » du récapitulatif, selon l'état du paiement. */
 function ligneAcompte(r: ReservationEmail) {
   if (r.acompteStatut === "paye" && r.acompteMontant != null) {
@@ -112,9 +158,10 @@ const lienAnnulation = (r: ReservationEmail) =>
 const phraseAnnulation = (r: ReservationEmail) =>
   `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? L'annulation est gratuite jusqu'à ${DELAI_ANNULATION_H} h avant le rendez-vous, et l'acompte est alors remboursé : <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. À moins de ${DELAI_ANNULATION_H} h, ou en cas d'absence, l'acompte est conservé ; merci de nous appeler au ${business.phoneDisplay}.</p>`;
 
-export async function emailDemandeCliente(r: ReservationEmail) {
+export async function emailDemandeCliente(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
-    to: r.email,
+    to: brut.email,
     subject: "Votre demande de rendez-vous",
     html: gabarit(
       `Bonjour ${r.prenom}, votre demande est bien reçue`,
@@ -126,9 +173,10 @@ export async function emailDemandeCliente(r: ReservationEmail) {
   });
 }
 
-export async function emailConfirmationCliente(r: ReservationEmail) {
+export async function emailConfirmationCliente(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
-    to: r.email,
+    to: brut.email,
     subject: "Rendez-vous confirmé",
     html: gabarit(
       `C'est confirmé, ${r.prenom} !`,
@@ -140,9 +188,10 @@ export async function emailConfirmationCliente(r: ReservationEmail) {
   });
 }
 
-export async function emailRappelCliente(r: ReservationEmail) {
+export async function emailRappelCliente(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
-    to: r.email,
+    to: brut.email,
     subject: "Rappel : votre rendez-vous demain",
     html: gabarit(
       `À demain, ${r.prenom}`,
@@ -153,10 +202,11 @@ export async function emailRappelCliente(r: ReservationEmail) {
   });
 }
 
-export async function emailNouvelleDemandeGerante(r: ReservationEmail) {
+export async function emailNouvelleDemandeGerante(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `${r.acompteStatut === "paye" ? "Nouveau rendez-vous, acompte payé" : "Nouvelle demande de rendez-vous"} — ${r.prenom} ${r.nom}`,
+    subject: `${brut.acompteStatut === "paye" ? "Nouveau rendez-vous, acompte payé" : "Nouvelle demande de rendez-vous"} — ${brut.prenom} ${brut.nom}`,
     html: gabarit(
       r.acompteStatut === "paye"
         ? "Nouveau rendez-vous (acompte payé)"
@@ -173,10 +223,11 @@ export async function emailNouvelleDemandeGerante(r: ReservationEmail) {
   });
 }
 
-export async function emailAnnulationGerante(r: ReservationEmail) {
+export async function emailAnnulationGerante(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `Annulation — ${r.prenom} ${r.nom}`,
+    subject: `Annulation — ${brut.prenom} ${brut.nom}`,
     html: gabarit(
       "Un créneau vient d'être libéré",
       `<p style="font-size:15px;line-height:1.8;">${r.prenom} ${r.nom} a annulé son rendez-vous.</p>
@@ -188,10 +239,11 @@ export async function emailAnnulationGerante(r: ReservationEmail) {
 }
 
 /** Alerte à la gérante quand une action manuelle est nécessaire (ex. remboursement). */
-export async function emailAlerteGerante(r: ReservationEmail, message: string) {
+export async function emailAlerteGerante(brut: ReservationEmail, message: string) {
+  const r = sur(brut);
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `Action requise — ${r.prenom} ${r.nom}`,
+    subject: `Action requise — ${brut.prenom} ${brut.nom}`,
     html: gabarit(
       "Action requise",
       `<p style="font-size:15px;line-height:1.8;">${message}</p>
@@ -200,4 +252,20 @@ export async function emailAlerteGerante(r: ReservationEmail, message: string) {
       { url: `${siteUrl()}/admin`, label: "Ouvrir le back-office" },
     ),
   });
+}
+
+/** E-mail de test envoyé depuis l'admin pour vérifier la configuration. */
+export async function emailTestGerante() {
+  const from = process.env["RESEND_FROM"] || `${business.name} <onboarding@resend.dev>`;
+  const res = await envoyer({
+    to: business.ownerEmail,
+    subject: `E-mail de test — ${business.name}`,
+    html: gabarit(
+      "L'envoi d'e-mails fonctionne",
+      `<p style="font-size:15px;line-height:1.8;">Si vous lisez ce message, les e-mails du site partent correctement.</p>
+       <p style="font-size:14px;line-height:1.8;color:${TAUPE};">Expéditeur utilisé : ${from.replace(/</g, "&lt;")}<br />Liens du site : ${siteUrl()}</p>`,
+      { url: `${siteUrl()}/admin`, label: "Ouvrir le back-office" },
+    ),
+  });
+  return { ...res, destinataire: business.ownerEmail, expediteur: from };
 }
