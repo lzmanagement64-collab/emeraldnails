@@ -9,7 +9,7 @@
 // Tant que RESEND_API_KEY n'est pas configurée, les envois sont
 // simplement journalisés : la réservation fonctionne quand même.
 // ============================================================
-import { getRequest } from "@tanstack/react-start/server";
+import { adresseSite } from "./adresse-site.server";
 import { business } from "@/config/business";
 import { acompteFormate, POURCENT_ACOMPTE } from "./acompte";
 import { DELAI_ANNULATION_H } from "./annulation";
@@ -18,18 +18,7 @@ import { parisLongDate, parisTime, formatEuros, formatDuree } from "./tz";
 type Envoi = { to: string; subject: string; html: string };
 
 /** Adresse du site pour les liens des e-mails (annulation, back-office). */
-function siteUrl() {
-  const configuree = process.env["SITE_URL"];
-  if (configuree) return configuree.replace(/\/$/, "");
-  try {
-    // Requête en cours (réservation, webhook Stripe, rappel…) : vraie adresse du site.
-    const url = new URL(getRequest().url);
-    const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-    return `${local ? url.protocol : "https:"}//${url.host}`;
-  } catch {
-    return business.siteUrl.replace(/\/$/, "");
-  }
-}
+const siteUrl = adresseSite;
 
 /** Envoie un e-mail et renvoie la raison précise en cas d'échec. */
 export async function envoyer({
@@ -118,6 +107,29 @@ export type ReservationEmail = {
   acompteStatut?: string;
 };
 
+/** Rend un texte saisi par une cliente inoffensif dans un e-mail (pas de balises ni de liens cachés). */
+function echapper(texte: string) {
+  return texte
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** Copie du rendez-vous dont tous les champs saisis sont échappés, pour le contenu HTML. */
+function sur(r: ReservationEmail): ReservationEmail {
+  return {
+    ...r,
+    prestation: echapper(r.prestation),
+    prenom: echapper(r.prenom),
+    nom: echapper(r.nom),
+    telephone: echapper(r.telephone),
+    email: echapper(r.email),
+    commentaire: r.commentaire ? echapper(r.commentaire) : r.commentaire,
+  };
+}
+
 /** Ligne « acompte » du récapitulatif, selon l'état du paiement. */
 function ligneAcompte(r: ReservationEmail) {
   if (r.acompteStatut === "paye" && r.acompteMontant != null) {
@@ -146,9 +158,10 @@ const lienAnnulation = (r: ReservationEmail) =>
 const phraseAnnulation = (r: ReservationEmail) =>
   `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? L'annulation est gratuite jusqu'à ${DELAI_ANNULATION_H} h avant le rendez-vous, et l'acompte est alors remboursé : <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. À moins de ${DELAI_ANNULATION_H} h, ou en cas d'absence, l'acompte est conservé ; merci de nous appeler au ${business.phoneDisplay}.</p>`;
 
-export async function emailDemandeCliente(r: ReservationEmail) {
+export async function emailDemandeCliente(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
-    to: r.email,
+    to: brut.email,
     subject: "Votre demande de rendez-vous",
     html: gabarit(
       `Bonjour ${r.prenom}, votre demande est bien reçue`,
@@ -160,9 +173,10 @@ export async function emailDemandeCliente(r: ReservationEmail) {
   });
 }
 
-export async function emailConfirmationCliente(r: ReservationEmail) {
+export async function emailConfirmationCliente(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
-    to: r.email,
+    to: brut.email,
     subject: "Rendez-vous confirmé",
     html: gabarit(
       `C'est confirmé, ${r.prenom} !`,
@@ -174,9 +188,10 @@ export async function emailConfirmationCliente(r: ReservationEmail) {
   });
 }
 
-export async function emailRappelCliente(r: ReservationEmail) {
+export async function emailRappelCliente(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
-    to: r.email,
+    to: brut.email,
     subject: "Rappel : votre rendez-vous demain",
     html: gabarit(
       `À demain, ${r.prenom}`,
@@ -187,10 +202,11 @@ export async function emailRappelCliente(r: ReservationEmail) {
   });
 }
 
-export async function emailNouvelleDemandeGerante(r: ReservationEmail) {
+export async function emailNouvelleDemandeGerante(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `${r.acompteStatut === "paye" ? "Nouveau rendez-vous, acompte payé" : "Nouvelle demande de rendez-vous"} — ${r.prenom} ${r.nom}`,
+    subject: `${brut.acompteStatut === "paye" ? "Nouveau rendez-vous, acompte payé" : "Nouvelle demande de rendez-vous"} — ${brut.prenom} ${brut.nom}`,
     html: gabarit(
       r.acompteStatut === "paye"
         ? "Nouveau rendez-vous (acompte payé)"
@@ -207,10 +223,11 @@ export async function emailNouvelleDemandeGerante(r: ReservationEmail) {
   });
 }
 
-export async function emailAnnulationGerante(r: ReservationEmail) {
+export async function emailAnnulationGerante(brut: ReservationEmail) {
+  const r = sur(brut);
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `Annulation — ${r.prenom} ${r.nom}`,
+    subject: `Annulation — ${brut.prenom} ${brut.nom}`,
     html: gabarit(
       "Un créneau vient d'être libéré",
       `<p style="font-size:15px;line-height:1.8;">${r.prenom} ${r.nom} a annulé son rendez-vous.</p>
@@ -222,10 +239,11 @@ export async function emailAnnulationGerante(r: ReservationEmail) {
 }
 
 /** Alerte à la gérante quand une action manuelle est nécessaire (ex. remboursement). */
-export async function emailAlerteGerante(r: ReservationEmail, message: string) {
+export async function emailAlerteGerante(brut: ReservationEmail, message: string) {
+  const r = sur(brut);
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `Action requise — ${r.prenom} ${r.nom}`,
+    subject: `Action requise — ${brut.prenom} ${brut.nom}`,
     html: gabarit(
       "Action requise",
       `<p style="font-size:15px;line-height:1.8;">${message}</p>

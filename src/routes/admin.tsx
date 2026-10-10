@@ -108,7 +108,7 @@ function InfoAcompte({ r }: { r: Reservation }) {
       const conserve = r.statut === "absente" || r.statut === "annulee";
       return (
         <p className="text-xs">
-          <span className="text-emerald-800">Acompte payé : {formatEuros(acompte)}</span>
+          <span className="text-emerald">Acompte payé : {formatEuros(acompte)}</span>
           <span className="text-taupe">
             {conserve
               ? " · conservé"
@@ -1242,7 +1242,7 @@ function ReglagesEmails() {
       {resultat && (
         <div className="space-y-1 text-sm">
           {resultat.ok ? (
-            <p className="text-emerald-800">
+            <p className="text-emerald">
               E-mail envoyé à {resultat.destinataire}. Vérifiez la boîte de réception (et les
               courriers indésirables).
             </p>

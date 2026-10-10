@@ -11,7 +11,7 @@
 // 4. Annulation en ligne (plus de 72 h avant) : acompte remboursé.
 // ============================================================
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getRequest } from "@tanstack/react-start/server";
+import { adresseSite } from "./adresse-site.server";
 import type { Database } from "@/integrations/supabase/types";
 import { business } from "@/config/business";
 import { getStripe, getStripeErrorMessage } from "./stripe.server";
@@ -34,15 +34,7 @@ function echeances() {
 }
 
 /** Adresse du site vue par la cliente (aperçu Lovable ou site publié), pour le retour de Stripe. */
-export function origineSite() {
-  try {
-    const url = new URL(getRequest().url);
-    const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-    return `${local ? url.protocol : "https:"}//${url.host}`;
-  } catch {
-    return (process.env["SITE_URL"] || business.siteUrl).replace(/\/$/, "");
-  }
-}
+export const origineSite = adresseSite;
 
 /** Fin de blocage d'une nouvelle réservation provisoire (enregistrée avant le paiement). */
 export const finBlocageProvisoire = () => echeances().finBlocage;
