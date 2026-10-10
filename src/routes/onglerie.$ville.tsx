@@ -120,7 +120,7 @@ function AreaPage() {
             </ul>
           </div>
 
-          <aside className="h-fit space-y-5 rounded-sm border border-border bg-card p-6">
+          <aside className="h-fit space-y-5 rounded-2xl border border-border bg-card p-6">
             <div className="flex items-start gap-2 text-sm text-taupe">
               <MapPin className="mt-0.5 size-4 shrink-0" />
               <span>{business.address}</span>
@@ -129,16 +129,10 @@ function AreaPage() {
               <Clock className="mt-0.5 size-4 shrink-0" />
               <span>{resumeJoursOuverture(horaires)}</span>
             </div>
-            <Link
-              to="/reserver"
-              className="block rounded-sm bg-ink px-5 py-3 text-center font-mono text-[11px] uppercase tracking-widest text-porcelain"
-            >
+            <Link to="/reserver" className="btn-primaire w-full">
               Réserver depuis {area.city}
             </Link>
-            <a
-              href={`tel:${business.phone}`}
-              className="block rounded-sm border border-border px-5 py-3 text-center font-mono text-[11px] uppercase tracking-widest"
-            >
+            <a href={`tel:${business.phone}`} className="btn-secondaire w-full">
               {business.phoneDisplay}
             </a>
           </aside>

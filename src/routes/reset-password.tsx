@@ -83,7 +83,7 @@ function ResetPasswordPage() {
   if (validLink === false) {
     return (
       <div className="grid min-h-[70vh] place-items-center px-4 py-16">
-        <div className="w-full max-w-sm rounded-sm border border-border bg-card p-8 text-center">
+        <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 text-center">
           <p className="eyebrow mb-2">Espace professionnel</p>
           <h1 className="mb-4 font-display text-2xl text-ink">{business.name}</h1>
           <p className="text-sm text-taupe">
@@ -103,7 +103,7 @@ function ResetPasswordPage() {
 
   return (
     <div className="grid min-h-[70vh] place-items-center px-4 py-16">
-      <div className="w-full max-w-sm rounded-sm border border-border bg-card p-8">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8">
         <p className="eyebrow mb-2">Espace professionnel</p>
         <h1 className="mb-6 font-display text-2xl text-ink">Nouveau mot de passe</h1>
         <form onSubmit={submit} className="space-y-4">
@@ -119,7 +119,7 @@ function ResetPasswordPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm"
+              className="w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm"
             />
           </div>
           <div>
@@ -134,14 +134,10 @@ function ResetPasswordPage() {
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm"
+              className="w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
-          >
+          <button type="submit" disabled={loading} className="btn-primaire w-full">
             {loading ? "Un instant…" : "Enregistrer le mot de passe"}
           </button>
         </form>

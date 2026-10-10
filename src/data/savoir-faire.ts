@@ -1,6 +1,6 @@
 // Savoir-faire et déroulement d'un rendez-vous — utilisés sur l'accueil et la page Savoir-faire.
 // Textes volontairement sobres : aucune affirmation invérifiable.
-import { Sparkles, Sprout, HeartHandshake } from "lucide-react";
+import { Sparkles, ShieldCheck, HeartHandshake } from "lucide-react";
 
 export const SAVOIR_FAIRE = [
   {
@@ -9,7 +9,7 @@ export const SAVOIR_FAIRE = [
     text: "Une manucure soignée et une pose réalisée avec minutie.",
   },
   {
-    icon: Sprout,
+    icon: ShieldCheck,
     title: "Hygiène",
     text: "Instruments stérilisés en autoclave, matériel à usage unique, produits professionnels certifiés.",
   },

@@ -4,7 +4,8 @@
 // crème/ivoire et touche dorée.
 // ============================================================
 
-export const SITE_URL = "https://velvet-digits-booker.lovable.app";
+// Adresse publique du site (liens de partage, référencement). À changer si un nom de domaine est ajouté.
+export const SITE_URL = "https://emeraldnails.lovable.app";
 
 export const business = {
   siteUrl: SITE_URL,

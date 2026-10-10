@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
 import { ACOMPTE_TEXTE, acompteFormate, montantAcompte, POURCENT_ACOMPTE } from "@/lib/acompte";
 import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
 import { MAX_PRESTATIONS, nomsPrestations, totaux } from "@/lib/selection";
+import { parCategorie } from "@/lib/categories";
 
 /** Temps laissé à la cliente pour payer (identique au serveur, voir acompte.server.ts). */
 const DELAI_PAIEMENT_AFFICHE = 30;
@@ -58,6 +59,7 @@ type Prestation = {
   id: string;
   nom: string;
   description: string;
+  categorie: string;
   duree_minutes: number;
   prix: number;
   couleur: string;
@@ -274,43 +276,52 @@ function ReserverPage() {
   const etapes = ["Prestation", "Date & heure", "Coordonnées", "Confirmation"];
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-8 sm:px-6 sm:pt-14">
       <header className="mb-8 text-center">
         <p className="eyebrow">Prise de rendez-vous</p>
-        <h1 className="mt-2 font-display text-3xl text-ink sm:text-4xl">Réserver en ligne</h1>
-        <p className="mx-auto mt-3 max-w-xl text-sm text-taupe">
+        <h1 className="mt-3 font-display text-5xl leading-none text-ink sm:text-6xl">
+          Réserver en ligne
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-sm text-taupe">
           Quatre étapes, deux minutes. Maria confirme ensuite votre rendez-vous. {ACOMPTE_TEXTE}
         </p>
       </header>
 
-      <ol className="mb-8 flex items-center justify-between gap-1">
-        {etapes.map((label, i) => {
-          const n = i + 1;
-          const fait = etape > n;
-          return (
-            <li key={label} className="flex flex-1 flex-col items-center gap-2 text-center">
-              <span
+      <div className="carte mb-8 p-4">
+        <div className="h-1.5 overflow-hidden rounded-full bg-sand">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-sage to-emerald transition-[width] duration-700 ease-out"
+            style={{ width: `${(etape / etapes.length) * 100}%` }}
+          />
+        </div>
+        <ol className="mt-3 grid grid-cols-4 gap-1 text-center">
+          {etapes.map((label, i) => {
+            const n = i + 1;
+            return (
+              <li
+                key={label}
                 className={cn(
-                  "grid size-8 place-items-center rounded-full border font-mono text-[11px]",
-                  etape === n && "border-ink bg-ink text-porcelain",
-                  fait && "border-ink/30 bg-ink/10 text-ink",
-                  etape < n && "border-border text-taupe",
+                  "flex flex-col items-center gap-1 text-[11px] leading-tight sm:flex-row sm:justify-center sm:gap-2 sm:text-xs",
+                  etape >= n ? "text-ink" : "text-taupe/70",
                 )}
+                aria-current={etape === n ? "step" : undefined}
               >
-                {fait ? <Check className="size-4" /> : n}
-              </span>
-              <span
-                className={cn(
-                  "font-mono text-[9px] uppercase tracking-widest",
-                  etape === n ? "text-ink" : "text-taupe",
-                )}
-              >
-                {label}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+                <span
+                  className={cn(
+                    "grid size-6 place-items-center rounded-full text-[11px] font-semibold transition-colors",
+                    etape > n && "bg-sage-soft text-emerald",
+                    etape === n && "bg-emerald text-porcelain",
+                    etape < n && "border border-border",
+                  )}
+                >
+                  {etape > n ? <Check className="size-3.5" strokeWidth={2} /> : n}
+                </span>
+                <span className={cn(etape === n && "font-semibold")}>{label}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
 
       {/* ÉTAPE 1 — PRESTATION */}
       {etape === 1 && (
@@ -330,68 +341,85 @@ function ReserverPage() {
                 Choisissez une ou plusieurs prestations (par exemple une dépose et une nouvelle
                 pose) : les prix et les durées s'additionnent.
               </p>
-              {prestations.map((p) => {
-                const choisie = selection.some((x) => x.id === p.id);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    aria-pressed={choisie}
-                    onClick={() => basculer(p)}
-                    className={cn(
-                      "flex w-full items-start gap-4 rounded-sm border p-5 text-left transition-colors",
-                      choisie
-                        ? "border-ink bg-linen/40"
-                        : "border-border bg-card hover:border-ink/40",
-                    )}
-                  >
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "mt-1 grid size-5 shrink-0 place-items-center rounded-sm border",
-                        choisie
-                          ? "border-ink bg-ink text-porcelain"
-                          : "border-border bg-background",
-                      )}
-                    >
-                      {choisie && <Check className="size-3.5" />}
-                    </span>
-                    <span className="flex-1">
-                      <span className="block font-display text-lg text-ink">{p.nom}</span>
-                      {p.description && (
-                        <span className="mt-1 block text-sm text-taupe">{p.description}</span>
-                      )}
-                      <span className="mt-2 block font-mono text-[11px] uppercase tracking-widest text-taupe">
-                        {formatDuree(p.duree_minutes)} · {formatEuros(p.prix)}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
+              {parCategorie(prestations).map(({ categorie, liste }) => (
+                <div key={categorie} className="space-y-2 pt-3">
+                  <h2 className="px-1 font-display text-2xl text-ink">{categorie}</h2>
+                  {liste.map((p) => {
+                    const choisie = selection.some((x) => x.id === p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        aria-pressed={choisie}
+                        onClick={() => basculer(p)}
+                        className={cn(
+                          "flex w-full items-center gap-4 rounded-[1.4rem] border p-4 text-left transition-all duration-300 sm:p-5",
+                          choisie
+                            ? "border-emerald bg-sage-soft/70 shadow-[0_16px_40px_-28px_rgba(20,80,60,0.6)]"
+                            : "border-border bg-porcelain/70 hover:border-emerald/40",
+                        )}
+                      >
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "grid size-6 shrink-0 place-items-center rounded-full border transition-colors",
+                            choisie
+                              ? "border-emerald bg-emerald text-porcelain"
+                              : "border-ink/20 bg-porcelain",
+                          )}
+                        >
+                          {choisie && <Check className="size-3.5" strokeWidth={2.2} />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-semibold text-ink">{p.nom}</span>
+                          {p.description && (
+                            <span className="mt-0.5 block text-sm leading-snug text-taupe">
+                              {p.description}
+                            </span>
+                          )}
+                          <span className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-taupe">
+                            <Clock className="size-3.5" strokeWidth={1.5} />
+                            {formatDuree(p.duree_minutes)}
+                          </span>
+                        </span>
+                        <span className="shrink-0 font-display text-2xl text-ink">
+                          {formatEuros(p.prix)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
 
               {/* Total de la sélection, toujours visible en bas de l'écran */}
-              <div className="sticky bottom-24 z-10 rounded-sm border border-ink/20 bg-card p-4 shadow-[0_20px_50px_-30px_rgba(28,25,23,0.45)] md:bottom-4">
+              <div className="fond-emeraude sticky bottom-3 z-10 mt-4 rounded-[1.75rem] p-5 shadow-[0_24px_60px_-24px_rgba(15,50,40,0.7)]">
                 {selection.length === 0 ? (
-                  <p className="text-sm text-taupe">Aucune prestation choisie pour le moment.</p>
+                  <p className="text-sm text-porcelain/80">
+                    Touchez une ou plusieurs prestations pour composer votre rendez-vous.
+                  </p>
                 ) : (
-                  <>
-                    <p className="text-sm text-ink">{noms}</p>
-                    <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-taupe">
-                      {selection.length} prestation{selection.length > 1 ? "s" : ""} · durée totale{" "}
-                      {formatDuree(total.duree)} · total {formatEuros(total.prix)}
+                  <div className="flex items-end justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-porcelain/80">{noms}</p>
+                      <p className="mt-1 text-xs text-porcelain/60">
+                        {selection.length} prestation{selection.length > 1 ? "s" : ""} ·{" "}
+                        {formatDuree(total.duree)} · acompte {acompteFormate(total.prix)} (
+                        {POURCENT_ACOMPTE} %)
+                      </p>
+                    </div>
+                    <p className="shrink-0 font-display text-4xl leading-none text-porcelain">
+                      {formatEuros(total.prix)}
                     </p>
-                    <p className="mt-1 text-sm text-taupe">
-                      Acompte ({POURCENT_ACOMPTE} %) : {acompteFormate(total.prix)}
-                    </p>
-                  </>
+                  </div>
                 )}
                 <button
                   type="button"
                   disabled={selection.length === 0}
                   onClick={() => setEtape(2)}
-                  className="mt-3 w-full rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-40"
+                  className="btn-primaire mt-4 w-full !bg-none !bg-porcelain !text-emerald-deep"
                 >
                   Continuer
+                  <ChevronRight className="size-4" strokeWidth={1.8} />
                 </button>
               </div>
             </>
@@ -402,14 +430,14 @@ function ReserverPage() {
       {/* ÉTAPE 2 — DATE & HEURE */}
       {etape === 2 && selection.length > 0 && (
         <section aria-label="Choix de la date et de l'heure" className="space-y-6">
-          <div className="rounded-sm border border-border bg-linen/40 p-4 text-sm">
+          <div className="rounded-[1.4rem] bg-sage-soft/60 p-4 text-sm">
             <p className="text-ink">{noms}</p>
             <p className="mt-1 text-taupe">
               Durée totale {formatDuree(total.duree)} · {formatEuros(total.prix)} — les créneaux
               proposés tiennent compte de la durée totale.
             </p>
           </div>
-          <div className="rounded-sm border border-border bg-card p-4 sm:p-6">
+          <div className="carte p-4 sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <button
                 type="button"
@@ -420,7 +448,7 @@ function ReserverPage() {
                   const d = new Date(Date.UTC(y, m - 2, 1));
                   setMois(d.toISOString().slice(0, 7));
                 }}
-                className="grid size-9 place-items-center rounded-sm border border-border disabled:opacity-30"
+                className="grid size-9 place-items-center rounded-2xl border border-border disabled:opacity-30"
               >
                 <ChevronLeft className="size-4" />
               </button>
@@ -436,13 +464,13 @@ function ReserverPage() {
                   const d = new Date(Date.UTC(y, m, 1));
                   setMois(d.toISOString().slice(0, 7));
                 }}
-                className="grid size-9 place-items-center rounded-sm border border-border disabled:opacity-30"
+                className="grid size-9 place-items-center rounded-2xl border border-border disabled:opacity-30"
               >
                 <ChevronRight className="size-4" />
               </button>
             </div>
 
-            <div className="mb-2 grid grid-cols-7 gap-1 text-center font-mono text-[10px] uppercase text-taupe">
+            <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[10px] uppercase text-taupe">
               {JOURS.map((j, i) => (
                 <span key={i}>{j}</span>
               ))}
@@ -461,9 +489,9 @@ function ReserverPage() {
                     }
                     onClick={() => setDate(jour)}
                     className={cn(
-                      "aspect-square rounded-sm border text-sm transition-colors",
+                      "aspect-square rounded-full border text-sm transition-colors",
                       date === jour
-                        ? "border-ink bg-ink text-porcelain"
+                        ? "border-emerald bg-emerald text-porcelain"
                         : (dispoMois[jour] ?? 0) > 0
                           ? "border-border bg-background text-ink hover:border-ink/50"
                           : "border-transparent text-taupe/40",
@@ -483,7 +511,7 @@ function ReserverPage() {
           </div>
 
           {date && (
-            <div className="rounded-sm border border-border bg-card p-4 sm:p-6">
+            <div className="carte p-4 sm:p-6">
               <p className="mb-3 font-display text-lg text-ink">
                 {parisLongDate(`${date}T12:00:00Z`)}
               </p>
@@ -504,9 +532,9 @@ function ReserverPage() {
                       type="button"
                       onClick={() => setHeure(c)}
                       className={cn(
-                        "rounded-sm border py-2.5 text-sm transition-colors",
+                        "rounded-full border py-2.5 text-sm transition-colors",
                         heure === c
-                          ? "border-ink bg-ink text-porcelain"
+                          ? "border-emerald bg-emerald text-porcelain"
                           : "border-border hover:border-ink/50",
                       )}
                     >
@@ -524,18 +552,14 @@ function ReserverPage() {
           </p>
 
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setEtape(1)}
-              className="rounded-sm border border-border px-5 py-3 font-mono text-[11px] uppercase tracking-widest"
-            >
+            <button type="button" onClick={() => setEtape(1)} className="btn-secondaire">
               Retour
             </button>
             <button
               type="button"
               disabled={!heure}
               onClick={() => setEtape(3)}
-              className="flex-1 rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-40"
+              className="btn-primaire flex-1"
             >
               Continuer
             </button>
@@ -546,7 +570,7 @@ function ReserverPage() {
       {/* ÉTAPE 3 — COORDONNÉES */}
       {etape === 3 && selection.length > 0 && date && heure && (
         <section aria-label="Vos coordonnées" className="space-y-6">
-          <div className="rounded-sm border border-border bg-linen/40 p-5">
+          <div className="fond-aurore rounded-[1.75rem] p-6">
             <p className="font-display text-lg text-ink">
               {parisLongDate(`${date}T12:00:00Z`)} à {heure}
             </p>
@@ -579,7 +603,7 @@ function ReserverPage() {
               </p>
             )}
             {paiement.modeTest && (
-              <p className="mt-2 rounded-sm border border-border bg-card p-3 text-xs text-taupe">
+              <p className="mt-2 rounded-2xl border border-border bg-card p-3 text-xs text-taupe">
                 Mode test : aucun paiement réel n'est encaissé. Carte de test : 4242 4242 4242 4242,
                 date future, code 123.
               </p>
@@ -611,7 +635,7 @@ function ReserverPage() {
                     autoComplete={f.autoComplete}
                     value={form[f.id as "prenom"]}
                     onChange={(e) => setForm((s) => ({ ...s, [f.id]: e.target.value }))}
-                    className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm"
+                    className="w-full rounded-2xl border border-border bg-porcelain/80 px-4 py-3 text-sm"
                   />
                 </div>
               ))}
@@ -627,7 +651,7 @@ function ReserverPage() {
                 maxLength={1000}
                 value={form.commentaire}
                 onChange={(e) => setForm((s) => ({ ...s, commentaire: e.target.value }))}
-                className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm"
+                className="w-full rounded-2xl border border-border bg-porcelain/80 px-4 py-3 text-sm"
               />
             </div>
 
@@ -652,18 +676,10 @@ function ReserverPage() {
             </label>
 
             <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setEtape(2)}
-                className="rounded-sm border border-border px-5 py-3 font-mono text-[11px] uppercase tracking-widest"
-              >
+              <button type="button" onClick={() => setEtape(2)} className="btn-secondaire">
                 Retour
               </button>
-              <button
-                type="submit"
-                disabled={envoi}
-                className="flex flex-1 items-center justify-center gap-2 rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain disabled:opacity-60"
-              >
+              <button type="submit" disabled={envoi} className="btn-primaire flex-1">
                 {envoi && <Loader2 className="size-4 animate-spin" />}
                 {envoi
                   ? "Enregistrement…"
@@ -690,7 +706,7 @@ function ReserverPage() {
             </p>
           </div>
 
-          <div className="mx-auto max-w-md rounded-sm border border-border bg-linen/40 p-5 text-left">
+          <div className="mx-auto max-w-md fond-aurore rounded-[1.75rem] p-6 text-left">
             <p className="font-display text-lg text-ink">{confirmation.prestation}</p>
             <p className="mt-1 text-sm text-taupe">
               {parisLongDate(confirmation.dateDebut)} à {parisTime(confirmation.dateDebut)}
@@ -710,14 +726,11 @@ function ReserverPage() {
               href={lienCalendrier}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-sm border border-border px-5 py-3 font-mono text-[11px] uppercase tracking-widest"
+              className="btn-secondaire"
             >
               Ajouter à mon calendrier
             </a>
-            <Link
-              to="/"
-              className="rounded-sm bg-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-porcelain"
-            >
+            <Link to="/" className="btn-primaire">
               Retour à l'accueil
             </Link>
           </div>
