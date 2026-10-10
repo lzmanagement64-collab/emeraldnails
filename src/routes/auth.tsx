@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +28,13 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const activerAcces = useServerFn(reclamerAccesAdmin);
+
+  // Déjà connectée : direction l'espace de gestion (qui vérifie toujours le compte).
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/admin", replace: true });
+    });
+  }, [navigate]);
 
   const apresConnexion = async () => {
     try {
