@@ -1,71 +1,81 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
 import { business } from "@/config/business";
+import { DEROULEMENT, SAVOIR_FAIRE } from "@/data/savoir-faire";
+import { galleryItems } from "@/data/gallery";
 
 export const Route = createFileRoute("/a-propos")({
-  component: AProposPage,
+  component: SavoirFairePage,
   head: () => ({
     meta: [
-      { title: "L'atelier — Emerald Beauty" },
+      { title: "Savoir-faire — Emerald Beauty" },
       {
         name: "description",
-        content: `Découvrez l'univers et l'approche de ${business.founder}, prothésiste ongulaire à ${business.city}.`,
+        content: `Le savoir-faire d'${business.name}, prothésiste ongulaire à ${business.city} : écoute, précision et soin de l'ongle naturel.`,
       },
-      { property: "og:title", content: "L'atelier" },
+      { property: "og:title", content: "Savoir-faire — Emerald Beauty" },
       { property: "og:url", content: "/a-propos" },
     ],
     links: [{ rel: "canonical", href: "/a-propos" }],
   }),
 });
 
-function AProposPage() {
+// Texte volontairement neutre : aucune information sur le parcours, les diplômes
+// ou l'expérience tant qu'elle n'a pas été fournie et validée par la gérante.
+function SavoirFairePage() {
+  const photo = galleryItems[0];
   return (
-    <Section eyebrow="L'atelier" title={`Rencontre avec ${business.founder}`}>
-      <div className="grid gap-12 md:grid-cols-[1fr_1.3fr] md:items-start">
-        <div
-          className="aspect-[3/4] w-full rounded-sm border border-border"
-          style={{ background: "linear-gradient(135deg, #ede6d8, #b8ac97)" }}
-          aria-label={`Portrait de ${business.founder}`}
-        />
-        <div className="space-y-5 text-taupe">
-          <p className="font-display text-2xl italic text-ink">
-            « L'ongle soigné est un détail qui change tout. Il révèle une élégance discrète,
-            quotidienne. »
-          </p>
-          <p>
-            Passionnée par le geste précis et l'esthétique naturelle, {business.founder} a fondé{" "}
-            {business.name} pour offrir un accompagnement sur-mesure loin de l'industrialisation des
-            salons classiques.
-          </p>
-          <p>
-            Formée à la manucure russe et diplômée d'onglerie, elle place la santé de l'ongle au
-            cœur de chaque rendez-vous. Chaque cliente bénéficie d'un temps d'échange avant la
-            prestation pour définir ensemble la forme, la longueur et l'univers souhaité.
-          </p>
-          <div className="grid grid-cols-3 gap-6 border-y border-border py-6">
-            {[
-              { k: "6 ans", v: "d'expérience" },
-              { k: "1 800+", v: "poses réalisées" },
-              { k: "100 %", v: "sur rendez-vous" },
-            ].map((s) => (
-              <div key={s.k}>
-                <p className="font-display text-2xl text-ink">{s.k}</p>
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-taupe">
-                  {s.v}
-                </p>
-              </div>
-            ))}
+    <>
+      <Section eyebrow="Savoir-faire" title={`${business.name}, prothésiste ongulaire`}>
+        <div className="grid gap-12 md:grid-cols-[1fr_1.3fr] md:items-start">
+          <div className="aspect-[3/4] w-full overflow-hidden rounded-sm border border-border bg-linen">
+            {photo && (
+              <img src={photo.image} alt={photo.title} className="h-full w-full object-cover" />
+            )}
           </div>
-          <div>
-            <Link
-              to="/reserver"
-              className="inline-block rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
-            >
-              Réserver un rendez-vous
-            </Link>
+          <div className="space-y-5 text-taupe">
+            <p>
+              {business.name} est l'établissement de {business.founder}, prothésiste ongulaire à{" "}
+              {business.city}. Les prestations sont réalisées sur rendez-vous, avec soin et dans le
+              respect de l'ongle naturel.
+            </p>
+            <p>
+              Chaque rendez-vous commence par un échange pour définir ensemble la forme, la longueur
+              et le style qui vous correspondent.
+            </p>
+            <ul className="space-y-4 border-y border-border py-6">
+              {SAVOIR_FAIRE.map((v) => (
+                <li key={v.title}>
+                  <p className="font-display text-lg text-ink">{v.title}</p>
+                  <p className="mt-1 text-sm">{v.text}</p>
+                </li>
+              ))}
+            </ul>
+            <div>
+              <Link
+                to="/reserver"
+                className="inline-block rounded-sm bg-ink px-7 py-4 font-mono text-[11px] uppercase tracking-widest text-porcelain"
+              >
+                Réserver un rendez-vous
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
-    </Section>
+      </Section>
+
+      <Section eyebrow="Le rendez-vous" title="Comment ça se passe" className="pt-0">
+        <ol className="grid gap-8 md:grid-cols-4">
+          {DEROULEMENT.map((step) => (
+            <li key={step.n} className="border-t border-border pt-5">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-bordeaux">
+                {step.n}
+              </p>
+              <h3 className="mt-3 font-display text-xl text-ink">{step.t}</h3>
+              <p className="mt-2 text-sm text-taupe">{step.d}</p>
+            </li>
+          ))}
+        </ol>
+      </Section>
+    </>
   );
 }

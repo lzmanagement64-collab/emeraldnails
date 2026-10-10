@@ -22,13 +22,13 @@ export const Route = createFileRoute("/paiement")({
       {
         name: "description",
         content:
-          "Réglez l'acompte de 20 % de votre rendez-vous Emerald Beauty en carte bancaire, Apple Pay ou PayPal. Paiement chiffré, aucune donnée bancaire stockée par le studio.",
+          "Réglez l'acompte de 30 % de votre rendez-vous Emerald Beauty en carte bancaire, Apple Pay ou PayPal. Paiement chiffré, aucune donnée bancaire stockée par Emerald Beauty.",
       },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Paiement sécurisé — Emerald Beauty" },
       {
         property: "og:description",
-        content: "Acompte de 20 % en carte bancaire, Apple Pay ou PayPal — paiement chiffré.",
+        content: "Acompte de 30 % en carte bancaire, Apple Pay ou PayPal — paiement chiffré.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -87,7 +87,7 @@ function PaymentPage() {
       <Section
         eyebrow="Étape finale"
         title="Paiement sécurisé de l'acompte"
-        description="Carte bancaire, Apple Pay, Google Pay ou PayPal. Le paiement est traité sur une page chiffrée de notre prestataire bancaire : le studio ne voit ni ne conserve vos coordonnées bancaires."
+        description="Carte bancaire, Apple Pay, Google Pay ou PayPal. Le paiement est traité sur une page chiffrée de notre prestataire bancaire : Emerald Beauty ne voit ni ne conserve vos coordonnées bancaires."
         as="h1"
       >
         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -113,7 +113,7 @@ function PaymentPage() {
             {!loading && summary?.depositStatus === "paid" && (
               <div className="space-y-2 text-sm text-taupe">
                 <p className="font-display text-xl text-ink">Acompte déjà réglé</p>
-                <p>Votre rendez-vous est confirmé. À très vite au studio !</p>
+                <p>Votre rendez-vous est confirmé. À très vite !</p>
               </div>
             )}
 

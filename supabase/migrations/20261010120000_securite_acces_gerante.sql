@@ -6,7 +6,7 @@
 -- ============================================================
 
 -- 1) Le rôle « admin » / « staff » ne compte QUE pour le compte
---    emeraldnails@outlook.fr, adresse confirmée. Toutes les règles
+--    mariachtioui@outlook.fr, adresse confirmée. Toutes les règles
 --    d'accès passent par has_role() : tout autre compte, même porteur
 --    d'un rôle en base, ne peut plus rien lire ni modifier.
 CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role)
@@ -22,7 +22,7 @@ AS $$
     JOIN auth.users u ON u.id = ur.user_id
     WHERE ur.user_id = _user_id
       AND ur.role = _role
-      AND lower(u.email) = 'emeraldnails@outlook.fr'
+      AND lower(u.email) = 'mariachtioui@outlook.fr'
       AND u.email_confirmed_at IS NOT NULL
   );
 $$;

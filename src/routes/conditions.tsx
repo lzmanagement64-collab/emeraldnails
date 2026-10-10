@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Section } from "@/components/site/Section";
 import { business } from "@/config/business";
+import { ACOMPTE_TEXTE } from "@/lib/acompte";
 
 export const Route = createFileRoute("/conditions")({
   component: () => (
@@ -14,6 +15,8 @@ export const Route = createFileRoute("/conditions")({
           Toute demande de rendez-vous est confirmée par email ou SMS après validation manuelle. Un
           délai minimum de {business.bookingRules.minLeadHours}h est nécessaire.
         </p>
+        <h3 className="font-display text-xl text-ink">Acompte</h3>
+        <p>{ACOMPTE_TEXTE} Il est déduit du montant total le jour de la prestation.</p>
         <h3 className="font-display text-xl text-ink">Annulation</h3>
         <p>
           Une annulation ou modification doit être effectuée au moins 24h avant le rendez-vous.

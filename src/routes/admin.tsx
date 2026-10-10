@@ -186,9 +186,7 @@ function AdminPage() {
     setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, statut } : r)));
     try {
       await changerStatut({ data: { id, statut } });
-      toast.success(
-        statut === "confirmee" ? "Rendez-vous confirmé, email envoyé." : "Statut mis à jour.",
-      );
+      toast.success(statut === "confirmee" ? "Rendez-vous confirmé." : "Statut mis à jour.");
     } catch (e) {
       toast.error((e as Error).message || "Mise à jour impossible");
     }

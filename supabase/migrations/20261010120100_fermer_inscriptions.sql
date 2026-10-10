@@ -1,6 +1,6 @@
 -- ============================================================
 -- SÉCURITÉ — création de comptes fermée.
--- Le seul compte utile (emeraldnails@outlook.fr) existe déjà.
+-- Le seul compte utile (mariachtioui@outlook.fr) existe déjà.
 -- Toute nouvelle inscription est refusée par la base elle-même,
 -- même si quelqu'un contourne le site.
 --

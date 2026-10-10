@@ -132,10 +132,7 @@ function AuthPage() {
           )}
         </div>
 
-        <p className="mt-6 text-xs text-taupe">
-          Accès réservé. Les tentatives de connexion sont journalisées et les données clientes
-          restent chiffrées et inaccessibles sans autorisation.
-        </p>
+        <p className="mt-6 text-xs text-taupe">Accès réservé à la gérante.</p>
       </div>
     </div>
   );

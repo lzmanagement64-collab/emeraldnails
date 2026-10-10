@@ -32,7 +32,7 @@ function ContactPage() {
       <Section
         eyebrow="Contact"
         title="Parlons de vos ongles"
-        description={`Une question sur une prestation, un devis nail art ou un événement ? Écrivez-nous, réponse sous 24 h ouvrées.`}
+        description={`Une question sur une prestation, un devis nail art ou un événement ? Écrivez-nous, nous revenons vers vous dès que possible.`}
       >
         <div className="grid gap-10 md:grid-cols-[1fr_1.1fr]">
           <div className="space-y-6 text-sm">

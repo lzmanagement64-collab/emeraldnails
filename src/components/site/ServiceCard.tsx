@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { PrestationPublique } from "@/lib/site-data";
+import { acompteFormate, POURCENT_ACOMPTE } from "@/lib/acompte";
 
 export function ServiceCard({ service }: { service: PrestationPublique }) {
   return (
@@ -10,6 +11,9 @@ export function ServiceCard({ service }: { service: PrestationPublique }) {
           <span className="font-mono text-sm text-bordeaux">{service.prix} €</span>
         </div>
         <p className="text-sm text-taupe">{service.description}</p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-bordeaux">
+          Acompte {acompteFormate(service.prix)} ({POURCENT_ACOMPTE} %) pour valider le rendez-vous
+        </p>
       </div>
       <div className="flex items-center justify-between border-t border-border pt-4">
         <span className="font-mono text-[10px] uppercase tracking-widest text-taupe">

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { business } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
+import { ACOMPTE_TEXTE, acompteFormate, POURCENT_ACOMPTE } from "@/lib/acompte";
 import { cn } from "@/lib/utils";
 import {
   listPrestations,
@@ -33,13 +34,13 @@ export const Route = createFileRoute("/reserver")({
       {
         name: "description",
         content:
-          "Réservez votre rendez-vous ongles en ligne chez Emerald Beauty à Lons (64) : choisissez votre prestation, votre créneau et recevez votre confirmation par email.",
+          "Réservez votre rendez-vous ongles en ligne chez Emerald Beauty à Lons (64) : choisissez votre prestation et votre créneau, Maria confirme ensuite votre rendez-vous.",
       },
       { property: "og:title", content: "Réserver en ligne — Emerald Beauty" },
       {
         property: "og:description",
         content:
-          "Prise de rendez-vous en ligne en 4 étapes chez Emerald Beauty, studio d'ongles à Lons.",
+          "Prise de rendez-vous en ligne en 4 étapes chez Emerald Beauty, prothésiste ongulaire à Lons.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -245,8 +246,7 @@ function ReserverPage() {
         <p className="eyebrow">Prise de rendez-vous</p>
         <h1 className="mt-2 font-display text-3xl text-ink sm:text-4xl">Réserver en ligne</h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-taupe">
-          Quatre étapes, deux minutes. Vous recevez un email récapitulatif immédiatement, puis la
-          confirmation définitive de Maria.
+          Quatre étapes, deux minutes. Maria confirme ensuite votre rendez-vous. {ACOMPTE_TEXTE}
         </p>
       </header>
 
@@ -474,6 +474,10 @@ function ReserverPage() {
               {parisLongDate(`${date}T12:00:00Z`)} à {heure} ·{" "}
               {formatDuree(prestation.duree_minutes)} · {formatEuros(prestation.prix)}
             </p>
+            <p className="mt-2 text-sm text-ink">
+              Acompte pour valider le rendez-vous : {acompteFormate(prestation.prix)} (
+              {POURCENT_ACOMPTE} %), déduit du montant total.
+            </p>
           </div>
 
           <form
@@ -571,8 +575,8 @@ function ReserverPage() {
           <div>
             <h2 className="font-display text-2xl text-ink">Demande enregistrée</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-taupe">
-              Un email récapitulatif vient de vous être envoyé à <strong>{form.email}</strong>.
-              Maria vous adresse la confirmation définitive très rapidement.
+              Votre demande a bien été transmise. Maria vous contacte pour confirmer le rendez-vous.{" "}
+              {ACOMPTE_TEXTE}
             </p>
           </div>
 
@@ -583,6 +587,9 @@ function ReserverPage() {
             </p>
             <p className="mt-1 text-sm text-taupe">
               {formatDuree(confirmation.dureeMinutes)} · {formatEuros(confirmation.prix)}
+            </p>
+            <p className="mt-1 text-sm text-ink">
+              Acompte : {acompteFormate(confirmation.prix)} ({POURCENT_ACOMPTE} %)
             </p>
             <p className="mt-3 text-sm text-taupe">{business.address}</p>
           </div>

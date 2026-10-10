@@ -10,7 +10,8 @@ export const business = {
   siteUrl: SITE_URL,
   name: "Emerald Beauty",
   tagline: "L'art de sublimer chaque instant.",
-  shortDescription: "Studio d'ongles à Lons — extension gel, Gel X et nail art signés Maria.",
+  shortDescription:
+    "Prothésiste ongulaire à Lons — semi-permanent, renforcement, extension gel, Gel X et nail art.",
   founder: "Maria",
   city: "Lons",
   address: "7 Imp. d'Ossau, 64140 Lons",
@@ -23,7 +24,7 @@ export const business = {
   ownerEmail: "emeraldnails@outlook.fr",
   // Liste blanche des comptes autorisés à accéder à l'administration.
   // La vérification réelle est faite côté serveur (voir admin-guard.server.ts).
-  adminEmails: ["emeraldnails@outlook.fr"],
+  adminEmails: ["mariachtioui@outlook.fr"],
   instagram: "@emerald.beauty64",
   instagramUrl: "https://instagram.com/emerald.beauty64",
   googleBusinessUrl: "https://www.google.com/maps/search/?api=1&query=7+Imp.+d%27Ossau+64140+Lons",
@@ -34,7 +35,7 @@ export const business = {
     maxAdvanceDays: 60,
     slotStepMinutes: 30,
     bufferMinutes: 15,
-    depositRate: 0.2,
+    depositRate: 0.3,
   },
   serviceArea: ["Pau", "Lons", "Billère", "Jurançon", "Lescar", "Bizanos", "Idron", "Gan"],
 } as const;

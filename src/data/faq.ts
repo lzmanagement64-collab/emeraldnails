@@ -1,7 +1,7 @@
 export const faq = [
   {
     q: "Combien de temps dure une pose ?",
-    a: "Une pose complète dure environ 1h45. Un semi-permanent, environ 1h. Les temps affichés dans les prestations sont indicatifs et peuvent varier selon la complexité demandée.",
+    a: "La durée de chaque prestation est indiquée sur la page Prestations. Elle est indicative et peut varier selon la complexité demandée.",
   },
   {
     q: "Comment préparer mes ongles avant le rendez-vous ?",
@@ -10,6 +10,10 @@ export const faq = [
   {
     q: "Comment choisir la bonne prestation ?",
     a: "En cas de doute, sélectionnez la prestation la plus proche et décrivez votre besoin dans le commentaire. Nous ajusterons ensemble sur place.",
+  },
+  {
+    q: "Faut-il verser un acompte ?",
+    a: "Oui. Un acompte de 30 % du montant de la prestation est demandé pour valider le rendez-vous. Il est déduit du montant total le jour de la prestation.",
   },
   {
     q: "Quelles sont les conditions d’annulation ?",
@@ -21,7 +25,7 @@ export const faq = [
   },
   {
     q: "Puis-je venir accompagnée ?",
-    a: "Le studio est un espace confidentiel et calme. Merci de venir seule dans la mesure du possible.",
+    a: "Pour que la prestation se déroule dans le calme, merci de venir seule dans la mesure du possible.",
   },
   {
     q: "Quels moyens de paiement acceptez-vous ?",

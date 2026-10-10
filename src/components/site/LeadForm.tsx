@@ -42,7 +42,7 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
         },
       });
       setDone(true);
-      toast.success("Message envoyé — réponse sous 24 h ouvrées.");
+      toast.success("Message envoyé — nous revenons vers vous dès que possible.");
     } catch (err) {
       const msg = (err as Error).message?.replace(/^Error:\s*/, "");
       // Messages lisibles seulement (pas les détails techniques de validation).
@@ -57,7 +57,7 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
       <div className="rounded-sm border border-border bg-card p-8 text-center">
         <p className="font-display text-xl text-ink">Merci !</p>
         <p className="mt-2 text-sm text-taupe">
-          Votre demande est bien enregistrée. Nous revenons vers vous sous 24 h ouvrées.
+          Votre demande est bien enregistrée. Nous revenons vers vous dès que possible.
         </p>
       </div>
     );
@@ -147,8 +147,8 @@ export function LeadForm({ type, submitLabel = "Envoyer", messagePlaceholder }: 
         {loading ? "Envoi…" : submitLabel}
       </button>
       <p className="text-xs text-taupe">
-        Vos données sont transmises de façon chiffrée, stockées en Europe et utilisées uniquement
-        pour répondre à votre demande. Aucune revente, aucun partage publicitaire.
+        Vos données sont transmises de façon chiffrée et utilisées uniquement pour répondre à votre
+        demande. Aucune revente, aucun partage publicitaire.
       </p>
     </form>
   );

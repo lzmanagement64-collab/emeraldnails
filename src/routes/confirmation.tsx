@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Check, Instagram } from "lucide-react";
 import { Section } from "@/components/site/Section";
 import { business } from "@/config/business";
+import { ACOMPTE_TEXTE } from "@/lib/acompte";
 
 const schema = z.object({
   service: z.string().optional(),
@@ -46,7 +47,7 @@ function Confirmation() {
         <p className="mx-auto mt-4 max-w-md text-taupe">
           {session_id
             ? "Votre paiement a bien été reçu : le créneau est réservé."
-            : "Votre demande de rendez-vous a bien été transmise. Vous recevrez une confirmation par email dès validation, sous quelques heures."}
+            : `Votre demande de rendez-vous a bien été transmise. ${ACOMPTE_TEXTE}`}
         </p>
 
         {(service || prettyDate || time) && (

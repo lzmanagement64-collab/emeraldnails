@@ -4,6 +4,7 @@
 // simplement journalisés : la réservation fonctionne quand même.
 // ============================================================
 import { business } from "@/config/business";
+import { acompteFormate, POURCENT_ACOMPTE } from "./acompte";
 import { parisLongDate, parisTime, formatEuros, formatDuree } from "./tz";
 
 type Envoi = { to: string; subject: string; html: string };
@@ -85,6 +86,7 @@ function recap(r: ReservationEmail) {
     <tr><td style="padding:16px 18px 6px;font-size:15px;color:${ENCRE};"><strong>${r.prestation}</strong></td></tr>
     <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">${parisLongDate(r.dateDebut)} à ${parisTime(r.dateDebut)}</td></tr>
     <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">Durée : ${formatDuree(r.dureeMinutes)} · Tarif : ${formatEuros(r.prix)}</td></tr>
+    <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">Acompte pour valider le rendez-vous : ${acompteFormate(r.prix)} (${POURCENT_ACOMPTE} %)</td></tr>
     <tr><td style="padding:0 18px 16px;font-size:14px;color:${TAUPE};">${business.address}</td></tr>
   </table>`;
 }
@@ -103,7 +105,7 @@ export async function emailDemandeCliente(r: ReservationEmail) {
       `Bonjour ${r.prenom}, votre demande est bien reçue`,
       `<p style="font-size:15px;line-height:1.8;">Merci pour votre confiance. Voici le récapitulatif de votre demande :</p>
        ${recap(r)}
-       <p style="font-size:15px;line-height:1.8;">Maria vous adresse la confirmation définitive très rapidement. Ce créneau vous est réservé en attendant.</p>
+       <p style="font-size:15px;line-height:1.8;">Maria vous confirmera votre rendez-vous. Ce créneau vous est réservé en attendant. Un acompte de ${POURCENT_ACOMPTE} % est demandé pour valider le rendez-vous.</p>
        ${phraseAnnulation(r)}`,
     ),
   });
@@ -115,7 +117,7 @@ export async function emailConfirmationCliente(r: ReservationEmail) {
     subject: "Rendez-vous confirmé",
     html: gabarit(
       `C'est confirmé, ${r.prenom} !`,
-      `<p style="font-size:15px;line-height:1.8;">Votre rendez-vous est validé. Nous avons hâte de vous accueillir à l'atelier.</p>
+      `<p style="font-size:15px;line-height:1.8;">Votre rendez-vous est validé. Nous avons hâte de vous accueillir.</p>
        ${recap(r)}
        <p style="font-size:15px;line-height:1.8;">Pensez à retirer tout vernis et à venir les mains propres, sans crème.</p>
        ${phraseAnnulation(r)}`,

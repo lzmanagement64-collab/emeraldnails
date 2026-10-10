@@ -1,5 +1,5 @@
 import { createFileRoute, getRouteApi, Link, notFound } from "@tanstack/react-router";
-import { MapPin, Clock, Star, ArrowRight } from "lucide-react";
+import { MapPin, Clock, ArrowRight } from "lucide-react";
 import { Section } from "@/components/site/Section";
 import { areas } from "@/data/areas";
 import { business, SITE_URL } from "@/config/business";
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/onglerie/$ville")({
     const area = loaderData?.area;
     if (!area) return {};
     const title = `Prothésiste ongulaire ${area.city} (${area.postalCode}) — Pose gel & nail art | ${business.name}`;
-    const description = `Onglerie près de ${area.city} : extension gel, Gel X, semi-permanent et nail art par Maria. Studio à Lons, à ${area.travelTime} de ${area.city}. Réservation en ligne 24/7.`;
+    const description = `Onglerie près de ${area.city} : extension gel, Gel X, semi-permanent et nail art par Maria, prothésiste ongulaire à Lons, à ${area.travelTime} de ${area.city}. Réservation en ligne 24/7.`;
     const url = `${SITE_URL}/onglerie/${params.ville}`;
     return {
       meta: [
@@ -47,7 +47,6 @@ export const Route = createFileRoute("/onglerie/$ville")({
               addressCountry: "FR",
             },
             areaServed: { "@type": "City", name: area.city },
-            aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "10" },
           }),
         },
         {
@@ -109,8 +108,8 @@ function AreaPage() {
 
             <h2 className="pt-4 font-display text-2xl text-ink">Venir depuis {area.city}</h2>
             <p>
-              Le studio est situé au {business.address}, soit {area.distance} et environ{" "}
-              {area.travelTime} depuis {area.city}. Stationnement gratuit devant le studio.
+              Emerald Beauty se trouve au {business.address}, soit {area.distance} et environ{" "}
+              {area.travelTime} depuis {area.city}.
             </p>
             <ul className="flex flex-wrap gap-2">
               {area.landmarks.map((l: string) => (
@@ -122,10 +121,6 @@ function AreaPage() {
           </div>
 
           <aside className="h-fit space-y-5 rounded-sm border border-border bg-card p-6">
-            <div className="flex items-center gap-2 text-sm">
-              <Star className="size-4 text-gold" />
-              <span className="text-ink">4,8/5 — clientes de l'agglomération paloise</span>
-            </div>
             <div className="flex items-start gap-2 text-sm text-taupe">
               <MapPin className="mt-0.5 size-4 shrink-0" />
               <span>{business.address}</span>
