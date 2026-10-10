@@ -15,4 +15,4 @@ export const montantAcompte = (prix: number) => Math.round(Number(prix) * TAUX_A
 /** « 16,50 € » pour une prestation à 55 €. */
 export const acompteFormate = (prix: number) => formatEuros(montantAcompte(prix));
 
-export const ACOMPTE_TEXTE = `Un acompte de ${POURCENT_ACOMPTE} % du montant total du rendez-vous, réglé en ligne au moment de la réservation, valide le rendez-vous.`;
+export const ACOMPTE_TEXTE = `Un acompte de ${POURCENT_ACOMPTE} % du montant total du rendez-vous est réglé en ligne au moment de la réservation : il bloque votre créneau, puis Maria valide votre rendez-vous (sinon, l'acompte est remboursé intégralement).`;

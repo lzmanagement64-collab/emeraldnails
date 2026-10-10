@@ -188,6 +188,45 @@ export async function emailDemandeCliente(brut: ReservationEmail) {
   });
 }
 
+/** Après paiement de l'acompte : demande reçue, en attente de validation par Maria. */
+export async function emailAcomptePayeCliente(brut: ReservationEmail) {
+  const r = sur(brut);
+  return envoyerEmail({
+    to: brut.email,
+    subject: "Demande reçue, acompte payé",
+    html: gabarit(
+      `Merci ${r.prenom}, votre acompte est bien payé`,
+      `<p style="font-size:15px;line-height:1.8;">Votre demande de rendez-vous est bien reçue et votre acompte est réglé. Votre créneau est réservé.</p>
+       ${recap(r)}
+       <p style="font-size:15px;line-height:1.8;">Maria va maintenant valider votre rendez-vous : vous recevrez un e-mail de confirmation. Si elle ne pouvait pas vous recevoir, votre acompte vous serait remboursé intégralement.</p>
+       ${phraseAnnulation(r)}`,
+    ),
+  });
+}
+
+/** Rendez-vous refusé par Maria : explication et remboursement de l'acompte. */
+export async function emailRefusCliente(brut: ReservationEmail, rembourse: boolean) {
+  const r = sur(brut);
+  const acompte =
+    brut.acompteMontant != null && brut.acompteMontant > 0
+      ? rembourse
+        ? `<p style="font-size:15px;line-height:1.8;">Votre acompte de ${formatEuros(brut.acompteMontant)} vous est remboursé intégralement. Il apparaît en général sous 5 à 10 jours sur votre compte.</p>`
+        : `<p style="font-size:15px;line-height:1.8;">Votre acompte de ${formatEuros(brut.acompteMontant)} vous sera remboursé intégralement : Emerald Beauty s'en occupe.</p>`
+      : "";
+  return envoyerEmail({
+    to: brut.email,
+    subject: "Votre demande de rendez-vous",
+    html: gabarit(
+      `Bonjour ${r.prenom}`,
+      `<p style="font-size:15px;line-height:1.8;">Nous sommes désolées : Maria ne peut pas vous recevoir sur ce créneau.</p>
+       ${recap(r)}
+       ${acompte}
+       <p style="font-size:15px;line-height:1.8;">N'hésitez pas à choisir un autre créneau sur le site, ou à nous appeler au ${business.phoneDisplay} pour trouver ensemble une autre date.</p>`,
+      { url: `${siteUrl()}/reserver`, label: "Choisir un autre créneau" },
+    ),
+  });
+}
+
 export async function emailConfirmationCliente(brut: ReservationEmail) {
   const r = sur(brut);
   return envoyerEmail({
@@ -221,12 +260,17 @@ export async function emailNouvelleDemandeGerante(brut: ReservationEmail) {
   const r = sur(brut);
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `${brut.acompteStatut === "paye" ? "Nouveau rendez-vous, acompte payé" : "Nouvelle demande de rendez-vous"} — ${brut.prenom} ${brut.nom}`,
+    subject: `${brut.acompteStatut === "paye" ? "Acompte payé – à valider" : "Nouvelle demande de rendez-vous"} — ${brut.prenom} ${brut.nom}`,
     html: gabarit(
       r.acompteStatut === "paye"
-        ? "Nouveau rendez-vous (acompte payé)"
+        ? "Nouvelle demande : acompte payé, à valider"
         : "Nouvelle demande de rendez-vous",
-      `${recap(r)}
+      `${
+        r.acompteStatut === "paye"
+          ? `<p style="font-size:15px;line-height:1.8;">L'acompte est payé. Ouvrez le back-office pour <strong>valider</strong> le rendez-vous (la cliente reçoit sa confirmation) ou le <strong>refuser</strong> (l'acompte lui est remboursé intégralement).</p>`
+          : ""
+      }
+       ${recap(r)}
        <p style="font-size:14px;line-height:1.8;">
          <strong>${r.prenom} ${r.nom}</strong><br />
          ${r.telephone}<br />

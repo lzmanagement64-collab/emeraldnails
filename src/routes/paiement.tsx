@@ -119,11 +119,22 @@ function PaiementPage() {
                 <div className="mx-auto grid size-14 place-items-center rounded-full bg-ink/10">
                   <Check className="size-6 text-ink" />
                 </div>
-                <p className="font-display text-2xl text-ink">Rendez-vous confirmé</p>
+                <p className="font-display text-2xl text-ink">
+                  {etat.statut === "confirmee"
+                    ? "Rendez-vous confirmé"
+                    : "Acompte payé, demande reçue"}
+                </p>
                 <p className="text-sm text-taupe">
                   Acompte réglé : {formatEuros(etat.acompte ?? 0)}. Reste à régler sur place :{" "}
                   {formatEuros(reste ?? 0)}.
                 </p>
+                {etat.statut !== "confirmee" && (
+                  <p className="text-sm text-ink">
+                    Votre créneau est réservé. Maria va valider votre rendez-vous : vous recevrez un
+                    e-mail de confirmation. Si elle ne pouvait pas vous recevoir, votre acompte vous
+                    serait remboursé intégralement.
+                  </p>
+                )}
                 <p className="text-sm text-taupe">{ANNULATION_TEXTE}</p>
               </div>
             )}

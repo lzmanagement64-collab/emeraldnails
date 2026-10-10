@@ -124,6 +124,8 @@ function ReserverPage() {
   );
   const noms = nomsPrestations(lignes);
   const probleme = problemeSelection(selection);
+  // Acompte à payer en ligne (pas pour une sélection uniquement « sur devis »).
+  const payerEnLigne = paiement.actif && montantAcompte(total.prix) >= 0.5;
   const avecDevis = devisAFaire(selection);
 
   const aujourdhui = todayParisISO();
@@ -300,7 +302,7 @@ function ReserverPage() {
           Réserver en ligne
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-sm text-taupe">
-          Quatre étapes, deux minutes. Maria confirme ensuite votre rendez-vous. {ACOMPTE_TEXTE}
+          Quatre étapes, deux minutes. {ACOMPTE_TEXTE}
         </p>
       </header>
 
@@ -637,7 +639,7 @@ function ReserverPage() {
             )}
             <p className="mt-2 text-sm text-taupe">{ANNULATION_TEXTE}</p>
             <p className="mt-2 text-sm text-taupe">{REGLE_ACOMPTE_TEXTE}</p>
-            {paiement.actif && (
+            {payerEnLigne && (
               <p className="mt-2 text-sm text-taupe">
                 L'acompte se règle en ligne sur la page sécurisée de Stripe. Le créneau vous est
                 réservé {DELAI_PAIEMENT_AFFICHE} minutes le temps du paiement ; sans paiement, il
@@ -725,7 +727,7 @@ function ReserverPage() {
                 {envoi && <Loader2 className="size-4 animate-spin" />}
                 {envoi
                   ? "Enregistrement…"
-                  : paiement.actif
+                  : payerEnLigne
                     ? `Payer l'acompte de ${acompteFormate(total.prix)}`
                     : "Confirmer ma demande"}
               </button>
@@ -743,8 +745,7 @@ function ReserverPage() {
           <div>
             <h2 className="font-display text-2xl text-ink">Demande enregistrée</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-taupe">
-              Votre demande a bien été transmise. Maria vous contacte pour confirmer le rendez-vous.{" "}
-              {ACOMPTE_TEXTE}
+              Votre demande a bien été transmise. Maria vous contacte pour confirmer le rendez-vous.
             </p>
           </div>
 
