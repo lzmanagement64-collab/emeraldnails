@@ -1450,6 +1450,20 @@ function ReglagesPaiement() {
               Connexion à Stripe : {d.connexion.ok ? "réussie" : `refusée — ${d.connexion.erreur}`}
             </li>
           )}
+          <li className={d.clePublique === "ok" ? "text-ink" : "text-bordeaux"}>
+            Clé publiable (pour le paiement dans la page) :{" "}
+            {d.clePublique === "ok"
+              ? "trouvée"
+              : d.clePublique === "absente"
+                ? "absente : ajoutez STRIPE_PUBLISHABLE_KEY (pk_test_… en test) dans Lovable Cloud → Secrets"
+                : "format inattendu (elle commence par pk_)"}
+          </li>
+          {!d.memeMode && (
+            <li className="text-bordeaux">
+              Attention : la clé publiable et la clé secrète ne sont pas du même mode (test / réel).
+            </li>
+          )}
+          {d.relais && <li className="text-taupe">Relais Supabase : {d.relais}</li>}
           <li className={d.webhook === "ok" ? "text-ink" : "text-bordeaux"}>
             Secret du webhook :{" "}
             {d.webhook === "ok"
@@ -1473,7 +1487,12 @@ function ReglagesEmails() {
     erreur?: string;
     destinataire: string;
     expediteur: string;
-    secrets: { nom: string; present: boolean; nomApproximatif: boolean }[];
+    secrets: {
+      nom: string;
+      present: boolean;
+      source: "site" | "relais" | null;
+      nomApproximatif: boolean;
+    }[];
     adresseConsultee: string;
   } | null>(null);
 
@@ -1528,7 +1547,11 @@ function ReglagesEmails() {
                 >
                   <span className="font-medium text-ink">{x.nom}</span>
                   <span className={x.present ? "text-emerald" : "text-taupe"}>
-                    {x.present ? "trouvé" : "absent"}
+                    {x.present
+                      ? x.source === "relais"
+                        ? "trouvé (via Supabase)"
+                        : "trouvé"
+                      : "absent"}
                     {x.nomApproximatif && " (nom à corriger)"}
                   </span>
                 </li>

@@ -29,15 +29,30 @@ export function analyserCleStripe(cle: string): EtatCleStripe {
   return "inconnue";
 }
 
-/** Paiement en ligne actif ? Et en mode test ? (aucune clé n'est renvoyée) */
+/** Clé publiable (pk_…) : sans danger, nécessaire au module de paiement intégré. */
+export function clePublique() {
+  const cle = lireSecret("STRIPE_PUBLISHABLE_KEY");
+  return cle.startsWith("pk_") ? cle : "";
+}
+
+/**
+ * Paiement en ligne actif ? Et en mode test ? (aucune clé secrète n'est renvoyée)
+ * Appeler `await preparerSecrets()` avant.
+ */
 export function configPaiement() {
   const key = lireSecret("STRIPE_SECRET_KEY");
-  return { actif: analyserCleStripe(key) === "ok", modeTest: /^(sk|rk)_test_/.test(key) };
+  return {
+    actif: analyserCleStripe(key) === "ok" && !!clePublique(),
+    modeTest: /^(sk|rk)_test_/.test(key),
+  };
 }
 
 /** Diagnostic complet pour l'admin : format des secrets et connexion réelle à Stripe. */
 export async function diagnosticPaiement() {
+  const { preparerSecrets, etatRelaisSecrets } = await import("./secrets.server");
+  await preparerSecrets();
   const cle = lireSecret("STRIPE_SECRET_KEY");
+  const publique = lireSecret("STRIPE_PUBLISHABLE_KEY");
   const etatCle = analyserCleStripe(cle);
   const webhook = lireSecret("STRIPE_WEBHOOK_SECRET");
   let connexion: { ok: boolean; erreur?: string } | null = null;
@@ -53,7 +68,13 @@ export async function diagnosticPaiement() {
     etatCle,
     modeTest: /^(sk|rk)_test_/.test(cle),
     webhook: !webhook ? "absent" : webhook.startsWith("whsec_") ? "ok" : "format_inconnu",
+    clePublique: !publique ? "absente" : publique.startsWith("pk_") ? "ok" : "format_inconnu",
+    memeMode:
+      !publique || etatCle !== "ok"
+        ? true
+        : /^pk_test_/.test(publique) === /^(sk|rk)_test_/.test(cle),
     connexion,
+    relais: etatRelaisSecrets(),
   };
 }
 

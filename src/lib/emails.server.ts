@@ -11,7 +11,7 @@
 // ============================================================
 import { getRequest } from "@tanstack/react-start/server";
 import { adresseSite } from "./adresse-site.server";
-import { diagnosticSecrets, lireSecret } from "./secrets.server";
+import { diagnosticSecrets, lireSecret, preparerSecrets } from "./secrets.server";
 import { business } from "@/config/business";
 import { acompteFormate, POURCENT_ACOMPTE } from "./acompte";
 import { DELAI_ANNULATION_H } from "./annulation";
@@ -40,6 +40,7 @@ export async function envoyer({
   subject,
   html,
 }: Envoi): Promise<{ ok: boolean; erreur?: string }> {
+  await preparerSecrets();
   const key = lireSecret("RESEND_API_KEY");
   const from = expediteur();
   if (!key) {

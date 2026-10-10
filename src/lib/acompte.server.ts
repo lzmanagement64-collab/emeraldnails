@@ -45,12 +45,85 @@ export const finBlocageProvisoire = () => echeances().finBlocage;
 
 /** Passe en « annulée » les réservations provisoires non payées dans le délai. */
 export async function libererReservationsExpirees(admin: Admin) {
-  const { error } = await admin
+  const { data, error } = await admin
     .from("reservations")
     .update({ statut: "annulee", acompte_statut: "expire" })
     .eq("acompte_statut", "en_attente")
-    .lt("acompte_expire_le", new Date().toISOString());
+    .lt("acompte_expire_le", new Date().toISOString())
+    .select("stripe_payment_intent");
   if (error) console.error("[acompte] libération des créneaux expirés", error.message);
+  // Paiement intégré encore ouvert : il ne peut plus aboutir.
+  for (const r of data ?? []) await annulerIntention(r.stripe_payment_intent);
+}
+
+/** Annule un paiement intégré qui n'a pas abouti (créneau libéré, refus…). */
+export async function annulerIntention(id: string | null) {
+  if (!id) return;
+  await getStripe()
+    .paymentIntents.cancel(id)
+    .catch(() => undefined);
+}
+
+type RowIntention = {
+  id: string;
+  date_debut: string;
+  cliente_email: string;
+  acompte_montant: number | null;
+  stripe_payment_intent: string | null;
+  prestations_detail?: unknown;
+  prestations: { nom: string } | null;
+};
+
+/**
+ * Paiement intégré au site (Payment Element / Apple Pay / Google Pay) :
+ * renvoie la clé de paiement (client secret) de l'acompte de ce rendez-vous,
+ * en réutilisant le paiement en cours s'il est encore utilisable.
+ */
+export async function intentionPaiement(admin: Admin, row: RowIntention) {
+  const stripe = getStripe();
+  const centimes = Math.round(Number(row.acompte_montant ?? 0) * 100);
+  if (centimes < 50) throw new Error("Montant d'acompte invalide.");
+
+  if (row.stripe_payment_intent) {
+    const actuel = await stripe.paymentIntents.retrieve(row.stripe_payment_intent);
+    const reutilisable = [
+      "requires_payment_method",
+      "requires_confirmation",
+      "requires_action",
+      "processing",
+      "succeeded",
+    ].includes(actuel.status);
+    if (reutilisable && actuel.amount === centimes && actuel.client_secret) {
+      return { clientSecret: actuel.client_secret, statut: actuel.status };
+    }
+  }
+
+  const detail = Array.isArray(row.prestations_detail)
+    ? (row.prestations_detail as { nom: string }[])
+    : [];
+  const nom = detail.length
+    ? detail.map((l) => l.nom).join(" + ")
+    : (row.prestations?.nom ?? "Prestation");
+  const quand = `${parisLongDate(row.date_debut)} à ${parisTime(row.date_debut)}`;
+  const intent = await stripe.paymentIntents.create(
+    {
+      amount: centimes,
+      currency: "eur",
+      // Carte bancaire (CB, Visa, Mastercard) ; Apple Pay et Google Pay passent par la carte.
+      payment_method_types: ["card"],
+      receipt_email: row.cliente_email,
+      description: `Acompte ${POURCENT_ACOMPTE} % — ${nom} — ${quand} — ${business.name}`,
+      metadata: { reservationId: row.id },
+    },
+    { idempotencyKey: `acompte-${row.id}-${centimes}-${row.stripe_payment_intent ?? "1"}` },
+  );
+  const { error } = await admin
+    .from("reservations")
+    .update({ stripe_payment_intent: intent.id })
+    .eq("id", row.id);
+  if (error) throw new Error(error.message);
+  if (!intent.client_secret) throw new Error("Paiement indisponible.");
+  return { clientSecret: intent.client_secret, statut: intent.status };
 }
 
 type RowPaiement = {
@@ -152,6 +225,32 @@ type SessionStripe = {
 export async function enregistrerPaiement(admin: Admin, session: SessionStripe) {
   const id = session.metadata?.reservationId;
   if (!id || session.payment_status !== "paid") return;
+  const pi =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : (session.payment_intent?.id ?? null);
+  await enregistrerAcomptePaye(admin, {
+    reservationId: id,
+    paymentIntentId: pi,
+    montant: session.amount_total != null ? session.amount_total / 100 : null,
+    sessionId: session.id,
+  });
+}
+
+/**
+ * Acompte payé (paiement intégré au site, page Stripe ou webhook) :
+ * rendez-vous « Acompte payé – à valider », e-mails à la cliente et à Maria.
+ */
+export async function enregistrerAcomptePaye(
+  admin: Admin,
+  p: {
+    reservationId: string;
+    paymentIntentId: string | null;
+    montant: number | null;
+    sessionId?: string | null;
+  },
+) {
+  const id = p.reservationId;
   const { data: row } = await admin
     .from("reservations")
     .select(SELECT_AVEC_PRESTATION)
@@ -160,18 +259,14 @@ export async function enregistrerPaiement(admin: Admin, session: SessionStripe) 
   if (!row) return;
   if (row.acompte_statut === "paye" || row.acompte_statut === "rembourse") return; // déjà traité
 
-  const pi =
-    typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : (session.payment_intent?.id ?? null);
-  const montant =
-    session.amount_total != null ? session.amount_total / 100 : Number(row.acompte_montant ?? 0);
+  const pi = p.paymentIntentId;
+  const montant = p.montant ?? Number(row.acompte_montant ?? 0);
   const paiement = {
     acompte_statut: "paye",
     acompte_montant: montant,
     acompte_paye_le: new Date().toISOString(),
     acompte_expire_le: null,
-    stripe_session_id: session.id,
+    stripe_session_id: p.sessionId ?? row.stripe_session_id,
     stripe_payment_intent: pi,
   };
   const { emailAcomptePayeCliente, emailNouvelleDemandeGerante, emailAlerteGerante } =
@@ -231,10 +326,28 @@ export async function enregistrerPaiement(admin: Admin, session: SessionStripe) 
  */
 export async function verifierPaiement(
   admin: Admin,
-  row: { acompte_statut: string; stripe_session_id: string | null },
+  row: {
+    id: string;
+    acompte_statut: string;
+    stripe_session_id: string | null;
+    stripe_payment_intent: string | null;
+  },
 ) {
-  if (row.acompte_statut !== "en_attente" || !row.stripe_session_id) return false;
+  if (row.acompte_statut !== "en_attente") return false;
   try {
+    // Paiement intégré au site (PaymentIntent)
+    if (row.stripe_payment_intent) {
+      const intent = await getStripe().paymentIntents.retrieve(row.stripe_payment_intent);
+      if (intent.status !== "succeeded" || intent.metadata?.reservationId !== row.id) return false;
+      await enregistrerAcomptePaye(admin, {
+        reservationId: row.id,
+        paymentIntentId: intent.id,
+        montant: intent.amount_received / 100,
+      });
+      return true;
+    }
+    // Ancienne page de paiement Stripe (Checkout)
+    if (!row.stripe_session_id) return false;
     const session = await getStripe().checkout.sessions.retrieve(row.stripe_session_id);
     if (session.payment_status !== "paid") return false;
     await enregistrerPaiement(admin, session as never);
@@ -251,6 +364,25 @@ export async function fermerSessionPaiement(sessionId: string | null) {
   await getStripe()
     .checkout.sessions.expire(sessionId)
     .catch(() => undefined);
+}
+
+/** Webhook « paiement réussi » (paiement intégré au site). */
+export async function enregistrerIntention(
+  admin: Admin,
+  intent: {
+    id: string;
+    status?: string;
+    amount_received?: number;
+    metadata?: Record<string, string> | null;
+  },
+) {
+  const id = intent.metadata?.reservationId;
+  if (!id || intent.status !== "succeeded") return;
+  await enregistrerAcomptePaye(admin, {
+    reservationId: id,
+    paymentIntentId: intent.id,
+    montant: intent.amount_received != null ? intent.amount_received / 100 : null,
+  });
 }
 
 /** Webhook « page de paiement expirée » : le créneau est libéré. */

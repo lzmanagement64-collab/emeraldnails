@@ -1,8 +1,9 @@
 // ============================================================
 // Webhook Stripe — adresse à déclarer dans Stripe :
 //   https://<adresse-du-site>/api/public/payments/webhook
-// Événements : checkout.session.completed, checkout.session.expired,
-//              charge.refunded
+// Événements : payment_intent.succeeded (paiement intégré au site),
+//              charge.refunded, et pour l'ancienne page de paiement :
+//              checkout.session.completed, checkout.session.expired
 // Chaque appel est authentifié par sa signature (STRIPE_WEBHOOK_SECRET) :
 // une requête non signée par Stripe est rejetée.
 // ============================================================
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
       POST: async ({ request }) => {
         let event: { id: string; type: string; data: { object: StripeWebhookObject } };
         try {
+          const { preparerSecrets } = await import("@/lib/secrets.server");
+          await preparerSecrets();
           event = await verifyWebhook(request);
         } catch (e) {
           console.error("[webhook] signature refusée :", (e as Error).message);
@@ -27,14 +30,21 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { enregistrerPaiement, enregistrerExpiration, enregistrerRemboursement } =
-          await import("@/lib/acompte.server");
+        const {
+          enregistrerPaiement,
+          enregistrerIntention,
+          enregistrerExpiration,
+          enregistrerRemboursement,
+        } = await import("@/lib/acompte.server");
         const objet = event.data.object as never;
         try {
           switch (event.type) {
             case "checkout.session.completed":
             case "checkout.session.async_payment_succeeded":
               await enregistrerPaiement(supabaseAdmin, objet);
+              break;
+            case "payment_intent.succeeded":
+              await enregistrerIntention(supabaseAdmin, objet);
               break;
             case "checkout.session.expired":
               await enregistrerExpiration(supabaseAdmin, objet);

@@ -6,7 +6,8 @@ import { Check, Loader2, Lock } from "lucide-react";
 
 import { Section } from "@/components/site/Section";
 import { business } from "@/config/business";
-import { etatAcompte, relancerPaiement } from "@/lib/reservation.functions";
+import { etatAcompte, preparerPaiement } from "@/lib/reservation.functions";
+import { PaiementAcompte, type InfosPaiement } from "@/components/site/PaiementAcompte";
 import { formatEuros, parisLongDate, parisTime } from "@/lib/tz";
 import { ANNULATION_TEXTE } from "@/lib/annulation";
 
@@ -32,7 +33,8 @@ type Etat = Awaited<ReturnType<typeof etatAcompte>>;
 function PaiementPage() {
   const { reservation, retour } = Route.useSearch();
   const lireEtat = useServerFn(etatAcompte);
-  const relancer = useServerFn(relancerPaiement);
+  const preparer = useServerFn(preparerPaiement);
+  const [infos, setInfos] = useState<InfosPaiement | null>(null);
   const [etat, setEtat] = useState<Etat>(null);
   const [chargement, setChargement] = useState(true);
   const [envoi, setEnvoi] = useState(false);
@@ -68,17 +70,18 @@ function PaiementPage() {
     };
   }, [charger, retour]);
 
+  /** Ouvre le paiement intégré de l'acompte (réservation provisoire encore valable). */
   const payer = async () => {
     if (!reservation) return;
     setEnvoi(true);
     setErreur(null);
     try {
-      const { url } = await relancer({ data: { id: reservation } });
-      window.location.assign(url);
+      setInfos(await preparer({ data: { id: reservation } }));
     } catch (e) {
       setErreur((e as Error).message.replace(/^Error:\s*/, ""));
-      setEnvoi(false);
       await charger().catch(() => undefined);
+    } finally {
+      setEnvoi(false);
     }
   };
 
@@ -156,12 +159,27 @@ function PaiementPage() {
                     {etat.expireLe ? ` jusqu'à ${parisTime(etat.expireLe)}` : ""}. Sans paiement de
                     l'acompte ({formatEuros(etat.acompte ?? 0)}), il sera libéré automatiquement.
                   </p>
-                  <button type="button" onClick={payer} disabled={envoi} className="btn-primaire">
-                    <Lock className="size-3.5" />
-                    {envoi
-                      ? "Ouverture du paiement…"
-                      : `Payer l'acompte de ${formatEuros(etat.acompte ?? 0)}`}
-                  </button>
+                  {infos && reservation ? (
+                    <div className="text-left">
+                      <PaiementAcompte
+                        infos={infos}
+                        retourUrl={`${window.location.origin}/paiement?reservation=${reservation}&retour=ok`}
+                        onPaye={async () => {
+                          setInfos(null);
+                          setChargement(true);
+                          await charger().catch(() => undefined);
+                          setChargement(false);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <button type="button" onClick={payer} disabled={envoi} className="btn-primaire">
+                      <Lock className="size-3.5" />
+                      {envoi
+                        ? "Ouverture du paiement…"
+                        : `Payer l'acompte de ${formatEuros(etat.acompte ?? 0)}`}
+                    </button>
+                  )}
                 </div>
               )}
 
