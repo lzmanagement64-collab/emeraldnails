@@ -8,6 +8,7 @@
 // ============================================================
 import { getRequest } from "@tanstack/react-start/server";
 import { business } from "@/config/business";
+import { lireSecret } from "./secrets.server";
 
 const ID_PROJET_LOVABLE = "9064e12b-d636-4376-b909-5b8dbe7455ed";
 
@@ -21,7 +22,7 @@ function hoteDeTest(hote: string) {
 }
 
 export function adresseSite() {
-  const configuree = process.env["SITE_URL"];
+  const configuree = lireSecret("SITE_URL");
   if (configuree) return configuree.replace(/\/$/, "");
   try {
     const url = new URL(getRequest().url);

@@ -1,7 +1,8 @@
 import Stripe from "stripe";
+import { lireSecret } from "./secrets.server";
 
 const getEnv = (key: string): string => {
-  const value = process.env[key];
+  const value = lireSecret(key);
   if (!value) throw new Error(`${key} is not configured`);
   return value;
 };
@@ -16,7 +17,7 @@ const getEnv = (key: string): string => {
 
 /** Paiement en ligne actif ? Et en mode test ? (aucune clé n'est renvoyée) */
 export function configPaiement() {
-  const key = process.env["STRIPE_SECRET_KEY"] ?? "";
+  const key = lireSecret("STRIPE_SECRET_KEY");
   return { actif: key.startsWith("sk_"), modeTest: key.startsWith("sk_test_") };
 }
 

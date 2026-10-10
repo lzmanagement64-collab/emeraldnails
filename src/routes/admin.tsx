@@ -1320,6 +1320,8 @@ function ReglagesEmails() {
     erreur?: string;
     destinataire: string;
     expediteur: string;
+    secrets: { nom: string; present: boolean; nomApproximatif: boolean }[];
+    adresseConsultee: string;
   } | null>(null);
 
   const lancer = async () => {
@@ -1354,6 +1356,32 @@ function ReglagesEmails() {
             <p className="text-bordeaux">Échec : {resultat.erreur}</p>
           )}
           <p className="text-taupe">Expéditeur utilisé : {resultat.expediteur}</p>
+          {resultat.adresseConsultee && (
+            <p className="text-taupe">
+              Test fait depuis : {resultat.adresseConsultee}
+              {resultat.adresseConsultee.includes("lovable.app") &&
+                " (aperçu Lovable : refaites le test sur le site publié)"}
+            </p>
+          )}
+          <div className="pt-2">
+            <p className="font-medium text-ink">
+              Secrets vus par le site (valeurs jamais affichées)
+            </p>
+            <ul className="mt-1 grid gap-1 sm:grid-cols-2">
+              {resultat.secrets.map((x) => (
+                <li
+                  key={x.nom}
+                  className="flex items-center justify-between gap-3 rounded-lg bg-linen/60 px-3 py-1.5"
+                >
+                  <span className="font-medium text-ink">{x.nom}</span>
+                  <span className={x.present ? "text-emerald" : "text-taupe"}>
+                    {x.present ? "trouvé" : "absent"}
+                    {x.nomApproximatif && " (nom à corriger)"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
     </section>
