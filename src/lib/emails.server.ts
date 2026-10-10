@@ -146,7 +146,7 @@ function recap(r: ReservationEmail) {
   return `<table style="width:100%;border-collapse:collapse;background-color:${CREME};border-radius:4px;">
     <tr><td style="padding:16px 18px 6px;font-size:15px;color:${ENCRE};"><strong>${r.prestation}</strong></td></tr>
     <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">${parisLongDate(r.dateDebut)} à ${parisTime(r.dateDebut)}</td></tr>
-    <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">Durée : ${formatDuree(r.dureeMinutes)} · Tarif : ${formatEuros(r.prix)}</td></tr>
+    <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">Durée : ${formatDuree(r.dureeMinutes)} · Tarif : ${formatEuros(r.prix)}${r.prestation.includes("(sur devis)") ? " + devis" : ""}</td></tr>
     <tr><td style="padding:0 18px 4px;font-size:14px;color:${TAUPE};">${ligneAcompte(r)}</td></tr>
     <tr><td style="padding:0 18px 16px;font-size:14px;color:${TAUPE};">${business.address}</td></tr>
   </table>`;

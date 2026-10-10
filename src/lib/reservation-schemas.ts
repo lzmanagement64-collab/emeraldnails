@@ -79,6 +79,14 @@ export const prestationSchema = z.object({
     .default("#1f6b43"),
   actif: z.boolean().default(true),
   ordre: z.number().int().min(0).max(999).default(0),
+  // Prix fixé avec la cliente : compte dans la durée, pas dans le total ni l'acompte.
+  surDevis: z.boolean().default(false),
+  // S'ajoute à une autre prestation, ne se réserve pas seule (nail art).
+  enOption: z.boolean().default(false),
+});
+
+export const reglagesSchema = z.object({
+  battementMinutes: z.number().int().min(0).max(60),
 });
 
 export const horaireSchema = z.object({

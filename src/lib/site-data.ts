@@ -17,6 +17,8 @@ export type PrestationPublique = {
   prix: number;
   couleur: string;
   ordre: number;
+  sur_devis: boolean;
+  en_option: boolean;
 };
 
 export type Horaire = {

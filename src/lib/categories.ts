@@ -1,14 +1,21 @@
 // Catégories de la grille de prix, dans l'ordre d'affichage.
 // Une catégorie créée dans l'admin et absente de cette liste s'affiche à la suite.
 export const ORDRE_CATEGORIES = [
+  "Ongles naturels",
+  "Extension gel",
+  "Gel-X",
+  "Nail art",
+  // Anciennes catégories (au cas où une prestation y serait encore rangée)
   "Semi-permanent",
   "Renforcement",
   "Déposes",
   "Homme",
-  "Extension gel",
-  "Gel-X",
-  "Nail art",
 ];
+
+/** Texte d'explication affiché sous certaines catégories. */
+export const NOTE_CATEGORIE: Record<string, string> = {
+  "Nail art": "En option, à ajouter à une pose.",
+};
 
 /** Regroupe des prestations par catégorie, dans l'ordre ci-dessus. */
 export function parCategorie<T extends { categorie?: string | null }>(items: T[]) {

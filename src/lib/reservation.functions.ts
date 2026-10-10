@@ -13,6 +13,7 @@ import {
   statutSchema,
   prestationSchema,
   horaireSchema,
+  reglagesSchema,
   indisponibiliteSchema,
   idSchema,
   tokenSchema,
@@ -25,7 +26,9 @@ export const listPrestations = createServerFn({ method: "GET" }).handler(async (
   const { supabasePublic } = await import("./reservation.server");
   const { data, error } = await supabasePublic()
     .from("prestations")
-    .select("id, nom, description, categorie, duree_minutes, prix, couleur, ordre")
+    .select(
+      "id, nom, description, categorie, duree_minutes, prix, couleur, ordre, sur_devis, en_option",
+    )
     .eq("actif", true)
     .order("ordre", { ascending: true });
   if (error) throw new Error("Impossible de charger les prestations.");
@@ -351,6 +354,35 @@ export const adminPrestations = createServerFn({ method: "POST" })
     return data ?? [];
   });
 
+/** Réglages généraux (temps de battement entre deux clientes). */
+export const adminReglages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { assertGerante } = await import("./reservation.server");
+    await assertGerante(context as never);
+    const { data, error } = await context.supabase
+      .from("reglages")
+      .select("battement_minutes")
+      .eq("id", 1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { battementMinutes: data?.battement_minutes ?? 10 };
+  });
+
+export const adminEnregistrerReglages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => reglagesSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { assertGerante } = await import("./reservation.server");
+    await assertGerante(context as never);
+    const { error } = await context.supabase
+      .from("reglages")
+      .update({ battement_minutes: data.battementMinutes })
+      .eq("id", 1);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const adminHoraires = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -406,24 +438,29 @@ export const adminCreerReservation = createServerFn({ method: "POST" })
     const { parisToUtc } = await import("./tz");
     await assertGerante(context as never);
 
+    const { nomComplet } = await import("./selection");
     const { data: prestation } = await context.supabase
       .from("prestations")
-      .select("id, nom, prix, duree_minutes")
+      .select("id, nom, prix, duree_minutes, categorie, sur_devis, en_option")
       .eq("id", data.prestationId)
       .maybeSingle();
     if (!prestation) throw new Error("Prestation introuvable.");
+    const prixLigne = prestation.sur_devis ? 0 : Number(prestation.prix);
 
     const debut = parisToUtc(data.date, data.heure);
     const fin = new Date(debut.getTime() + prestation.duree_minutes * 60000);
     const { error } = await context.supabase.from("reservations").insert({
       prestation_id: data.prestationId,
-      prix_total: Number(prestation.prix),
+      prix_total: prixLigne,
       prestations_detail: [
         {
           id: prestation.id,
-          nom: prestation.nom,
-          prix: Number(prestation.prix),
+          nom: nomComplet(prestation.nom, prestation.categorie),
+          prix: prixLigne,
           duree_minutes: prestation.duree_minutes,
+          categorie: prestation.categorie,
+          sur_devis: prestation.sur_devis,
+          en_option: prestation.en_option,
         },
       ],
       date_debut: debut.toISOString(),
@@ -457,6 +494,8 @@ export const adminEnregistrerPrestation = createServerFn({ method: "POST" })
       couleur: data.couleur,
       actif: data.actif,
       ordre: data.ordre,
+      sur_devis: data.surDevis,
+      en_option: data.enOption,
     };
     const { error } = data.id
       ? await context.supabase.from("prestations").update(row).eq("id", data.id)

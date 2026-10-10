@@ -11,6 +11,7 @@ import { SAVOIR_FAIRE, DEROULEMENT } from "@/data/savoir-faire";
 import { business, SITE_URL } from "@/config/business";
 import { ACOMPTE_TEXTE, POURCENT_ACOMPTE } from "@/lib/acompte";
 import { formatDuree, formatEuros } from "@/lib/tz";
+import { prixAffiche, prixMinimum } from "@/lib/selection";
 import { cn } from "@/lib/utils";
 
 const TITLE = "Prothésiste ongulaire Pau & Lons (64) — Pose gel, Gel X & nail art | Emerald Beauty";
@@ -154,7 +155,9 @@ function Index() {
               >
                 <div>
                   <p className={cn("eyebrow", vedette && "!text-porcelain/70")}>
-                    dès {formatEuros(Math.min(...liste.map((p) => Number(p.prix))))}
+                    {prixMinimum(liste) !== null
+                      ? `dès ${formatEuros(prixMinimum(liste) ?? 0)}`
+                      : "sur devis"}
                   </p>
                   <h3
                     className={cn(
@@ -182,7 +185,7 @@ function Index() {
                         )}
                       />
                       <span className={vedette ? "text-porcelain" : "text-ink"}>
-                        {formatEuros(p.prix)} · {formatDuree(p.duree_minutes)}
+                        {prixAffiche(p)} · {formatDuree(p.duree_minutes)}
                       </span>
                     </li>
                   ))}

@@ -7,8 +7,16 @@ import { business } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
 import { ACOMPTE_TEXTE, acompteFormate, montantAcompte, POURCENT_ACOMPTE } from "@/lib/acompte";
 import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
-import { MAX_PRESTATIONS, nomsPrestations, totaux } from "@/lib/selection";
-import { parCategorie } from "@/lib/categories";
+import {
+  devisAFaire,
+  MAX_PRESTATIONS,
+  nomComplet,
+  nomsPrestations,
+  prixAffiche,
+  problemeSelection,
+  totaux,
+} from "@/lib/selection";
+import { NOTE_CATEGORIE, parCategorie } from "@/lib/categories";
 
 /** Temps laissé à la cliente pour payer (identique au serveur, voir acompte.server.ts). */
 const DELAI_PAIEMENT_AFFICHE = 30;
@@ -63,6 +71,8 @@ type Prestation = {
   duree_minutes: number;
   prix: number;
   couleur: string;
+  sur_devis?: boolean;
+  en_option?: boolean;
 };
 
 const JOURS = ["L", "M", "M", "J", "V", "S", "D"];
@@ -107,7 +117,14 @@ function ReserverPage() {
   const [selection, setSelection] = useState<Prestation[]>([]);
   const cle = selection.map((p) => p.id).join(",");
   const total = useMemo(() => totaux(selection), [selection]);
-  const noms = nomsPrestations(selection);
+  // Noms complets (« Gel-X · Pose complète ») pour le récapitulatif.
+  const lignes = useMemo(
+    () => selection.map((p) => ({ ...p, nom: nomComplet(p.nom, p.categorie) })),
+    [selection],
+  );
+  const noms = nomsPrestations(lignes);
+  const probleme = problemeSelection(selection);
+  const avecDevis = devisAFaire(selection);
 
   const aujourdhui = todayParisISO();
   const dernierJour = addDaysISO(aujourdhui, REGLES.maxJoursAvance);
@@ -344,6 +361,9 @@ function ReserverPage() {
               {parCategorie(prestations).map(({ categorie, liste }) => (
                 <div key={categorie} className="space-y-2 pt-3">
                   <h2 className="px-1 font-display text-2xl text-ink">{categorie}</h2>
+                  {NOTE_CATEGORIE[categorie] && (
+                    <p className="px-1 text-sm text-taupe">{NOTE_CATEGORIE[categorie]}</p>
+                  )}
                   {liste.map((p) => {
                     const choisie = selection.some((x) => x.id === p.id);
                     return (
@@ -382,8 +402,13 @@ function ReserverPage() {
                             {formatDuree(p.duree_minutes)}
                           </span>
                         </span>
-                        <span className="shrink-0 font-display text-2xl text-ink">
-                          {formatEuros(p.prix)}
+                        <span
+                          className={cn(
+                            "shrink-0 font-display text-ink",
+                            p.sur_devis ? "text-lg" : "text-2xl",
+                          )}
+                        >
+                          {prixAffiche(p)}
                         </span>
                       </button>
                     );
@@ -407,14 +432,24 @@ function ReserverPage() {
                         {POURCENT_ACOMPTE} %)
                       </p>
                     </div>
-                    <p className="shrink-0 font-display text-4xl leading-none text-porcelain">
+                    <p className="shrink-0 text-right font-display text-4xl leading-none text-porcelain">
                       {formatEuros(total.prix)}
+                      {avecDevis && (
+                        <span className="mt-1 block font-sans text-xs text-porcelain/70">
+                          + devis
+                        </span>
+                      )}
                     </p>
                   </div>
                 )}
+                {probleme && (
+                  <p role="alert" className="mt-3 text-sm text-porcelain">
+                    {probleme}
+                  </p>
+                )}
                 <button
                   type="button"
-                  disabled={selection.length === 0}
+                  disabled={selection.length === 0 || !!probleme}
                   onClick={() => setEtape(2)}
                   className="btn-primaire mt-4 w-full !bg-none !bg-porcelain !text-emerald-deep"
                 >
@@ -433,8 +468,9 @@ function ReserverPage() {
           <div className="rounded-[1.4rem] bg-sage-soft/60 p-4 text-sm">
             <p className="text-ink">{noms}</p>
             <p className="mt-1 text-taupe">
-              Durée totale {formatDuree(total.duree)} · {formatEuros(total.prix)} — les créneaux
-              proposés tiennent compte de la durée totale.
+              Durée totale {formatDuree(total.duree)} · {formatEuros(total.prix)}
+              {avecDevis ? " + devis" : ""} — les créneaux proposés tiennent compte de la durée
+              totale.
             </p>
           </div>
           <div className="carte p-4 sm:p-6">
@@ -575,12 +611,12 @@ function ReserverPage() {
               {parisLongDate(`${date}T12:00:00Z`)} à {heure}
             </p>
             <ul className="mt-3 space-y-1 text-sm">
-              {selection.map((p) => (
+              {lignes.map((p) => (
                 <li key={p.id} className="flex justify-between gap-4 text-taupe">
                   <span>
                     {p.nom} · {formatDuree(p.duree_minutes)}
                   </span>
-                  <span className="text-ink">{formatEuros(p.prix)}</span>
+                  <span className="shrink-0 text-ink">{prixAffiche(p)}</span>
                 </li>
               ))}
               <li className="flex justify-between gap-4 border-t border-border pt-2 font-medium text-ink">
@@ -593,6 +629,12 @@ function ReserverPage() {
               % du total), déduit du montant total. Reste à régler sur place :{" "}
               {formatEuros(Math.max(0, total.prix - montantAcompte(total.prix)))}.
             </p>
+            {avecDevis && (
+              <p className="mt-2 text-sm text-ink">
+                Prestation sur devis : son prix est fixé avec Maria et s'ajoute au total. Il n'est
+                pas compté dans l'acompte.
+              </p>
+            )}
             <p className="mt-2 text-sm text-taupe">{ANNULATION_TEXTE}</p>
             <p className="mt-2 text-sm text-taupe">{REGLE_ACOMPTE_TEXTE}</p>
             {paiement.actif && (

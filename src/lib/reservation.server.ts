@@ -4,7 +4,14 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { ReservationEmail } from "./emails.server";
-import { lignesDuRendezVous, nomsPrestations, totaux, type LignePrestation } from "./selection";
+import {
+  lignesDuRendezVous,
+  nomComplet,
+  nomsPrestations,
+  problemeSelection,
+  totaux,
+  type LignePrestation,
+} from "./selection";
 
 /** Client publiable côté serveur : lectures publiques (prestations, horaires, créneaux). */
 export function supabasePublic() {
@@ -34,19 +41,25 @@ export async function chargerSelection(
 ): Promise<{ lignes: LignePrestation[]; prix: number; duree: number }> {
   const { data, error } = await client
     .from("prestations")
-    .select("id, nom, prix, duree_minutes")
+    .select("id, nom, prix, duree_minutes, categorie, sur_devis, en_option")
     .in("id", ids)
     .eq("actif", true);
   if (error) throw new Error("Impossible de charger les prestations.");
   const parId = new Map((data ?? []).map((p) => [p.id, p]));
   const lignes = ids.map((id) => parId.get(id));
   if (lignes.some((l) => !l)) throw new Error("Une prestation choisie n'est plus disponible.");
-  const propres = (lignes as LignePrestation[]).map((l) => ({
-    id: l.id,
-    nom: l.nom,
-    prix: Number(l.prix),
-    duree_minutes: Number(l.duree_minutes),
+  // Prix, durées et options relus en base : rien ne vient du navigateur.
+  const propres: LignePrestation[] = lignes.map((l) => ({
+    id: l!.id,
+    nom: nomComplet(l!.nom, l!.categorie),
+    prix: l!.sur_devis ? 0 : Number(l!.prix),
+    duree_minutes: Number(l!.duree_minutes),
+    categorie: l!.categorie,
+    sur_devis: l!.sur_devis,
+    en_option: l!.en_option,
   }));
+  const probleme = problemeSelection(propres);
+  if (probleme) throw new Error(probleme);
   return { lignes: propres, ...totaux(propres) };
 }
 
