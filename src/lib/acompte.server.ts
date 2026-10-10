@@ -93,8 +93,18 @@ export async function intentionPaiement(admin: Admin, row: RowIntention) {
       "processing",
       "succeeded",
     ].includes(actuel.status);
-    if (reutilisable && actuel.amount === centimes && actuel.client_secret) {
+    const automatique = !!actuel.automatic_payment_methods?.enabled;
+    if (
+      reutilisable &&
+      (automatique || actuel.status !== "requires_payment_method") &&
+      actuel.amount === centimes &&
+      actuel.client_secret
+    ) {
       return { clientSecret: actuel.client_secret, statut: actuel.status };
+    }
+    // Ancien paiement non utilisable (ex. créé « carte seule ») : il est fermé avant d'en créer un neuf.
+    if (actuel.status !== "succeeded" && actuel.status !== "canceled") {
+      await stripe.paymentIntents.cancel(actuel.id).catch(() => undefined);
     }
   }
 
@@ -109,8 +119,9 @@ export async function intentionPaiement(admin: Admin, row: RowIntention) {
     {
       amount: centimes,
       currency: "eur",
-      // Carte bancaire (CB, Visa, Mastercard) ; Apple Pay et Google Pay passent par la carte.
-      payment_method_types: ["card"],
+      // Moyens de paiement automatiques : ceux activés dans le tableau de bord
+      // Stripe (carte bancaire CB / Visa / Mastercard, Apple Pay, Google Pay…).
+      automatic_payment_methods: { enabled: true },
       receipt_email: row.cliente_email,
       description: `Acompte ${POURCENT_ACOMPTE} % — ${nom} — ${quand} — ${business.name}`,
       metadata: { reservationId: row.id },
