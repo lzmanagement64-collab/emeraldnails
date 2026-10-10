@@ -106,7 +106,8 @@ function FormulairePaiement({
   const reste = useCompteARebours(infos.expireLe);
   const expire = reste === 0;
 
-  const payer = async () => {
+  /** `echecPortefeuille` : referme proprement la fenêtre Apple Pay / Google Pay en cas d'échec. */
+  const payer = async (echecPortefeuille?: (p?: { reason?: "fail" }) => void) => {
     if (!stripe || !elements || expire) return;
     setEnvoi(true);
     setErreur(null);
@@ -117,6 +118,7 @@ function FormulairePaiement({
       redirect: "if_required",
     });
     if (error) {
+      echecPortefeuille?.({ reason: "fail" });
       setErreur(
         error.type === "card_error" || error.type === "validation_error"
           ? (error.message ?? "Paiement refusé.")
@@ -149,7 +151,11 @@ function FormulairePaiement({
       )}
 
       {/* Apple Pay / Google Pay (affichés seulement si l'appareil les propose) */}
-      <div className={express ? "space-y-3" : "hidden"}>
+      {/* Invisible (mais chargé) tant que Stripe n'a pas dit quels boutons l'appareil propose */}
+      <div
+        className={express ? "space-y-3" : "pointer-events-none invisible h-0 overflow-hidden"}
+        aria-hidden={!express}
+      >
         <ExpressCheckoutElement
           options={{
             buttonHeight: 48,
@@ -157,7 +163,7 @@ function FormulairePaiement({
             paymentMethods: { applePay: "always", googlePay: "always", link: "never" },
           }}
           onReady={({ availablePaymentMethods }) => setExpress(!!availablePaymentMethods)}
-          onConfirm={() => payer()}
+          onConfirm={(event) => payer(event.paymentFailed)}
         />
         <p className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-taupe">
           <span className="h-px flex-1 bg-border" /> ou par carte
@@ -169,8 +175,8 @@ function FormulairePaiement({
         onReady={() => setPret(true)}
         options={{
           layout: "tabs",
+          // Apple Pay / Google Pay sont déjà proposés en haut : pas de doublon ici.
           wallets: { applePay: "never", googlePay: "never", link: "never" },
-          fields: { billingDetails: { address: "never" } },
         }}
       />
 
@@ -182,7 +188,7 @@ function FormulairePaiement({
 
       <button
         type="button"
-        onClick={payer}
+        onClick={() => payer()}
         disabled={!stripe || !pret || envoi || expire}
         className="btn-primaire w-full"
       >
