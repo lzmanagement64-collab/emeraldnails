@@ -92,9 +92,22 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col items-start justify-between gap-3 border-t border-border px-7 py-5 text-xs text-taupe sm:flex-row sm:px-10">
-          <p>
-            © {new Date().getFullYear()} {business.name} · SIRET {business.legal.siretAffiche}
-          </p>
+          <div className="space-y-1">
+            <p>
+              © {new Date().getFullYear()} {business.name} · SIRET {business.legal.siretAffiche}
+            </p>
+            <p className="text-taupe/80">
+              Site réalisé par{" "}
+              <a
+                href="https://lz-management.fr"
+                target="_blank"
+                rel="noopener"
+                className="underline-offset-4 hover:text-ink hover:underline"
+              >
+                LZ Management
+              </a>
+            </p>
+          </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link to="/securite" className="hover:text-ink">
               Sécurité

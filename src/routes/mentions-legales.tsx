@@ -44,6 +44,19 @@ export const Route = createFileRoute("/mentions-legales")({
           même prestataire (service Lovable Cloud, opéré avec Supabase).
         </p>
 
+        <h2 className={titre}>Conception du site</h2>
+        <p>
+          Conception et réalisation du site : LZ Management –{" "}
+          <a
+            href="https://lz-management.fr"
+            target="_blank"
+            rel="noopener"
+            className="text-ink underline underline-offset-4"
+          >
+            lz-management.fr
+          </a>
+        </p>
+
         <h2 className={titre}>Propriété intellectuelle</h2>
         <p>
           Les textes, photos de réalisations, logo et éléments graphiques du site sont la propriété
