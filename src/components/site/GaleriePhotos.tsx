@@ -29,7 +29,9 @@ export function GaleriePhotos({ photos }: { photos: PhotoGalerie[] }) {
     >
       <img
         src={p.vignette}
-        alt={p.titre || `Réalisation ${libelleCategorie(p.categorie)}`}
+        srcSet={p.srcset || undefined}
+        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 80vw"
+        alt={p.alt}
         loading="lazy"
         decoding="async"
         className="size-full object-cover"

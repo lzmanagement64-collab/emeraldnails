@@ -52,7 +52,7 @@ export function schemaSalon(horaires: Horaire[] = []) {
     url: SITE_URL,
     telephone: business.phone,
     email: business.email,
-    image: `${SITE_URL}/og-image.png`,
+    image: `${SITE_URL}/og-image.jpg`,
     logo: `${SITE_URL}/apple-touch-icon.png`,
     priceRange: "€€",
     hasMap: business.googleBusinessUrl,

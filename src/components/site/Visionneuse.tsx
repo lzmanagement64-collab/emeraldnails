@@ -70,7 +70,9 @@ export function Visionneuse({
         <img
           key={photo.id}
           src={photo.src}
-          alt={photo.titre}
+          srcSet={photo.srcset || undefined}
+          sizes="100vw"
+          alt={photo.alt}
           className="max-h-full max-w-full rounded-3xl object-contain shadow-2xl animate-in zoom-in-95 fade-in duration-500"
           onClick={(e) => e.stopPropagation()}
         />

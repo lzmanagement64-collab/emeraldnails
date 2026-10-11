@@ -39,7 +39,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: SITE_DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: business.name },
-      { property: "og:image", content: `${SITE_URL}/og-image.png` },
+      { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       {
@@ -48,7 +48,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:locale", content: "fr_FR" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: `${SITE_URL}/og-image.png` },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

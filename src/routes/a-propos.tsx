@@ -1,3 +1,4 @@
+import { PHOTO_SAVOIR_FAIRE } from "@/data/gallery";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarHeart } from "lucide-react";
 import { Section } from "@/components/site/Section";
@@ -27,8 +28,15 @@ export const Route = createFileRoute("/a-propos")({
 // ou l'expérience tant qu'elle n'a pas été fournie et validée par la gérante.
 function SavoirFairePage() {
   const { photos } = Route.useLoaderData();
-  const accueil = photos.filter((p) => p.accueil);
-  const [p1, p2] = accueil.length >= 2 ? accueil : photos;
+  // Photo dédiée au savoir-faire, puis une réalisation de l'accueil.
+  const accueil = photos.filter((p) => p.accueil && !p.banniere);
+  const p1 = {
+    id: "savoir-faire",
+    vignette: `${PHOTO_SAVOIR_FAIRE.base}-960.webp`,
+    srcset: `${PHOTO_SAVOIR_FAIRE.base}-480.webp 480w, ${PHOTO_SAVOIR_FAIRE.base}-960.webp 960w, ${PHOTO_SAVOIR_FAIRE.base}-1600.webp 1600w`,
+    alt: PHOTO_SAVOIR_FAIRE.alt,
+  };
+  const p2 = accueil[0] ?? photos[0];
   return (
     <>
       <Section as="h1" eyebrow="Savoir-faire" title={`${business.name}, prothésiste ongulaire`}>
@@ -61,7 +69,9 @@ function SavoirFairePage() {
               >
                 <img
                   src={p.vignette}
-                  alt={p.titre || "Réalisation Emerald Beauty"}
+                  srcSet={p.srcset || undefined}
+                  sizes="(min-width: 768px) 20vw, 50vw"
+                  alt={p.alt}
                   loading="lazy"
                   className="size-full object-cover"
                 />
