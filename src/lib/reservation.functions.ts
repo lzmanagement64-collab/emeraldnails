@@ -193,7 +193,6 @@ export const creerReservation = createServerFn({ method: "POST" })
             clePublique: clePublique(),
             acompte: Number(row.acompte_montant ?? 0),
             expireLe: row.acompte_expire_le,
-            modeTest: config.modeTest,
           },
         };
       } catch (e) {
@@ -260,7 +259,6 @@ export const preparerPaiement = createServerFn({ method: "POST" })
         clePublique: clePublique(),
         acompte: Number(row.acompte_montant ?? 0),
         expireLe: row.acompte_expire_le,
-        modeTest: config.modeTest,
       };
     } catch (e) {
       console.error("[preparerPaiement]", e);

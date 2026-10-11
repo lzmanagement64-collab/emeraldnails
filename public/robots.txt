@@ -2,5 +2,10 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /auth
+Disallow: /reset-password
+Disallow: /annulation
+Disallow: /paiement
+Disallow: /confirmation
+Disallow: /api/
 
 Sitemap: https://emeraldbeauty.fr/sitemap.xml

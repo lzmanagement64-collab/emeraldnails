@@ -2,13 +2,14 @@
 // Webhook Stripe — adresse à déclarer dans Stripe :
 //   https://<adresse-du-site>/api/public/payments/webhook
 // Événements : payment_intent.succeeded (paiement intégré au site),
-//              charge.refunded, et pour l'ancienne page de paiement :
-//              checkout.session.completed, checkout.session.expired
+//              charge.refunded (les anciens événements checkout.session.*
+//              restent gérés pour les paiements faits avant le paiement intégré)
 // Chaque appel est authentifié par sa signature (STRIPE_WEBHOOK_SECRET) :
-// une requête non signée par Stripe est rejetée.
+// une requête non signée par Stripe est rejetée. Un événement d'un autre mode
+// que la clé du site (test alors que le site est en réel) est ignoré.
 // ============================================================
 import { createFileRoute } from "@tanstack/react-router";
-import { type StripeWebhookObject, verifyWebhook } from "@/lib/stripe.server";
+import { type StripeWebhookObject, evenementAutreMode, verifyWebhook } from "@/lib/stripe.server";
 
 export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
@@ -19,7 +20,12 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           headers: { "content-type": "text/plain; charset=utf-8" },
         }),
       POST: async ({ request }) => {
-        let event: { id: string; type: string; data: { object: StripeWebhookObject } };
+        let event: {
+          id: string;
+          type: string;
+          livemode?: boolean;
+          data: { object: StripeWebhookObject };
+        };
         try {
           const { preparerSecrets } = await import("@/lib/secrets.server");
           await preparerSecrets();
@@ -27,6 +33,13 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         } catch (e) {
           console.error("[webhook] signature refusée :", (e as Error).message);
           return new Response("Signature invalide", { status: 400 });
+        }
+
+        if (evenementAutreMode(event.livemode)) {
+          console.warn(
+            `[webhook] ${event.type} (${event.id}) ignoré : autre mode que la clé du site`,
+          );
+          return Response.json({ received: true, ignore: true });
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

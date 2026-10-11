@@ -112,7 +112,7 @@ function ReserverPage() {
   const [enCours, setEnCours] = useState<{ id: string; infos: InfosPaiement } | null>(null);
   const [acomptePaye, setAcomptePaye] = useState(false);
   // Paiement de l'acompte en ligne actif ? (déterminé par le serveur)
-  const [paiement, setPaiement] = useState({ actif: false, modeTest: false });
+  const [paiement, setPaiement] = useState<{ actif: boolean }>({ actif: false });
   useEffect(() => {
     lirePaiement({})
       .then(setPaiement)

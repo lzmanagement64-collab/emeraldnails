@@ -7,14 +7,7 @@ export function MobileBar() {
   const chemin = useRouterState({ select: (s) => s.location.pathname });
   // Sur la page de réservation, le bouton « Réserver » ferait doublon.
   // Pas de barre « Réserver » pendant la réservation ni sur les pages techniques
-  const cachee = [
-    "/reserver",
-    "/paiement",
-    "/auth",
-    "/reset-password",
-    "/annulation",
-    "/confirmation",
-  ];
+  const cachee = ["/reserver", "/paiement", "/auth", "/reset-password", "/annulation", "/admin"];
   if (cachee.some((c) => chemin.startsWith(c))) return null;
 
   return (

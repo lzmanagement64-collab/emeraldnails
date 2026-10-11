@@ -21,6 +21,15 @@ function hoteDeTest(hote: string) {
   );
 }
 
+/** Vrai sur l'aperçu Lovable de ce projet ou en local (jamais sur le site en ligne). */
+export function requeteDeTest() {
+  try {
+    return hoteDeTest(new URL(getRequest().url).hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function adresseSite() {
   const configuree = lireSecret("SITE_URL");
   if (configuree) return configuree.replace(/\/$/, "");
