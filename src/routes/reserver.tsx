@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, Clock, Loader2, Lock } from "lucide-react";
 import { PaiementAcompte, type InfosPaiement } from "@/components/site/PaiementAcompte";
-import { business } from "@/config/business";
+import { business, SITE_URL } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
 import { ACOMPTE_TEXTE, acompteFormate, montantAcompte, POURCENT_ACOMPTE } from "@/lib/acompte";
 import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
@@ -52,17 +52,19 @@ export const Route = createFileRoute("/reserver")({
       {
         name: "description",
         content:
-          "Réservez votre rendez-vous ongles en ligne chez Emerald Beauty à Lons (64) : choisissez votre prestation et votre créneau, Maria confirme ensuite votre rendez-vous.",
+          "Réservez en ligne chez Emerald Beauty à Lons : prestations, créneau et acompte de 30 % en quelques minutes. Maria valide ensuite votre rendez-vous.",
       },
       { property: "og:title", content: "Réserver en ligne — Emerald Beauty" },
       {
         property: "og:description",
         content:
-          "Prise de rendez-vous en ligne en 4 étapes chez Emerald Beauty, prothésiste ongulaire à Lons.",
+          "Prise de rendez-vous en ligne en 5 étapes chez Emerald Beauty, prothésiste ongulaire à Lons.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: `${SITE_URL}/reserver` },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/reserver` }],
   }),
 });
 
@@ -561,7 +563,7 @@ function ReserverPage() {
                           ? "border-border bg-background text-ink hover:border-ink/50"
                           : "border-transparent text-taupe/40",
                     )}
-                    aria-label={`${jour} — ${dispoMois[jour] ?? 0} créneaux`}
+                    aria-label={`${parisLongDate(`${jour}T12:00:00Z`)} — ${dispoMois[jour] ?? 0} créneau(x) libre(s)`}
                   >
                     {Number(jour.slice(8))}
                   </button>

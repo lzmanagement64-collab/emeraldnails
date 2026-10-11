@@ -14,9 +14,9 @@ import { formatDuree, formatEuros } from "@/lib/tz";
 import { prixAffiche, prixMinimum } from "@/lib/selection";
 import { cn } from "@/lib/utils";
 
-const TITLE = "Prothésiste ongulaire Pau & Lons (64) — Pose gel, Gel X & nail art | Emerald Beauty";
+const TITLE = "Prothésiste ongulaire à Lons, près de Pau | Emerald Beauty";
 const DESC =
-  "Prothésiste ongulaire à Lons près de Pau : semi-permanent, renforcement, extension gel, Gel X et nail art par Maria. Réservation en ligne 24/7.";
+  "Prothésiste ongulaire à Lons près de Pau : semi-permanent, renforcement, extension gel, Gel-X et nail art par Maria. Réservation en ligne 24/7.";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -34,31 +34,6 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: `${SITE_URL}/` }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "BeautySalon",
-          name: business.name,
-          description: DESC,
-          url: SITE_URL,
-          telephone: business.phone,
-          email: business.email,
-          priceRange: "€€",
-          image: `${SITE_URL}/og-image.png`,
-          address: {
-            "@type": "PostalAddress",
-            streetAddress: "7 Imp. d'Ossau",
-            addressLocality: "Lons",
-            postalCode: "64140",
-            addressRegion: "Nouvelle-Aquitaine",
-            addressCountry: "FR",
-          },
-          areaServed: business.serviceArea.map((c) => ({ "@type": "City", name: c })),
-        }),
-      },
-    ],
   }),
 });
 

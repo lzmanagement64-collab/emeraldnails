@@ -46,7 +46,7 @@ const CONTROLS = [
   {
     icon: CreditCard,
     title: "Aucune donnée bancaire chez nous",
-    body: "Aucun paiement n'est effectué sur le site pour le moment : aucun numéro de carte ne transite par Emerald Beauty.",
+    body: "L'acompte est payé via Stripe, prestataire de paiement certifié : votre numéro de carte n'est jamais vu ni conservé par Emerald Beauty.",
   },
   {
     icon: ShieldCheck,
@@ -84,8 +84,8 @@ function SecurityPage() {
               leur traitement.
             </p>
             <p>
-              Les données de réservation sont conservées le temps nécessaire au suivi de la relation
-              cliente et aux obligations comptables, puis supprimées.
+              Les données de rendez-vous sont conservées 3 ans après le dernier rendez-vous, et les
+              pièces comptables 10 ans comme l'exige la loi, puis supprimées.
             </p>
             <p>
               Nous n'utilisons aucun traceur publicitaire et ne revendons aucune donnée à des tiers.

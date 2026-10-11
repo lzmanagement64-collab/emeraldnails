@@ -183,7 +183,11 @@ export async function emailDemandeCliente(brut: ReservationEmail) {
       `Bonjour ${r.prenom}, votre demande est bien reçue`,
       `<p style="font-size:15px;line-height:1.8;">Merci pour votre confiance. Voici le récapitulatif de votre demande :</p>
        ${recap(r)}
-       <p style="font-size:15px;line-height:1.8;">Maria vous confirmera votre rendez-vous. Ce créneau vous est réservé en attendant. Un acompte de ${POURCENT_ACOMPTE} % est demandé pour valider le rendez-vous.</p>
+       <p style="font-size:15px;line-height:1.8;">Maria vous confirmera votre rendez-vous. Ce créneau vous est réservé en attendant.${
+         brut.acompteMontant && brut.acompteMontant > 0
+           ? ` Un acompte de ${POURCENT_ACOMPTE} % est demandé pour valider le rendez-vous.`
+           : " Le prix de la prestation sur devis sera fixé avec Maria."
+       }</p>
        ${phraseAnnulation(r)}`,
     ),
   });
@@ -224,6 +228,22 @@ export async function emailRefusCliente(brut: ReservationEmail, rembourse: boole
        ${acompte}
        <p style="font-size:15px;line-height:1.8;">N'hésitez pas à choisir un autre créneau sur le site, ou à nous appeler au ${business.phoneDisplay} pour trouver ensemble une autre date.</p>`,
       { url: `${siteUrl()}/reserver`, label: "Choisir un autre créneau" },
+    ),
+  });
+}
+
+/** Confirmation d'une annulation faite par la cliente avec son lien (plus de 72 h avant). */
+export async function emailAnnulationCliente(brut: ReservationEmail, message: string) {
+  const r = sur(brut);
+  return envoyerEmail({
+    to: brut.email,
+    subject: "Votre rendez-vous est annulé",
+    html: gabarit(
+      `Bonjour ${r.prenom}`,
+      `<p style="font-size:15px;line-height:1.8;">${message.replace(/</g, "&lt;")}</p>
+       ${recap(r)}
+       <p style="font-size:15px;line-height:1.8;">Au plaisir de vous accueillir une prochaine fois.</p>`,
+      { url: `${siteUrl()}/reserver`, label: "Réserver un nouveau créneau" },
     ),
   });
 }

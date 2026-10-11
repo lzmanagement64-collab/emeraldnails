@@ -325,7 +325,8 @@ export const annulerReservation = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { versEmail, SELECT_AVEC_PRESTATION } = await import("./reservation.server");
-    const { emailAnnulationGerante, emailAlerteGerante } = await import("./emails.server");
+    const { emailAnnulationGerante, emailAlerteGerante, emailAnnulationCliente } =
+      await import("./emails.server");
     const { ANNULATION_TROP_TARD } = await import("./annulation");
     const { rembourserAcompte } = await import("./acompte.server");
     const { formatEuros } = await import("./tz");
@@ -373,9 +374,8 @@ export const annulerReservation = createServerFn({ method: "POST" })
       }
     }
 
-    await Promise.allSettled([
-      emailAnnulationGerante(versEmail({ ...row, acompte_statut: etatAcompteMail } as never)),
-    ]);
+    const mail = versEmail({ ...row, acompte_statut: etatAcompteMail } as never);
+    await Promise.allSettled([emailAnnulationGerante(mail), emailAnnulationCliente(mail, message)]);
     return { annulee: true, message, dateDebut: row.date_debut };
   });
 
