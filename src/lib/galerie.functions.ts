@@ -8,7 +8,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { idSchema } from "./reservation-schemas";
 import { ordreGalerieSchema, photoAjoutSchema, photoModifSchema, versPhoto } from "./galerie";
 
-const COLONNES = "id, titre, categorie, chemin, url_statique, accueil, visible, ordre";
+const COLONNES =
+  "id, titre, categorie, chemin, url_statique, accueil, visible, ordre, banniere, texte_alt";
 const urlSupabase = () => process.env["SUPABASE_URL"] ?? "";
 
 /** Photos visibles, dans l'ordre choisi par la gérante. */
@@ -71,7 +72,36 @@ export const adminModifierPhoto = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => photoModifSchema.parse(d))
   .handler(async ({ data, context }) => {
     await gerante(context);
-    const { id, ...champs } = data;
+    const { id, banniere, ...champs } = data;
+    if (banniere) {
+      // Une seule bannière : l'ancienne est d'abord retirée. La bannière est
+      // toujours visible (sinon les visiteuses ne pourraient pas la voir).
+      const { error: e1 } = await context.supabase
+        .from("galerie_photos")
+        .update({ banniere: false })
+        .eq("banniere", true)
+        .neq("id", id);
+      if (e1) throw new Error(e1.message);
+      const { error: e2 } = await context.supabase
+        .from("galerie_photos")
+        .update({ ...champs, banniere: true, visible: true })
+        .eq("id", id);
+      if (e2) throw new Error(e2.message);
+      return { ok: true };
+    }
+    // Masquer la bannière la retirerait du site : interdit tant qu'elle est la bannière.
+    if (champs.visible === false) {
+      const { data: actuelle } = await context.supabase
+        .from("galerie_photos")
+        .select("banniere")
+        .eq("id", id)
+        .maybeSingle();
+      if (actuelle?.banniere) {
+        throw new Error(
+          "Choisissez d'abord une autre photo pour la bannière avant de masquer celle-ci.",
+        );
+      }
+    }
     const { error } = await context.supabase.from("galerie_photos").update(champs).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };

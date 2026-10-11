@@ -39,11 +39,11 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { prestations, photos } = Route.useLoaderData();
-  // Photos choisies par Maria pour l'accueil (« Accueil » dans l'admin).
-  const accueil = photos.filter((p) => p.accueil);
-  const selection = accueil.length ? accueil : photos;
-  const banniere = selection[0];
-  const realisations = (selection.length > 1 ? selection.slice(1) : photos).slice(0, 7);
+  // Bannière et photos de l'accueil choisies par Maria dans l'admin (onglet Galerie).
+  const banniere = photos.find((p) => p.banniere) ?? photos.find((p) => p.accueil) ?? photos[0];
+  const autres = photos.filter((p) => p.id !== banniere?.id);
+  const accueil = autres.filter((p) => p.accueil);
+  const realisations = (accueil.length ? accueil : autres).slice(0, 7);
   const categories = parCategorie(prestations);
 
   return (
@@ -77,8 +77,10 @@ function Index() {
             {banniere && (
               <div className="photo-zoom reveal relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-sand md:aspect-auto md:h-full md:min-h-[34rem]">
                 <img
-                  src={banniere.src}
-                  alt={banniere.titre || "Réalisation Emerald Beauty"}
+                  src={banniere.vignette}
+                  srcSet={banniere.srcset || undefined}
+                  sizes="(min-width: 768px) 40vw, 100vw"
+                  alt={banniere.alt}
                   fetchPriority="high"
                   decoding="async"
                   className="size-full object-cover"

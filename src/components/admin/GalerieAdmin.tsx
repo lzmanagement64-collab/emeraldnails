@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Eye, EyeOff, Home, ImagePlus, Loader2, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Eye,
+  EyeOff,
+  Home,
+  ImagePlus,
+  Loader2,
+  PanelTop,
+  Trash2,
+} from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -19,8 +29,8 @@ const champ = "w-full rounded-xl border border-border bg-background px-3 py-2 te
 
 /**
  * Onglet « Galerie » de l'admin : ajout depuis le téléphone (photos allégées
- * automatiquement), titre, catégorie, ordre, choix des photos de l'accueil,
- * masquage et suppression.
+ * automatiquement), titre, texte alternatif, catégorie, ordre, choix de la
+ * bannière et des photos de l'accueil, masquage et suppression.
  */
 export function GalerieAdmin() {
   const charger = useServerFn(adminGalerie);
@@ -73,9 +83,7 @@ export function GalerieAdmin() {
         }
         await ajouter({ data: { chemin: dossier, titre: "", categorie: categorieAjout as never } });
       }
-      toast.success(
-        liste.length > 1 ? `${liste.length} photos ajoutées.` : "Photo ajoutée.",
-      );
+      toast.success(liste.length > 1 ? `${liste.length} photos ajoutées.` : "Photo ajoutée.");
     } catch (e) {
       toast.error((e as Error).message || "Envoi impossible.");
     } finally {
@@ -109,8 +117,34 @@ export function GalerieAdmin() {
     }
   };
 
+  /** Nouvelle photo de bannière (une seule : l'ancienne est retirée par le serveur). */
+  const choisirBanniere = async (id: string) => {
+    setPhotos((ps) =>
+      ps.map((p) => ({ ...p, banniere: p.id === id, visible: p.id === id || p.visible })),
+    );
+    try {
+      await modifier({ data: { id, banniere: true } });
+      toast.success("Bannière d'accueil mise à jour.");
+    } catch (e) {
+      toast.error((e as Error).message || "Modification impossible.");
+      await rafraichir();
+    }
+  };
+
+  const majAlt = async (id: string, texte: string) => {
+    setPhotos((ps) => ps.map((p) => (p.id === id ? { ...p, texteAlt: texte } : p)));
+    try {
+      await modifier({ data: { id, texte_alt: texte } });
+    } catch (e) {
+      toast.error((e as Error).message || "Modification impossible.");
+      await rafraichir();
+    }
+  };
+
   const effacer = async (p: PhotoGalerie) => {
-    if (!window.confirm(`Supprimer définitivement cette photo${p.titre ? ` « ${p.titre} »` : ""} ?`))
+    if (
+      !window.confirm(`Supprimer définitivement cette photo${p.titre ? ` « ${p.titre} »` : ""} ?`)
+    )
       return;
     try {
       await supprimer({ data: { id: p.id } });
@@ -177,8 +211,18 @@ export function GalerieAdmin() {
               )}
             >
               <div className="relative aspect-[4/5] bg-linen">
-                <img src={p.vignette} alt={p.titre} loading="lazy" className="size-full object-cover" />
-                <div className="absolute left-3 top-3 flex gap-1.5">
+                <img
+                  src={p.vignette}
+                  alt={p.titre}
+                  loading="lazy"
+                  className="size-full object-cover"
+                />
+                <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                  {p.banniere && (
+                    <span className="rounded-full bg-emerald px-2.5 py-1 text-[11px] text-porcelain">
+                      Bannière
+                    </span>
+                  )}
                   {p.accueil && (
                     <span className="rounded-full bg-ink/85 px-2.5 py-1 text-[11px] text-porcelain">
                       Accueil
@@ -199,6 +243,15 @@ export function GalerieAdmin() {
                   onBlur={(e) => e.target.value !== p.titre && maj(p.id, { titre: e.target.value })}
                   className={champ}
                   aria-label="Titre de la photo"
+                />
+                <textarea
+                  defaultValue={p.texteAlt}
+                  placeholder="Description pour Google (facultatif) : ex. Ongles amande en french blanche avec fleurs bleues"
+                  maxLength={250}
+                  rows={2}
+                  onBlur={(e) => e.target.value !== p.texteAlt && majAlt(p.id, e.target.value)}
+                  className={cn(champ, "resize-none")}
+                  aria-label="Description de la photo pour Google et les lecteurs d'écran"
                 />
                 <select
                   value={p.categorie}
@@ -226,6 +279,12 @@ export function GalerieAdmin() {
                     icone={<ArrowDown className="size-4" />}
                   />
                   <BoutonIcone
+                    titre={p.banniere ? "Photo de la bannière" : "Choisir comme bannière d'accueil"}
+                    onClick={() => !p.banniere && choisirBanniere(p.id)}
+                    actif={p.banniere}
+                    icone={<PanelTop className="size-4" />}
+                  />
+                  <BoutonIcone
                     titre={p.accueil ? "Retirer de l'accueil" : "Mettre à l'accueil"}
                     onClick={() => maj(p.id, { accueil: !p.accueil })}
                     actif={p.accueil}
@@ -250,9 +309,10 @@ export function GalerieAdmin() {
         </ul>
       )}
       <p className="text-xs text-taupe">
-        « Accueil » : la première photo de l'accueil sert de grande photo de bannière, les
-        suivantes apparaissent dans « Réalisations ». « Masquée » : la photo reste ici mais
-        n'apparaît pas sur le site.
+        « Bannière » (icône fenêtre) : la grande photo en haut de l'accueil, une seule à la fois. «
+        Accueil » (icône maison) : les photos de la section « Réalisations » de l'accueil, dans
+        l'ordre de la liste. « Masquée » : la photo reste ici mais n'apparaît pas sur le site. La
+        description aide Google à comprendre la photo ; sans description, le titre est utilisé.
       </p>
     </div>
   );
@@ -280,7 +340,9 @@ function BoutonIcone({
       onClick={onClick}
       className={cn(
         "grid size-10 place-items-center rounded-full border transition-colors disabled:opacity-30",
-        actif ? "border-ink bg-ink text-porcelain" : "border-border bg-background text-ink hover:border-ink/50",
+        actif
+          ? "border-ink bg-ink text-porcelain"
+          : "border-border bg-background text-ink hover:border-ink/50",
       )}
     >
       {icone}
