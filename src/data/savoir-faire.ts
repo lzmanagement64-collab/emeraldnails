@@ -11,7 +11,7 @@ export const SAVOIR_FAIRE = [
   {
     icon: ShieldCheck,
     title: "Hygiène",
-    text: "Instruments stérilisés en autoclave, matériel à usage unique, produits professionnels certifiés.",
+    text: "Instruments stérilisés en autoclave, limes et embouts à usage unique ou désinfectés à chaque cliente, produits professionnels certifiés.",
   },
   {
     icon: HeartHandshake,

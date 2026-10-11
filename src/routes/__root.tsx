@@ -17,6 +17,7 @@ import { MobileBar } from "@/components/site/MobileBar";
 import { AnimationsDefilement } from "@/components/site/AnimationsDefilement";
 import { Toaster } from "@/components/ui/sonner";
 import { business, SITE_URL } from "@/config/business";
+import { schemaSalon } from "@/lib/schema-org";
 import { chargerHoraires } from "@/lib/site-data";
 
 const SITE_TITLE = `${business.name} — Prothésiste ongulaire à ${business.city}`;
@@ -26,7 +27,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   // Horaires d'ouverture (base de données) — affichés dans le pied de page.
   loader: async () => ({ horaires: await chargerHoraires() }),
   staleTime: 5 * 60_000,
-  head: () => ({
+  head: ({ loaderData }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -64,21 +65,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     scripts: [
       {
         type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "BeautySalon",
-          name: business.name,
-          description: SITE_DESCRIPTION,
-          telephone: business.phone,
-          email: business.email,
-          address: {
-            "@type": "PostalAddress",
-            streetAddress: business.address,
-            addressLocality: business.city,
-            addressCountry: "FR",
-          },
-          sameAs: [business.instagramUrl],
-        }),
+        children: JSON.stringify(schemaSalon(loaderData?.horaires ?? [])),
       },
     ],
   }),

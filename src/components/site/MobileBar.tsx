@@ -6,7 +6,16 @@ import { business } from "@/config/business";
 export function MobileBar() {
   const chemin = useRouterState({ select: (s) => s.location.pathname });
   // Sur la page de réservation, le bouton « Réserver » ferait doublon.
-  if (chemin.startsWith("/reserver") || chemin.startsWith("/paiement")) return null;
+  // Pas de barre « Réserver » pendant la réservation ni sur les pages techniques
+  const cachee = [
+    "/reserver",
+    "/paiement",
+    "/auth",
+    "/reset-password",
+    "/annulation",
+    "/confirmation",
+  ];
+  if (cachee.some((c) => chemin.startsWith(c))) return null;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">

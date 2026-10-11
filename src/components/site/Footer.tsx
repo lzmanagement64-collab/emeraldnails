@@ -17,11 +17,7 @@ function LienEspacePro() {
     return () => data.subscription.unsubscribe();
   }, []);
   return (
-    <Link
-      to={connectee ? "/admin" : "/auth"}
-      rel="nofollow"
-      className="text-taupe/70 hover:text-ink"
-    >
+    <Link to={connectee ? "/admin" : "/auth"} rel="nofollow" className="text-taupe hover:text-ink">
       Espace pro
     </Link>
   );
@@ -97,7 +93,7 @@ export function Footer() {
 
         <div className="flex flex-col items-start justify-between gap-3 border-t border-border px-7 py-5 text-xs text-taupe sm:flex-row sm:px-10">
           <p>
-            © {new Date().getFullYear()} {business.name}
+            © {new Date().getFullYear()} {business.name} · SIRET {business.legal.siretAffiche}
           </p>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link to="/securite" className="hover:text-ink">
@@ -110,7 +106,7 @@ export function Footer() {
               Confidentialité
             </Link>
             <Link to="/conditions" className="hover:text-ink">
-              Conditions
+              CGV
             </Link>
             <LienEspacePro />
           </div>

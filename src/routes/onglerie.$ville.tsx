@@ -1,4 +1,5 @@
-import { prixAffiche } from "@/lib/selection";
+import { nomComplet, prixAffiche } from "@/lib/selection";
+import { ID_SALON } from "@/lib/schema-org";
 import { createFileRoute, getRouteApi, Link, notFound } from "@tanstack/react-router";
 import { MapPin, Clock, ArrowRight } from "lucide-react";
 import { Section } from "@/components/site/Section";
@@ -17,7 +18,10 @@ export const Route = createFileRoute("/onglerie/$ville")({
     const area = loaderData?.area;
     if (!area) return {};
     const title = `Prothésiste ongulaire ${area.city} (${area.postalCode}) — Pose gel & nail art | ${business.name}`;
-    const description = `Onglerie près de ${area.city} : extension gel, Gel X, semi-permanent et nail art par Maria, prothésiste ongulaire à Lons, à ${area.travelTime} de ${area.city}. Réservation en ligne 24/7.`;
+    const description =
+      area.slug === "lons"
+        ? `Prothésiste ongulaire à Lons (64140) : semi-permanent, renforcement, extension gel, Gel-X et nail art. Réservation en ligne.`
+        : `Onglerie près de ${area.city} : semi-permanent, extension gel, Gel-X et nail art à Lons, à ${area.travelTime} de ${area.city}. Réservation en ligne.`;
     const url = `${SITE_URL}/onglerie/${params.ville}`;
     return {
       meta: [
@@ -31,22 +35,16 @@ export const Route = createFileRoute("/onglerie/$ville")({
       links: [{ rel: "canonical", href: url }],
       scripts: [
         {
+          // Service proposé aux habitantes de la ville, rattaché à la fiche unique du salon
           type: "application/ld+json",
           children: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "BeautySalon",
-            name: `${business.name} — onglerie ${area.city}`,
+            "@type": "Service",
+            name: `Prothésiste ongulaire — ${area.city}`,
+            serviceType: "Prothésie ongulaire",
             description,
             url,
-            telephone: business.phone,
-            priceRange: "€€",
-            address: {
-              "@type": "PostalAddress",
-              streetAddress: "7 Imp. d'Ossau",
-              addressLocality: "Lons",
-              postalCode: "64140",
-              addressCountry: "FR",
-            },
+            provider: { "@id": ID_SALON },
             areaServed: { "@type": "City", name: area.city },
           }),
         },
@@ -56,14 +54,8 @@ export const Route = createFileRoute("/onglerie/$ville")({
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Accueil", item: SITE_URL },
-              {
-                "@type": "ListItem",
-                position: 2,
-                name: "Zones",
-                item: `${SITE_URL}/onglerie/${params.ville}`,
-              },
-              { "@type": "ListItem", position: 3, name: area.city },
+              { "@type": "ListItem", position: 1, name: "Accueil", item: `${SITE_URL}/` },
+              { "@type": "ListItem", position: 2, name: `Onglerie ${area.city}`, item: url },
             ],
           }),
         },
@@ -99,7 +91,7 @@ function AreaPage() {
             <ul className="grid gap-2 sm:grid-cols-2">
               {prestations.slice(0, 8).map((s) => (
                 <li key={s.id} className="flex justify-between gap-4 border-b border-border py-2">
-                  <span className="text-ink">{s.nom}</span>
+                  <span className="text-ink">{nomComplet(s.nom, s.categorie)}</span>
                   <span>{prixAffiche(s)}</span>
                 </li>
               ))}
@@ -109,8 +101,10 @@ function AreaPage() {
 
             <h2 className="pt-4 font-display text-2xl text-ink">Venir depuis {area.city}</h2>
             <p>
-              Emerald Beauty se trouve au {business.address}, soit {area.distance} et environ{" "}
-              {area.travelTime} depuis {area.city}. Stationnement gratuit devant l'établissement.
+              {area.slug === "lons"
+                ? `Emerald Beauty se trouve au ${business.address}, en plein Lons.`
+                : `Emerald Beauty se trouve au ${business.address}, à ${area.distance} et environ ${area.travelTime} de ${area.city}.`}{" "}
+              Stationnement gratuit devant l'établissement.
             </p>
             <ul className="flex flex-wrap gap-2">
               {area.landmarks.map((l: string) => (

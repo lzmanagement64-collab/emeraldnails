@@ -1,7 +1,7 @@
 // ============================================================
 // Acompte demandé pour valider un rendez-vous — source unique.
 // Le taux se règle dans src/config/business.ts (bookingRules.depositRate).
-// Le paiement en ligne n'est pas activé : le site informe seulement.
+// L'acompte est payé en ligne (Stripe) à l'étape « Paiement » de la réservation.
 // ============================================================
 import { business } from "@/config/business";
 import { formatEuros } from "./tz";

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/annulation")({
       {
         name: "description",
         content:
-          "Annulez votre rendez-vous chez Emerald Beauty à Lons depuis le lien reçu par email, en quelques secondes.",
+          "Annulez votre rendez-vous chez Emerald Beauty à Lons depuis le lien reçu par e-mail, en quelques secondes.",
       },
       { property: "og:title", content: "Annuler mon rendez-vous — Emerald Beauty" },
       {

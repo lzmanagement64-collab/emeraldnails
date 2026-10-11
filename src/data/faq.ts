@@ -1,3 +1,4 @@
+import { POURCENT_ACOMPTE } from "@/lib/acompte";
 import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
 
 export const faq = [
@@ -15,7 +16,7 @@ export const faq = [
   },
   {
     q: "Faut-il verser un acompte ?",
-    a: `Oui. Un acompte de 30 % du montant total du rendez-vous (toutes prestations comprises) se règle en ligne, par carte bancaire, au moment de la réservation : c'est lui qui valide le rendez-vous. Il est déduit du montant total, et le reste se règle sur place. ${REGLE_ACOMPTE_TEXTE}`,
+    a: `Oui. Un acompte de ${POURCENT_ACOMPTE} % du montant total du rendez-vous (toutes prestations comprises, hors prestation sur devis) se règle en ligne au moment de la réservation, par carte bancaire, Apple Pay ou Google Pay. Il bloque votre créneau ; Maria valide ensuite votre rendez-vous (sinon, l'acompte est remboursé intégralement). Il est déduit du montant total, et le reste se règle sur place. ${REGLE_ACOMPTE_TEXTE}`,
   },
   {
     q: "Quelles sont les conditions d’annulation ?",
@@ -31,7 +32,7 @@ export const faq = [
   },
   {
     q: "Quels moyens de paiement acceptez-vous ?",
-    a: "Les paiements en espèces, par PayPal ou par Wero sont acceptés.",
+    a: "L'acompte se règle en ligne par carte bancaire, Apple Pay ou Google Pay. Le reste se règle sur place, en espèces, par PayPal ou par Wero.",
   },
   {
     q: "Comment prendre soin de mes mains et de mes ongles après le rendez-vous ?",
