@@ -1403,10 +1403,10 @@ const LIBELLE_CLE: Record<string, string> = {
   ok: "trouvée",
   absente: "absente : ajoutez STRIPE_SECRET_KEY dans Lovable Cloud → Secrets, puis republiez",
   cle_publique:
-    "c'est la clé publique (pk_…) : il faut la clé SECRÈTE (sk_test_… en test), dans Stripe → Développeurs → Clés API",
+    "c'est la clé publique (pk_…) : il faut la clé SECRÈTE (sk_live_…), dans Stripe → Développeurs → Clés API",
   secret_webhook:
-    "c'est le secret du webhook (whsec_…) : mettez-le dans STRIPE_WEBHOOK_SECRET, et la clé secrète sk_test_… dans STRIPE_SECRET_KEY",
-  inconnue: "format inattendu : la clé secrète commence par sk_test_ (test) ou sk_live_ (réel)",
+    "c'est le secret du webhook (whsec_…) : mettez-le dans STRIPE_WEBHOOK_SECRET, et la clé secrète sk_live_… dans STRIPE_SECRET_KEY",
+  inconnue: "format inattendu : la clé secrète commence par sk_live_",
 };
 
 /** État du paiement en ligne : secrets Stripe et connexion réelle, sans aucune clé affichée. */
@@ -1426,7 +1426,7 @@ function ReglagesPaiement() {
     }
   };
 
-  const actif = d?.etatCle === "ok" && d.connexion?.ok;
+  const actif = d?.etatCle === "ok" && d.connexion?.ok && !d.testRefuse && d.memeMode;
   return (
     <section className={cn(carte, "space-y-4")}>
       <h2 className="font-display text-lg text-ink">Paiement de l'acompte (Stripe)</h2>
@@ -1441,9 +1441,16 @@ function ReglagesPaiement() {
         <ul className="space-y-1.5 text-sm">
           <li className={actif ? "font-semibold text-emerald" : "font-semibold text-bordeaux"}>
             {actif
-              ? `Paiement en ligne ACTIF${d.modeTest ? " (mode test : aucun vrai paiement)" : " (paiements réels)"}`
-              : "Paiement en ligne INACTIF : les clientes ne voient pas d'étape de paiement"}
+              ? `Paiement en ligne ACTIF${d.modeTest ? " (mode test, aperçu uniquement : aucun vrai paiement)" : " (paiements réels)"}`
+              : "Paiement en ligne INACTIF : les clientes ne peuvent pas réserver en ligne"}
           </li>
+          {d.testRefuse && (
+            <li className="font-semibold text-bordeaux">
+              La clé enregistrée est une clé de TEST : elle est refusée sur le site en ligne.
+              Remplacez STRIPE_SECRET_KEY par la clé sk_live_… et STRIPE_PUBLISHABLE_KEY par la clé
+              pk_live_… (Stripe → Développeurs → Clés API, mode réel).
+            </li>
+          )}
           <li className="text-ink">Clé secrète Stripe : {LIBELLE_CLE[d.etatCle]}</li>
           {d.connexion && (
             <li className={d.connexion.ok ? "text-emerald" : "text-bordeaux"}>
@@ -1455,7 +1462,7 @@ function ReglagesPaiement() {
             {d.clePublique === "ok"
               ? "trouvée"
               : d.clePublique === "absente"
-                ? "absente : ajoutez STRIPE_PUBLISHABLE_KEY (pk_test_… en test) dans Lovable Cloud → Secrets"
+                ? "absente : ajoutez STRIPE_PUBLISHABLE_KEY (pk_live_…) dans Lovable Cloud → Secrets"
                 : "format inattendu (elle commence par pk_)"}
           </li>
           {!d.memeMode && (

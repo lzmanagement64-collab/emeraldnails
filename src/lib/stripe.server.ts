@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { lireSecret } from "./secrets.server";
+import { requeteDeTest } from "./adresse-site.server";
 
 const getEnv = (key: string): string => {
   const value = lireSecret(key);
@@ -10,7 +11,8 @@ const getEnv = (key: string): string => {
 // ------------------------------------------------------------
 // Connexion directe au compte Stripe de l'établissement.
 // Secrets à créer dans Lovable Cloud (jamais dans le code) :
-//   STRIPE_SECRET_KEY      clé secrète (sk_test_… en test, sk_live_… en réel)
+//   STRIPE_SECRET_KEY      clé secrète (sk_live_… en réel ; sk_test_… accepté
+//                          seulement sur l'aperçu Lovable, jamais sur le site en ligne)
 //   STRIPE_WEBHOOK_SECRET  secret de signature du webhook (whsec_…)
 // Sans STRIPE_SECRET_KEY, le paiement en ligne est simplement désactivé.
 // ------------------------------------------------------------
@@ -35,16 +37,30 @@ export function clePublique() {
   return cle.startsWith("pk_") ? cle : "";
 }
 
+const estCleTest = (cle: string) => /^(sk|rk)_test_/.test(cle);
+
 /**
- * Paiement en ligne actif ? Et en mode test ? (aucune clé secrète n'est renvoyée)
- * Appeler `await preparerSecrets()` avant.
+ * Paiement en ligne actif ? (aucune clé secrète n'est renvoyée)
+ * Sur le site en ligne, une clé de TEST est refusée : aucun rendez-vous ne
+ * peut alors être pris avec un faux paiement. Appeler `await preparerSecrets()` avant.
  */
 export function configPaiement() {
   const key = lireSecret("STRIPE_SECRET_KEY");
+  const publique = clePublique();
+  const modeTest = estCleTest(key);
+  const memeMode = !publique || publique.startsWith("pk_test_") === modeTest;
+  const testRefuse = modeTest && !requeteDeTest();
+  if (testRefuse) console.error("[paiement] clé Stripe de TEST refusée sur le site en ligne");
   return {
-    actif: analyserCleStripe(key) === "ok" && !!clePublique(),
-    modeTest: /^(sk|rk)_test_/.test(key),
+    actif: analyserCleStripe(key) === "ok" && !!publique && memeMode && !testRefuse,
+    testRefuse,
   };
+}
+
+/** Vrai si l'événement Stripe n'est pas du même mode (test / réel) que la clé du site. */
+export function evenementAutreMode(livemode: unknown) {
+  if (typeof livemode !== "boolean") return false;
+  return livemode === estCleTest(lireSecret("STRIPE_SECRET_KEY"));
 }
 
 /** Diagnostic complet pour l'admin : format des secrets et connexion réelle à Stripe. */
@@ -66,7 +82,8 @@ export async function diagnosticPaiement() {
   }
   return {
     etatCle,
-    modeTest: /^(sk|rk)_test_/.test(cle),
+    modeTest: estCleTest(cle),
+    testRefuse: estCleTest(cle) && !requeteDeTest(),
     webhook: !webhook ? "absent" : webhook.startsWith("whsec_") ? "ok" : "format_inconnu",
     clePublique: !publique ? "absente" : publique.startsWith("pk_") ? "ok" : "format_inconnu",
     memeMode:
@@ -130,9 +147,12 @@ export type StripeWebhookObject = {
   [key: string]: unknown;
 };
 
-export async function verifyWebhook(
-  req: Request,
-): Promise<{ id: string; type: string; data: { object: StripeWebhookObject } }> {
+export async function verifyWebhook(req: Request): Promise<{
+  id: string;
+  type: string;
+  livemode?: boolean;
+  data: { object: StripeWebhookObject };
+}> {
   const signature = req.headers.get("stripe-signature");
   const body = await req.text();
   const secret = getEnv("STRIPE_WEBHOOK_SECRET");

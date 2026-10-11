@@ -22,7 +22,6 @@ export type InfosPaiement = {
   clePublique: string;
   acompte: number;
   expireLe: string | null;
-  modeTest: boolean;
 };
 
 // Couleurs et formes du site (émeraude, ivoire, coins arrondis, Manrope).
@@ -200,12 +199,6 @@ function FormulairePaiement({
         <ShieldCheck className="size-4 text-emerald" strokeWidth={1.6} />
         Paiement sécurisé par Stripe · {business.name} ne voit jamais vos coordonnées bancaires
       </p>
-
-      {infos.modeTest && (
-        <p className="rounded-2xl border border-border bg-card p-3 text-xs text-taupe">
-          Mode test : aucun paiement réel. Carte de test 4242 4242 4242 4242, date future, code 123.
-        </p>
-      )}
     </div>
   );
 }
