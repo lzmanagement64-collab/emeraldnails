@@ -18,12 +18,12 @@ type Realisation = {
 
 export const realisations: Realisation[] = [
   {
-    titre: "Fleurs 3D blanc crème · touches dorées",
-    categorie: "nail-art",
-    base: "/photos/realisations/banniere-fleurs-3d-blanc-creme-or",
+    titre: "Blanc laiteux · amande",
+    categorie: "french",
+    base: "/photos/realisations/banniere-french-blanc-laiteux",
     accueil: false,
     banniere: true,
-    alt: "Ongles longs amande nude ornés de fleurs 3D blanc crème et de détails dorés, réalisés par Emerald Beauty, prothésiste ongulaire à Lons",
+    alt: "Ongles amande blanc laiteux brillant, pose réalisée par Emerald Beauty, prothésiste ongulaire à Lons",
   },
   {
     titre: "French blanche · fleurs bleues",
@@ -42,12 +42,12 @@ export const realisations: Realisation[] = [
     alt: "Nail art sur ongles amande nude : pointes roses, fleurs 3D roses et bijoux dorés, par Emerald Beauty à Lons",
   },
   {
-    titre: "Blanc laiteux · amande",
-    categorie: "french",
-    base: "/photos/realisations/accueil-3-french-blanc-laiteux",
+    titre: "Fleurs 3D blanc crème · touches dorées",
+    categorie: "nail-art",
+    base: "/photos/realisations/accueil-3-nailart-fleurs-3d-blanc-creme-or",
     accueil: true,
     banniere: false,
-    alt: "Ongles amande blanc laiteux brillant, pose réalisée par Emerald Beauty, prothésiste ongulaire à Lons",
+    alt: "Ongles longs amande nude ornés de fleurs 3D blanc crème et de détails dorés, réalisés par Emerald Beauty, prothésiste ongulaire à Lons",
   },
   {
     titre: "Corail · fleurs 3D",
@@ -144,14 +144,6 @@ export const realisations: Realisation[] = [
     accueil: false,
     banniere: false,
     alt: "Ongles amande rouge cerise brillant, couleur unie réalisée par Emerald Beauty, prothésiste ongulaire à Lons",
-  },
-  {
-    titre: "Bordeaux · stiletto",
-    categorie: "couleur",
-    base: "/photos/realisations/galerie-couleur-bordeaux-stiletto",
-    accueil: false,
-    banniere: false,
-    alt: "Ongles stiletto longs bordeaux profond et brillants, réalisation Emerald Beauty à Lons",
   },
 ];
 
