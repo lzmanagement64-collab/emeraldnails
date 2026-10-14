@@ -121,6 +121,11 @@ export const indisponibiliteSchema = z.object({
 });
 
 export const idSchema = z.object({ id: z.string().uuid() });
+/** Option de paiement choisie par la cliente : seul le mode est transmis, jamais un montant. */
+export const optionPaiementSchema = z.object({
+  id: z.string().uuid(),
+  mode: z.enum(["acompte", "total"]),
+});
 export const tokenSchema = z.object({ token: z.string().uuid("Lien d'annulation invalide") });
 
 export const REGLES = {

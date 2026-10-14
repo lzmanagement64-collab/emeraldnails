@@ -7,6 +7,14 @@ import { PaiementAcompte, type InfosPaiement } from "@/components/site/PaiementA
 import { business, SITE_URL } from "@/config/business";
 import { ChampPiege } from "@/components/site/ChampPiege";
 import { ACOMPTE_TEXTE, acompteFormate, montantAcompte, POURCENT_ACOMPTE } from "@/lib/acompte";
+import {
+  DEVIS_TEXTE,
+  montantAPayer,
+  nomOption,
+  optionsPaiement,
+  resteSurPlace,
+  type ModePaiement,
+} from "@/lib/options-paiement";
 import { ANNULATION_TEXTE, REGLE_ACOMPTE_TEXTE } from "@/lib/annulation";
 import {
   devisAFaire,
@@ -111,6 +119,8 @@ function ReserverPage() {
   // Paiement intégré de l'étape 5 (réservation provisoire en cours)
   const [enCours, setEnCours] = useState<{ id: string; infos: InfosPaiement } | null>(null);
   const [acomptePaye, setAcomptePaye] = useState(false);
+  // Option choisie à l'étape Paiement (acompte par défaut).
+  const [modePaiement, setModePaiement] = useState<ModePaiement>("acompte");
   // Paiement de l'acompte en ligne actif ? (déterminé par le serveur)
   const [paiement, setPaiement] = useState<{ actif: boolean }>({ actif: false });
   useEffect(() => {
@@ -271,7 +281,8 @@ function ReserverPage() {
         prix: res.prix,
       });
       if (res.paiement) {
-        // Créneau bloqué : paiement de l'acompte directement dans la page.
+        // Créneau bloqué : paiement (acompte ou totalité) directement dans la page.
+        setModePaiement(res.paiement.mode);
         setEnCours({ id: res.id, infos: res.paiement });
         setEtape(5);
         return;
@@ -741,22 +752,19 @@ function ReserverPage() {
               {acompteDu && (
                 <>
                   <li className="flex justify-between gap-4 font-semibold text-emerald">
-                    <span>Acompte à payer maintenant ({POURCENT_ACOMPTE} %)</span>
+                    <span>Acompte en ligne ({POURCENT_ACOMPTE} %)</span>
                     <span>{acompteFormate(total.prix)}</span>
                   </li>
-                  <li className="flex justify-between gap-4 text-taupe">
-                    <span>Reste à payer sur place</span>
-                    <span>{formatEuros(Math.max(0, total.prix - montantAcompte(total.prix)))}</span>
-                  </li>
+                  {optionsPaiement(total.prix).choixPossible && (
+                    <li className="flex justify-between gap-4 text-taupe">
+                      <span>ou totalité en ligne</span>
+                      <span>{formatEuros(total.prix)}</span>
+                    </li>
+                  )}
                 </>
               )}
             </ul>
-            {avecDevis && (
-              <p className="mt-3 text-sm text-ink">
-                Prestation sur devis : son prix est fixé avec Maria et s'ajoute au total. Il n'est
-                pas compté dans l'acompte.
-              </p>
-            )}
+            {avecDevis && <p className="mt-3 text-sm text-ink">{DEVIS_TEXTE}</p>}
           </div>
 
           <div className="carte space-y-1 p-5 text-sm">
@@ -775,9 +783,10 @@ function ReserverPage() {
             <p>{REGLE_ACOMPTE_TEXTE}</p>
             {acompteDu && (
               <p>
-                À l'étape suivante, vous réglez l'acompte directement sur cette page. Votre créneau
-                vous est réservé {DELAI_PAIEMENT_AFFICHE} minutes le temps du paiement ; sans
-                paiement, il est libéré. Maria valide ensuite votre rendez-vous.
+                À l'étape suivante, vous choisissez de payer l'acompte ({POURCENT_ACOMPTE} %) ou la
+                totalité, directement sur cette page. Votre créneau vous est réservé{" "}
+                {DELAI_PAIEMENT_AFFICHE} minutes le temps du paiement ; sans paiement, il est
+                libéré. Maria valide ensuite votre rendez-vous.
               </p>
             )}
           </div>
@@ -810,7 +819,7 @@ function ReserverPage() {
               {envoi
                 ? "Réservation du créneau…"
                 : acompteDu
-                  ? "Confirmer et payer l'acompte"
+                  ? "Confirmer et passer au paiement"
                   : "Confirmer ma demande"}
             </button>
           </div>
@@ -820,12 +829,12 @@ function ReserverPage() {
       {/* ÉTAPE 5 — PAIEMENT intégré (carte, Apple Pay, Google Pay) */}
       {etape === 5 && enCours && date && heure && (
         <section
-          aria-label="Paiement de l'acompte"
+          aria-label="Paiement"
           className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]"
         >
           <div className="carte order-2 p-5 sm:p-6 md:order-1">
             <h2 className="flex items-center gap-2 font-display text-2xl text-ink">
-              <Lock className="size-5 text-emerald" strokeWidth={1.6} /> Paiement de l'acompte
+              <Lock className="size-5 text-emerald" strokeWidth={1.6} /> Paiement
             </h2>
             <p className="mb-5 mt-1 text-sm text-taupe">
               Carte bancaire (CB, Visa, Mastercard), Apple Pay ou Google Pay.
@@ -837,7 +846,12 @@ function ReserverPage() {
                   ? `${window.location.origin}/paiement?reservation=${enCours.id}&retour=ok`
                   : ""
               }
-              onPaye={apresPaiement}
+              onMode={setModePaiement}
+              avecDevis={avecDevis}
+              onPaye={async (m) => {
+                setModePaiement(m);
+                await apresPaiement();
+              }}
             />
           </div>
           <aside className="order-1 md:order-2">
@@ -861,24 +875,26 @@ function ReserverPage() {
                 {acompteDu && (
                   <>
                     <li className="flex justify-between gap-4 font-semibold text-emerald">
-                      <span>Acompte à payer maintenant ({POURCENT_ACOMPTE} %)</span>
-                      <span>{acompteFormate(total.prix)}</span>
+                      <span>
+                        {modePaiement === "total"
+                          ? "À payer maintenant (totalité)"
+                          : `À payer maintenant (acompte ${POURCENT_ACOMPTE} %)`}
+                      </span>
+                      <span>{formatEuros(montantAPayer(total.prix, modePaiement))}</span>
                     </li>
                     <li className="flex justify-between gap-4 text-taupe">
                       <span>Reste à payer sur place</span>
                       <span>
-                        {formatEuros(Math.max(0, total.prix - montantAcompte(total.prix)))}
+                        {formatEuros(
+                          resteSurPlace(total.prix, montantAPayer(total.prix, modePaiement)),
+                        )}
+                        {avecDevis ? " + devis" : ""}
                       </span>
                     </li>
                   </>
                 )}
               </ul>
-              {avecDevis && (
-                <p className="mt-3 text-sm text-ink">
-                  Prestation sur devis : son prix est fixé avec Maria et s'ajoute au total. Il n'est
-                  pas compté dans l'acompte.
-                </p>
-              )}
+              {avecDevis && <p className="mt-3 text-sm text-ink">{DEVIS_TEXTE}</p>}
             </div>
           </aside>
         </section>
@@ -892,11 +908,11 @@ function ReserverPage() {
           </div>
           <div>
             <h2 className="font-display text-3xl text-ink">
-              {acomptePaye ? "Acompte payé – demande reçue" : "Demande enregistrée"}
+              {acomptePaye ? `${nomOption(modePaiement)} – demande reçue` : "Demande enregistrée"}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-taupe">
               {acomptePaye
-                ? "Merci ! Votre créneau est réservé. Maria va valider votre rendez-vous : vous recevrez un e-mail de confirmation. Si elle ne pouvait pas vous recevoir, votre acompte vous serait remboursé intégralement."
+                ? "Merci ! Votre créneau est réservé. Maria va valider votre rendez-vous : vous recevrez un e-mail de confirmation. Si elle ne pouvait pas vous recevoir, tout ce que vous avez payé vous serait remboursé."
                 : "Votre demande a bien été transmise. Maria vous contacte pour confirmer le rendez-vous."}
             </p>
           </div>
@@ -911,8 +927,13 @@ function ReserverPage() {
             </p>
             {acomptePaye && (
               <p className="mt-1 text-sm text-ink">
-                Acompte payé : {acompteFormate(confirmation.prix)} · reste à payer sur place :{" "}
-                {formatEuros(Math.max(0, confirmation.prix - montantAcompte(confirmation.prix)))}
+                {modePaiement === "total" ? "Payé intégralement" : "Acompte payé"} :{" "}
+                {formatEuros(montantAPayer(confirmation.prix, modePaiement))} · reste à payer sur
+                place :{" "}
+                {formatEuros(
+                  resteSurPlace(confirmation.prix, montantAPayer(confirmation.prix, modePaiement)),
+                )}
+                {avecDevis ? " + prestation sur devis" : ""}
               </p>
             )}
             <p className="mt-3 text-sm text-taupe">{ANNULATION_TEXTE}</p>

@@ -3,16 +3,18 @@
 //
 // Déroulé :
 // 1. La cliente valide le formulaire : le rendez-vous est enregistré en
-//    « réservation provisoire » (acompte_statut = en_attente) et la page de
-//    paiement Stripe s'ouvre. Le créneau est bloqué 35 minutes.
+//    « réservation provisoire » (acompte_statut = en_attente) et le paiement
+//    s'affiche dans la page. Elle choisit l'acompte (30 %, par défaut) ou la
+//    totalité : le montant est recalculé ici, jamais d'après le navigateur.
+//    Le créneau est bloqué 35 minutes.
 // 2. Paiement reçu (webhook Stripe signé, ou vérification directe auprès de
 //    Stripe au retour de la cliente) : acompte « payé », rendez-vous « à
 //    valider » par Maria. E-mail « demande reçue, acompte payé » à la cliente,
 //    alerte à Maria.
-// 2 bis. Maria valide (e-mail de confirmation) ou refuse (acompte remboursé
-//    intégralement, e-mail d'explication).
+// 2 bis. Maria valide (e-mail de confirmation) ou refuse (tout ce qui a été
+//    payé est remboursé, e-mail d'explication).
 // 3. Pas de paiement à temps : le créneau est libéré automatiquement.
-// 4. Annulation en ligne (plus de 72 h avant) : acompte remboursé.
+// 4. Annulation : règles dans options-paiement.ts (montantARembourser).
 // ============================================================
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { adresseSite } from "./adresse-site.server";
@@ -20,6 +22,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { business } from "@/config/business";
 import { getStripe, getStripeErrorMessage } from "./stripe.server";
 import { POURCENT_ACOMPTE } from "./acompte";
+import { modeValide, montantAPayer } from "./options-paiement";
 import { SELECT_AVEC_PRESTATION, versEmail } from "./reservation.server";
 import { parisLongDate, parisTime } from "./tz";
 
@@ -68,45 +71,41 @@ type RowIntention = {
   id: string;
   date_debut: string;
   cliente_email: string;
+  prix_total: number | null;
   acompte_montant: number | null;
+  mode_paiement: string | null;
   stripe_payment_intent: string | null;
   prestations_detail?: unknown;
   prestations: { nom: string } | null;
 };
 
+/** Montant (en centimes) à payer en ligne pour l'option enregistrée, recalculé ici. */
+export function centimesAPayer(
+  row: Pick<RowIntention, "prix_total" | "acompte_montant" | "mode_paiement">,
+) {
+  const mode = modeValide(row.mode_paiement);
+  const euros =
+    mode === "total"
+      ? montantAPayer(Number(row.prix_total ?? 0), "total")
+      : Number(row.acompte_montant ?? montantAPayer(Number(row.prix_total ?? 0), "acompte"));
+  return Math.round(euros * 100);
+}
+
+/** Erreur affichée si la cliente change d'option pendant qu'un paiement aboutit. */
+export const PAIEMENT_DEJA_EN_COURS =
+  "Un paiement est déjà en cours pour ce rendez-vous : l'option ne peut plus être changée.";
+
 /**
  * Paiement intégré au site (Payment Element / Apple Pay / Google Pay) :
- * renvoie la clé de paiement (client secret) de l'acompte de ce rendez-vous,
- * en réutilisant le paiement en cours s'il est encore utilisable.
+ * renvoie la clé de paiement (client secret) de ce rendez-vous, au montant de
+ * l'option choisie (acompte ou totalité). Le paiement en cours est réutilisé,
+ * ou son montant mis à jour si la cliente a changé d'option.
  */
 export async function intentionPaiement(admin: Admin, row: RowIntention) {
   const stripe = getStripe();
-  const centimes = Math.round(Number(row.acompte_montant ?? 0) * 100);
-  if (centimes < 50) throw new Error("Montant d'acompte invalide.");
-
-  if (row.stripe_payment_intent) {
-    const actuel = await stripe.paymentIntents.retrieve(row.stripe_payment_intent);
-    const reutilisable = [
-      "requires_payment_method",
-      "requires_confirmation",
-      "requires_action",
-      "processing",
-      "succeeded",
-    ].includes(actuel.status);
-    const automatique = !!actuel.automatic_payment_methods?.enabled;
-    if (
-      reutilisable &&
-      (automatique || actuel.status !== "requires_payment_method") &&
-      actuel.amount === centimes &&
-      actuel.client_secret
-    ) {
-      return { clientSecret: actuel.client_secret, statut: actuel.status };
-    }
-    // Ancien paiement non utilisable (ex. créé « carte seule ») : il est fermé avant d'en créer un neuf.
-    if (actuel.status !== "succeeded" && actuel.status !== "canceled") {
-      await stripe.paymentIntents.cancel(actuel.id).catch(() => undefined);
-    }
-  }
+  const centimes = centimesAPayer(row);
+  const mode = modeValide(row.mode_paiement);
+  if (centimes < 50) throw new Error("Montant à payer invalide.");
 
   const detail = Array.isArray(row.prestations_detail)
     ? (row.prestations_detail as { nom: string }[])
@@ -115,6 +114,37 @@ export async function intentionPaiement(admin: Admin, row: RowIntention) {
     ? detail.map((l) => l.nom).join(" + ")
     : (row.prestations?.nom ?? "Prestation");
   const quand = `${parisLongDate(row.date_debut)} à ${parisTime(row.date_debut)}`;
+  const description = `${mode === "total" ? "Paiement intégral" : `Acompte ${POURCENT_ACOMPTE} %`} — ${nom} — ${quand} — ${business.name}`;
+
+  if (row.stripe_payment_intent) {
+    const actuel = await stripe.paymentIntents.retrieve(row.stripe_payment_intent);
+    const automatique = !!actuel.automatic_payment_methods?.enabled;
+    const modifiable = [
+      "requires_payment_method",
+      "requires_confirmation",
+      "requires_action",
+    ].includes(actuel.status);
+    const enCours = ["processing", "succeeded"].includes(actuel.status);
+    if (actuel.client_secret && actuel.amount === centimes && (automatique || enCours)) {
+      return { clientSecret: actuel.client_secret, statut: actuel.status };
+    }
+    // Paiement déjà en cours ou terminé à un autre montant : on ne touche à rien.
+    if (enCours) throw new Error(PAIEMENT_DEJA_EN_COURS);
+    // Changement d'option : même paiement, nouveau montant.
+    if (automatique && modifiable && actuel.client_secret) {
+      const maj = await stripe.paymentIntents.update(actuel.id, {
+        amount: centimes,
+        description,
+        metadata: { reservationId: row.id, mode },
+      });
+      return { clientSecret: maj.client_secret ?? actuel.client_secret, statut: maj.status };
+    }
+    // Ancien paiement non utilisable (ex. créé « carte seule ») : il est fermé avant d'en créer un neuf.
+    if (actuel.status !== "canceled") {
+      await stripe.paymentIntents.cancel(actuel.id).catch(() => undefined);
+    }
+  }
+
   const intent = await stripe.paymentIntents.create(
     {
       amount: centimes,
@@ -123,8 +153,8 @@ export async function intentionPaiement(admin: Admin, row: RowIntention) {
       // Stripe (carte bancaire CB / Visa / Mastercard, Apple Pay, Google Pay…).
       automatic_payment_methods: { enabled: true },
       receipt_email: row.cliente_email,
-      description: `Acompte ${POURCENT_ACOMPTE} % — ${nom} — ${quand} — ${business.name}`,
-      metadata: { reservationId: row.id },
+      description,
+      metadata: { reservationId: row.id, mode },
     },
     { idempotencyKey: `acompte-${row.id}-${centimes}-${row.stripe_payment_intent ?? "1"}` },
   );
@@ -137,23 +167,64 @@ export async function intentionPaiement(admin: Admin, row: RowIntention) {
   return { clientSecret: intent.client_secret, statut: intent.status };
 }
 
-/** Rembourse l'acompte payé d'un rendez-vous. Renvoie vrai si le remboursement est lancé. */
-export async function rembourserAcompte(
+type RowRemboursement = {
+  id: string;
+  stripe_payment_intent: string | null;
+  acompte_montant: number | null;
+  montant_paye: number | null;
+  montant_rembourse?: number | null;
+};
+
+/** Montant encaissé en ligne (anciennes réservations : l'acompte). */
+export const montantEncaisse = (row: Pick<RowRemboursement, "montant_paye" | "acompte_montant">) =>
+  Number(row.montant_paye ?? row.acompte_montant ?? 0);
+
+/**
+ * Rembourse `montant` euros (par défaut : tout ce qui reste) sur le paiement
+ * d'un rendez-vous. Renvoie le montant remboursé, ou null si Stripe a refusé.
+ * `motif` rend l'opération unique : un double clic ne rembourse pas deux fois.
+ */
+export async function rembourser(
   admin: Admin,
-  row: { id: string; stripe_payment_intent: string | null },
-) {
-  if (!row.stripe_payment_intent) return false;
+  row: RowRemboursement,
+  motif: string,
+  montant?: number,
+): Promise<number | null> {
+  const paye = montantEncaisse(row);
+  const deja = Number(row.montant_rembourse ?? 0);
+  const aRendre = Math.round(Math.min(montant ?? paye - deja, paye - deja) * 100) / 100;
+  if (aRendre < 0.01) return 0;
+  if (!row.stripe_payment_intent) return null;
+  const centimes = Math.round(aRendre * 100);
   try {
     await getStripe().refunds.create(
-      { payment_intent: row.stripe_payment_intent, reason: "requested_by_customer" },
-      { idempotencyKey: `remboursement-${row.id}` },
+      {
+        payment_intent: row.stripe_payment_intent,
+        amount: centimes,
+        reason: "requested_by_customer",
+        metadata: { reservationId: row.id, motif },
+      },
+      { idempotencyKey: `remboursement-${row.id}-${motif}-${centimes}` },
     );
   } catch (e) {
     console.error("[acompte] remboursement", getStripeErrorMessage(e));
-    return false;
+    return null;
   }
-  await admin.from("reservations").update({ acompte_statut: "rembourse" }).eq("id", row.id);
-  return true;
+  const total = Math.round((deja + aRendre) * 100) / 100;
+  await admin
+    .from("reservations")
+    .update({
+      montant_paye: paye,
+      montant_rembourse: total,
+      acompte_statut: total >= paye - 0.005 ? "rembourse" : "rembourse_partiel",
+    })
+    .eq("id", row.id);
+  return aRendre;
+}
+
+/** Rembourse tout ce qui a été payé. Renvoie vrai si le remboursement est lancé. */
+export async function rembourserAcompte(admin: Admin, row: RowRemboursement, motif = "total") {
+  return (await rembourser(admin, row, motif)) !== null;
 }
 
 type SessionStripe = {
@@ -203,10 +274,13 @@ export async function enregistrerAcomptePaye(
   if (row.acompte_statut === "paye" || row.acompte_statut === "rembourse") return; // déjà traité
 
   const pi = p.paymentIntentId;
-  const montant = p.montant ?? Number(row.acompte_montant ?? 0);
+  // Montant réellement encaissé (lu chez Stripe) : il fixe l'option payée.
+  const montant = p.montant ?? centimesAPayer(row) / 100;
+  const prix = Number(row.prix_total ?? 0);
   const paiement = {
     acompte_statut: "paye",
-    acompte_montant: montant,
+    montant_paye: montant,
+    mode_paiement: prix > 0 && montant >= prix - 0.005 ? "total" : "acompte",
     acompte_paye_le: new Date().toISOString(),
     acompte_expire_le: null,
     stripe_session_id: p.sessionId ?? row.stripe_session_id,
@@ -243,12 +317,18 @@ export async function enregistrerAcomptePaye(
       .eq("acompte_statut", row.acompte_statut)
       .select("id");
     if (!faits?.length) return; // déjà traité par l'autre appel
-    const rembourse = await rembourserAcompte(admin, { id, stripe_payment_intent: pi });
+    const rembourse = await rembourserAcompte(admin, {
+      id,
+      stripe_payment_intent: pi,
+      acompte_montant: row.acompte_montant,
+      montant_paye: montant,
+      montant_rembourse: 0,
+    });
     await emailAlerteGerante(
       versEmail({ ...row, ...paiement } as never),
       rembourse
-        ? "Un acompte a été payé pour un créneau qui n'était plus disponible. Il a été remboursé automatiquement : pensez à recontacter la cliente."
-        : "Un acompte a été payé pour un créneau qui n'était plus disponible. Le remboursement automatique a échoué : remboursez-le depuis le tableau de bord Stripe.",
+        ? "Un paiement a été fait pour un créneau qui n'était plus disponible. Il a été remboursé automatiquement : pensez à recontacter la cliente."
+        : "Un paiement a été fait pour un créneau qui n'était plus disponible. Le remboursement automatique a échoué : remboursez-le depuis le tableau de bord Stripe.",
     );
     return;
   }
@@ -340,17 +420,36 @@ export async function enregistrerExpiration(admin: Admin, session: SessionStripe
     .eq("stripe_session_id", session.id);
 }
 
-/** Webhook « remboursement » (fait en ligne ou depuis le tableau de bord Stripe). */
+/** Webhook « remboursement » (fait par le site ou depuis le tableau de bord Stripe). */
 export async function enregistrerRemboursement(
   admin: Admin,
-  charge: { payment_intent?: string | { id: string } | null; refunded?: boolean },
+  charge: {
+    payment_intent?: string | { id: string } | null;
+    refunded?: boolean;
+    amount_refunded?: number;
+  },
 ) {
   const pi =
     typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
-  if (!pi || !charge.refunded) return;
-  await admin
+  if (!pi || !charge.amount_refunded) return;
+  // Montant cumulé chez Stripe : le même événement reçu deux fois ne change rien.
+  const { data: rows } = await admin
     .from("reservations")
-    .update({ acompte_statut: "rembourse" })
+    .select("id, montant_paye, acompte_montant, montant_rembourse")
     .eq("stripe_payment_intent", pi)
-    .eq("acompte_statut", "paye");
+    .in("acompte_statut", ["paye", "rembourse_partiel", "rembourse"]);
+  for (const r of rows ?? []) {
+    const paye = montantEncaisse(r);
+    const rembourse = Math.min(paye, charge.amount_refunded / 100);
+    if (rembourse <= Number(r.montant_rembourse ?? 0)) continue;
+    await admin
+      .from("reservations")
+      .update({
+        montant_paye: paye,
+        montant_rembourse: rembourse,
+        acompte_statut:
+          charge.refunded || rembourse >= paye - 0.005 ? "rembourse" : "rembourse_partiel",
+      })
+      .eq("id", r.id);
+  }
 }

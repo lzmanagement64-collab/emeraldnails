@@ -237,6 +237,9 @@ export type Database = {
           date_fin: string;
           fin_bloquee: string;
           id: string;
+          mode_paiement: string;
+          montant_paye: number | null;
+          montant_rembourse: number;
           prestation_id: string;
           prestations_detail: Json | null;
           prix_total: number | null;
@@ -261,6 +264,9 @@ export type Database = {
           date_fin: string;
           fin_bloquee: string;
           id?: string;
+          mode_paiement?: string;
+          montant_paye?: number | null;
+          montant_rembourse?: number;
           prestation_id: string;
           prestations_detail?: Json | null;
           prix_total?: number | null;
@@ -285,6 +291,9 @@ export type Database = {
           date_fin?: string;
           fin_bloquee?: string;
           id?: string;
+          mode_paiement?: string;
+          montant_paye?: number | null;
+          montant_rembourse?: number;
           prestation_id?: string;
           prestations_detail?: Json | null;
           prix_total?: number | null;

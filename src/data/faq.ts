@@ -16,7 +16,7 @@ export const faq = [
   },
   {
     q: "Faut-il verser un acompte ?",
-    a: `Oui. Un acompte de ${POURCENT_ACOMPTE} % du montant total du rendez-vous (toutes prestations comprises, hors prestation sur devis) se règle en ligne au moment de la réservation, par carte bancaire, Apple Pay ou Google Pay. Il bloque votre créneau ; Maria valide ensuite votre rendez-vous (sinon, l'acompte est remboursé intégralement). Il est déduit du montant total, et le reste se règle sur place. ${REGLE_ACOMPTE_TEXTE}`,
+    a: `Oui. Au moment de la réservation, vous payez en ligne au choix un acompte de ${POURCENT_ACOMPTE} % du montant total du rendez-vous, ou la totalité (rien à régler sur place). Une prestation sur devis n'est pas comprise : elle se règle sur place, après devis. Le paiement se fait par carte bancaire, Apple Pay ou Google Pay et bloque votre créneau ; Maria valide ensuite votre rendez-vous. ${REGLE_ACOMPTE_TEXTE}`,
   },
   {
     q: "Quelles sont les conditions d’annulation ?",
@@ -32,7 +32,7 @@ export const faq = [
   },
   {
     q: "Quels moyens de paiement acceptez-vous ?",
-    a: "L'acompte se règle en ligne par carte bancaire, Apple Pay ou Google Pay. Le reste se règle sur place, en espèces, par PayPal ou par Wero.",
+    a: "L'acompte (ou la totalité) se règle en ligne par carte bancaire, Apple Pay ou Google Pay. Le reste éventuel se règle sur place, en espèces, par PayPal ou par Wero.",
   },
   {
     q: "Comment prendre soin de mes mains et de mes ongles après le rendez-vous ?",

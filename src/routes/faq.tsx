@@ -17,7 +17,7 @@ export const Route = createFileRoute("/faq")({
       {
         name: "description",
         content:
-          "Questions fréquentes Emerald Beauty à Lons : durée d'une pose, préparation, acompte de 30 %, annulation jusqu'à 72 h, retard, moyens de paiement.",
+          "Questions fréquentes Emerald Beauty à Lons : durée d'une pose, préparation, acompte de 30 % ou paiement total, annulation jusqu'à 72 h, retard, moyens de paiement.",
       },
       { property: "og:title", content: "Questions fréquentes — Emerald Beauty" },
       { property: "og:url", content: `${SITE_URL}/faq` },

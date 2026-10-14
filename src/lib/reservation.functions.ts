@@ -17,6 +17,7 @@ import {
   reglagesSchema,
   indisponibiliteSchema,
   idSchema,
+  optionPaiementSchema,
   tokenSchema,
 } from "./reservation-schemas";
 
@@ -155,6 +156,8 @@ export const creerReservation = createServerFn({ method: "POST" })
         statut: "en_attente",
         prix_total: prix,
         acompte_montant: montantAcompte(prix),
+        // Acompte par défaut : la cliente peut choisir la totalité à l'étape Paiement.
+        mode_paiement: "acompte",
         // Paiement en ligne actif : réservation provisoire, créneau bloqué le temps du paiement.
         acompte_statut: paiement.actif ? "en_attente" : "non_requis",
         acompte_expire_le: paiement.actif ? finBlocageProvisoire().toISOString() : null,
@@ -185,13 +188,15 @@ export const creerReservation = createServerFn({ method: "POST" })
       try {
         // Paiement de l'acompte intégré à la page (étape « Paiement »).
         const { clientSecret } = await intentionPaiement(supabaseAdmin, row as never);
-        // Les e-mails partent une fois l'acompte payé.
+        // Les e-mails partent une fois le paiement reçu.
         return {
           ...resume,
           paiement: {
+            reservationId: row.id,
             clientSecret,
             clePublique: clePublique(),
-            acompte: Number(row.acompte_montant ?? 0),
+            prix,
+            mode: "acompte" as const,
             expireLe: row.acompte_expire_le,
           },
         };
@@ -211,6 +216,10 @@ export const creerReservation = createServerFn({ method: "POST" })
     await Promise.allSettled([emailDemandeCliente(mail), emailNouvelleDemandeGerante(mail)]);
     return { ...resume, paiement: null };
   });
+
+/** Colonnes nécessaires pour (re)préparer le paiement en ligne d'un rendez-vous. */
+const COLONNES_INTENTION =
+  "id, statut, date_debut, cliente_email, prix_total, acompte_montant, mode_paiement, acompte_statut, acompte_expire_le, stripe_payment_intent, prestations_detail, prestations(nom)";
 
 /** Message affiché quand le paiement en ligne ne peut pas être ouvert. */
 const PAIEMENT_INDISPONIBLE = `Le paiement en ligne est momentanément indisponible : votre rendez-vous n'a pas été enregistré. Merci de nous contacter au ${business.phoneDisplay}.`;
@@ -232,11 +241,10 @@ export const preparerPaiement = createServerFn({ method: "POST" })
     await preparerSecrets();
     const { configPaiement, clePublique } = await import("./stripe.server");
     const { intentionPaiement } = await import("./acompte.server");
+    const { modeValide } = await import("./options-paiement");
     const { data: row } = await supabaseAdmin
       .from("reservations")
-      .select(
-        "id, statut, date_debut, cliente_email, acompte_montant, acompte_statut, acompte_expire_le, stripe_payment_intent, prestations_detail, prestations(nom)",
-      )
+      .select(COLONNES_INTENTION)
       .eq("id", data.id)
       .maybeSingle();
     if (
@@ -255,14 +263,76 @@ export const preparerPaiement = createServerFn({ method: "POST" })
     try {
       const { clientSecret } = await intentionPaiement(supabaseAdmin, row as never);
       return {
+        reservationId: row.id,
         clientSecret,
         clePublique: clePublique(),
-        acompte: Number(row.acompte_montant ?? 0),
+        prix: Number(row.prix_total ?? 0),
+        mode: modeValide(row.mode_paiement),
         expireLe: row.acompte_expire_le,
       };
     } catch (e) {
       console.error("[preparerPaiement]", e);
       throw new Error(PAIEMENT_INDISPONIBLE);
+    }
+  });
+
+/**
+ * Choix de la cliente à l'étape Paiement : acompte (30 %) ou totalité.
+ * Seul le mode est reçu du navigateur : le montant est recalculé ici à partir
+ * du prix enregistré en base, puis le paiement Stripe est mis à jour.
+ */
+export const choisirOptionPaiement = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => optionPaiementSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { preparerSecrets } = await import("./secrets.server");
+    await preparerSecrets();
+    const { configPaiement } = await import("./stripe.server");
+    const { intentionPaiement, PAIEMENT_DEJA_EN_COURS } = await import("./acompte.server");
+    const { optionsPaiement, montantAPayer } = await import("./options-paiement");
+    const { data: row } = await supabaseAdmin
+      .from("reservations")
+      .select(COLONNES_INTENTION)
+      .eq("id", data.id)
+      .maybeSingle();
+    if (
+      !row ||
+      row.acompte_statut !== "en_attente" ||
+      row.statut === "annulee" ||
+      !row.acompte_expire_le ||
+      new Date(row.acompte_expire_le).getTime() < Date.now()
+    ) {
+      throw new Error(
+        "Le délai de paiement est dépassé et le créneau a été libéré. Merci de refaire une réservation.",
+      );
+    }
+    const prix = Number(row.prix_total ?? 0);
+    if (data.mode === "total" && !optionsPaiement(prix).choixPossible) {
+      throw new Error("Pour ce rendez-vous, seul l'acompte peut être payé en ligne.");
+    }
+    if (!configPaiement().actif) throw new Error(PAIEMENT_INDISPONIBLE);
+    const precedent = row.mode_paiement;
+    await supabaseAdmin
+      .from("reservations")
+      .update({ mode_paiement: data.mode })
+      .eq("id", row.id)
+      .eq("acompte_statut", "en_attente");
+    try {
+      const { clientSecret } = await intentionPaiement(supabaseAdmin, {
+        ...row,
+        mode_paiement: data.mode,
+      } as never);
+      return { mode: data.mode, clientSecret, aPayer: montantAPayer(prix, data.mode) };
+    } catch (e) {
+      console.error("[choisirOptionPaiement]", e);
+      // Le paiement Stripe n'a pas changé : on revient à l'option précédente.
+      await supabaseAdmin
+        .from("reservations")
+        .update({ mode_paiement: precedent })
+        .eq("id", row.id)
+        .eq("acompte_statut", "en_attente");
+      const message = (e as Error).message;
+      throw new Error(message === PAIEMENT_DEJA_EN_COURS ? message : PAIEMENT_INDISPONIBLE);
     }
   });
 
@@ -289,12 +359,12 @@ export const etatAcompte = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => idSchema.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { nomsPrestations, lignesDuRendezVous } = await import("./selection");
+    const { nomsPrestations, lignesDuRendezVous, devisAFaire } = await import("./selection");
     const { verifierPaiement } = await import("./acompte.server");
     const { preparerSecrets } = await import("./secrets.server");
     await preparerSecrets();
     const colonnes =
-      "id, statut, date_debut, prix_total, prestations_detail, acompte_montant, acompte_statut, acompte_expire_le, stripe_session_id, stripe_payment_intent, prestations(nom, prix, duree_minutes)";
+      "id, statut, date_debut, prix_total, prestations_detail, acompte_montant, acompte_statut, acompte_expire_le, mode_paiement, montant_paye, montant_rembourse, stripe_session_id, stripe_payment_intent, prestations(nom, prix, duree_minutes)";
     const lire = () =>
       supabaseAdmin.from("reservations").select(colonnes).eq("id", data.id).maybeSingle();
     let { data: row } = await lire();
@@ -312,6 +382,10 @@ export const etatAcompte = createServerFn({ method: "POST" })
       dateDebut: row.date_debut,
       prix: Number(row.prix_total ?? row.prestations?.prix ?? 0),
       acompte: row.acompte_montant == null ? null : Number(row.acompte_montant),
+      mode: row.mode_paiement === "total" ? ("total" as const) : ("acompte" as const),
+      montantPaye: row.montant_paye == null ? null : Number(row.montant_paye),
+      montantRembourse: Number(row.montant_rembourse ?? 0),
+      devis: devisAFaire(lignesDuRendezVous(row)),
       acompteStatut: expire ? "expire" : row.acompte_statut,
       statut: row.statut,
       expireLe: row.acompte_expire_le,
@@ -326,7 +400,7 @@ export const annulerReservation = createServerFn({ method: "POST" })
     const { emailAnnulationGerante, emailAlerteGerante, emailAnnulationCliente } =
       await import("./emails.server");
     const { ANNULATION_TROP_TARD } = await import("./annulation");
-    const { rembourserAcompte } = await import("./acompte.server");
+    const { rembourser, montantEncaisse } = await import("./acompte.server");
     const { formatEuros } = await import("./tz");
     const { preparerSecrets } = await import("./secrets.server");
     await preparerSecrets();
@@ -354,25 +428,30 @@ export const annulerReservation = createServerFn({ method: "POST" })
       };
     }
 
-    // Plus de 72 h avant : l'acompte payé est remboursé.
+    // Plus de 72 h avant : tout ce qui a été payé est remboursé.
     let message = "Votre rendez-vous a bien été annulé.";
-    let etatAcompteMail = row.acompte_statut;
-    if (row.acompte_statut === "paye") {
-      const rembourse = await rembourserAcompte(supabaseAdmin, row);
-      const montant = formatEuros(Number(row.acompte_montant ?? 0));
-      if (rembourse) {
-        etatAcompteMail = "rembourse";
-        message += ` Votre acompte de ${montant} est remboursé : il apparaît en général sous 5 à 10 jours sur votre compte.`;
+    let maj: Record<string, unknown> = {};
+    if (row.acompte_statut === "paye" || row.acompte_statut === "rembourse_partiel") {
+      const paye = montantEncaisse(row);
+      const rendu = await rembourser(supabaseAdmin, row, "annulation-cliente");
+      const montant = formatEuros(paye);
+      if (rendu !== null) {
+        maj = {
+          acompte_statut: "rembourse",
+          montant_paye: paye,
+          montant_rembourse: Number(row.montant_rembourse ?? 0) + rendu,
+        };
+        message += ` Les ${montant} que vous avez payés vous sont remboursés : ils apparaissent en général sous 5 à 10 jours sur votre compte.`;
       } else {
-        message += ` Votre acompte de ${montant} vous sera remboursé : Emerald Beauty s'en occupe.`;
+        message += ` Les ${montant} que vous avez payés vous seront remboursés : Emerald Beauty s'en occupe.`;
         await emailAlerteGerante(
           versEmail(row as never),
-          "Rendez-vous annulé en ligne plus de 72 h avant : le remboursement automatique de l'acompte a échoué. Remboursez-le depuis le tableau de bord Stripe.",
+          "Rendez-vous annulé en ligne plus de 72 h avant : le remboursement automatique a échoué. Remboursez la cliente depuis le tableau de bord Stripe.",
         );
       }
     }
 
-    const mail = versEmail({ ...row, acompte_statut: etatAcompteMail } as never);
+    const mail = versEmail({ ...row, ...maj } as never);
     await Promise.allSettled([emailAnnulationGerante(mail), emailAnnulationCliente(mail, message)]);
     return { annulee: true, message, dateDebut: row.date_debut };
   });
@@ -390,7 +469,7 @@ export const adminEmailTest = createServerFn({ method: "POST" })
     return emailTestGerante();
   });
 
-/** Refus d'une demande par la gérante : acompte remboursé intégralement + e-mail. */
+/** Refus (ou annulation de son côté) par la gérante : tout ce qui a été payé est remboursé + e-mail. */
 export const adminRefuserReservation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => idSchema.parse(d))
@@ -399,7 +478,7 @@ export const adminRefuserReservation = createServerFn({ method: "POST" })
       await import("./reservation.server");
     await assertGerante(context as never);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { rembourserAcompte, fermerSessionPaiement, annulerIntention } =
+    const { rembourserAcompte, fermerSessionPaiement, annulerIntention, montantEncaisse } =
       await import("./acompte.server");
     const { emailRefusCliente } = await import("./emails.server");
     const { preparerSecrets } = await import("./secrets.server");
@@ -414,8 +493,9 @@ export const adminRefuserReservation = createServerFn({ method: "POST" })
     if (row.statut === "annulee") throw new Error("Ce rendez-vous est déjà annulé.");
 
     let rembourse = false;
-    if (row.acompte_statut === "paye") {
-      rembourse = await rembourserAcompte(supabaseAdmin, row);
+    const etaitPaye = row.acompte_statut === "paye" || row.acompte_statut === "rembourse_partiel";
+    if (etaitPaye) {
+      rembourse = await rembourserAcompte(supabaseAdmin, row, "refus");
     } else if (row.acompte_statut === "en_attente") {
       await fermerSessionPaiement(row.stripe_session_id);
       await annulerIntention(row.stripe_payment_intent);
@@ -435,7 +515,8 @@ export const adminRefuserReservation = createServerFn({ method: "POST" })
     await Promise.allSettled([emailRefusCliente(mail, rembourse)]);
     return {
       ok: true,
-      acompteEtaitPaye: row.acompte_statut === "paye",
+      acompteEtaitPaye: etaitPaye,
+      montantPaye: etaitPaye ? montantEncaisse(row) : 0,
       rembourse,
     };
   });
@@ -539,6 +620,40 @@ export const adminChangerStatut = createServerFn({ method: "POST" })
     const { assertGerante, versEmail, SELECT_AVEC_PRESTATION } =
       await import("./reservation.server");
     await assertGerante(context as never);
+
+    const { data: avant, error: errLecture } = await context.supabase
+      .from("reservations")
+      .select(SELECT_AVEC_PRESTATION)
+      .eq("id", data.id)
+      .single();
+    if (errLecture) throw new Error(errLecture.message);
+
+    // Annulation par la cliente (notée par Maria) ou absence, alors qu'un paiement
+    // a été fait : application automatique des règles de remboursement.
+    const fin = data.statut === "annulee" || data.statut === "absente";
+    const dejaFini = avant.statut === "annulee" || avant.statut === "absente";
+    const paye = avant.acompte_statut === "paye" || avant.acompte_statut === "rembourse_partiel";
+    let remboursement: { rendu: number | null; garde: number; cas: string } | null = null;
+    if (fin && !dejaFini && paye) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { preparerSecrets } = await import("./secrets.server");
+      await preparerSecrets();
+      const { rembourser, montantEncaisse } = await import("./acompte.server");
+      const { casAnnulation, montantARembourser } = await import("./options-paiement");
+      const cas = data.statut === "absente" ? "absence" : casAnnulation(avant.date_debut);
+      const encaisse = montantEncaisse(avant);
+      const deja = Number(avant.montant_rembourse ?? 0);
+      const aRendre = montantARembourser({
+        paye: encaisse,
+        dejaRembourse: deja,
+        acompte: Number(avant.acompte_montant ?? 0),
+        cas,
+      });
+      const rendu = aRendre > 0 ? await rembourser(supabaseAdmin, avant, cas, aRendre) : 0;
+      const garde = Math.round((encaisse - deja - (rendu ?? 0)) * 100) / 100;
+      remboursement = { rendu, garde, cas };
+    }
+
     const { data: row, error } = await context.supabase
       .from("reservations")
       .update({ statut: data.statut })
@@ -546,11 +661,42 @@ export const adminChangerStatut = createServerFn({ method: "POST" })
       .select(SELECT_AVEC_PRESTATION)
       .single();
     if (error) throw new Error(error.message);
+    const { emailConfirmationCliente, emailAnnulationCliente, emailAlerteGerante } =
+      await import("./emails.server");
     if (data.statut === "confirmee") {
-      const { emailConfirmationCliente } = await import("./emails.server");
       await Promise.allSettled([emailConfirmationCliente(versEmail(row as never))]);
     }
-    return { ok: true };
+    if (remboursement) {
+      const { formatEuros } = await import("./tz");
+      const { rendu, garde, cas } = remboursement;
+      const absence = cas === "absence";
+      const debut = absence
+        ? "Vous n'avez pas pu venir à votre rendez-vous."
+        : cas === "annulation_plus_72h"
+          ? "Votre rendez-vous a bien été annulé."
+          : "Votre rendez-vous a bien été annulé, moins de 72 h à l'avance.";
+      const message =
+        rendu === null
+          ? `${debut} Le remboursement qui vous est dû sera fait par Emerald Beauty.`
+          : `${debut}${garde > 0 ? ` Comme prévu par nos conditions, ${formatEuros(garde)} (l'équivalent de l'acompte) sont conservés.` : ""}${rendu > 0 ? ` ${formatEuros(rendu)} vous ${rendu > 1 ? "sont remboursés" : "est remboursé"} : ils apparaissent en général sous 5 à 10 jours sur votre compte.` : ""}`;
+      const mail = versEmail(row as never);
+      await Promise.allSettled([
+        emailAnnulationCliente(
+          mail,
+          message,
+          absence ? "Votre rendez-vous manqué" : "Votre rendez-vous est annulé",
+        ),
+        ...(rendu === null
+          ? [
+              emailAlerteGerante(
+                mail,
+                "Le remboursement automatique a échoué : remboursez la cliente depuis le tableau de bord Stripe.",
+              ),
+            ]
+          : []),
+      ]);
+    }
+    return { ok: true, remboursement };
   });
 
 export const adminCreerReservation = createServerFn({ method: "POST" })
