@@ -92,7 +92,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isAdmin = pathname.startsWith("/admin");
+  // Espace pro et page d'installation de l'app : sans l'en-tête du site public.
+  const isAdmin = pathname.startsWith("/admin") || pathname === "/app";
 
   return (
     <QueryClientProvider client={queryClient}>

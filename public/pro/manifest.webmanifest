@@ -1,0 +1,20 @@
+{
+  "id": "/admin",
+  "name": "Emerald Beauty Pro",
+  "short_name": "Emerald Pro",
+  "description": "Espace de gestion d'Emerald Beauty : rendez-vous, clientes et chiffre d'affaires.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/admin?app=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1e6a4c",
+  "theme_color": "#1e6a4c",
+  "icons": [
+    { "src": "/pro/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/pro/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/pro/icone-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/pro/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

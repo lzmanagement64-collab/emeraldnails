@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { business } from "@/config/business";
 import { reclamerAccesAdmin } from "@/lib/admin-access.functions";
 import { toast } from "sonner";
+import { teteAppPro } from "@/lib/app-pro";
 
 // Pas de création de compte depuis le site : le seul compte est celui de la gérante.
 // Les inscriptions sont aussi bloquées côté base de données (voir supabase/migrations).
@@ -13,7 +14,9 @@ type AuthMode = "signin" | "reset";
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
   head: () => ({
+    ...teteAppPro(),
     meta: [
+      ...teteAppPro().meta,
       { title: "Connexion espace pro — Emerald Beauty" },
       { name: "robots", content: "noindex, nofollow" },
       { name: "description", content: "Accès réservé à l'équipe Emerald Beauty." },

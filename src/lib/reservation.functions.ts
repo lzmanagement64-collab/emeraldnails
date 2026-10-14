@@ -213,7 +213,12 @@ export const creerReservation = createServerFn({ method: "POST" })
 
     // Sélection uniquement « sur devis » : aucun acompte à payer.
     const mail = versEmail(row as never);
-    await Promise.allSettled([emailDemandeCliente(mail), emailNouvelleDemandeGerante(mail)]);
+    const { notifNouvelleReservation } = await import("./notifications.server");
+    await Promise.allSettled([
+      emailDemandeCliente(mail),
+      emailNouvelleDemandeGerante(mail),
+      notifNouvelleReservation(supabaseAdmin, { dateDebut: row.date_debut, paiement: "aucun" }),
+    ]);
     return { ...resume, paiement: null };
   });
 
@@ -452,7 +457,12 @@ export const annulerReservation = createServerFn({ method: "POST" })
     }
 
     const mail = versEmail({ ...row, ...maj } as never);
-    await Promise.allSettled([emailAnnulationGerante(mail), emailAnnulationCliente(mail, message)]);
+    const { notifAnnulation } = await import("./notifications.server");
+    await Promise.allSettled([
+      emailAnnulationGerante(mail),
+      emailAnnulationCliente(mail, message),
+      notifAnnulation(supabaseAdmin, row.date_debut),
+    ]);
     return { annulee: true, message, dateDebut: row.date_debut };
   });
 
