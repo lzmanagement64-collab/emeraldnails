@@ -9,118 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SecuriteRouteImport } from './routes/securite'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as ReserverRouteImport } from './routes/reserver'
-import { Route as ReservationRouteImport } from './routes/reservation'
-import { Route as PrestationsRouteImport } from './routes/prestations'
-import { Route as PaiementRouteImport } from './routes/paiement'
-import { Route as OuvrirUnSalonRouteImport } from './routes/ouvrir-un-salon'
-import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
-import { Route as GalerieRouteImport } from './routes/galerie'
-import { Route as FaqRouteImport } from './routes/faq'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as ConfirmationRouteImport } from './routes/confirmation'
-import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
-import { Route as ConditionsRouteImport } from './routes/conditions'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AnnulationRouteImport } from './routes/annulation'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AProposRouteImport } from './routes/a-propos'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AnnulationRouteImport } from './routes/annulation'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ConditionsRouteImport } from './routes/conditions'
+import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
+import { Route as ConfirmationRouteImport } from './routes/confirmation'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as GalerieRouteImport } from './routes/galerie'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as OuvrirUnSalonRouteImport } from './routes/ouvrir-un-salon'
+import { Route as PaiementRouteImport } from './routes/paiement'
+import { Route as PrestationsRouteImport } from './routes/prestations'
+import { Route as ReservationRouteImport } from './routes/reservation'
+import { Route as ReserverRouteImport } from './routes/reserver'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SecuriteRouteImport } from './routes/securite'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as OnglerieVilleRouteImport } from './routes/onglerie.$ville'
 import { Route as ApiPublicRappelsRouteImport } from './routes/api/public/rappels'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SecuriteRoute = SecuriteRouteImport.update({
-  id: '/securite',
-  path: '/securite',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReserverRoute = ReserverRouteImport.update({
-  id: '/reserver',
-  path: '/reserver',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReservationRoute = ReservationRouteImport.update({
-  id: '/reservation',
-  path: '/reservation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrestationsRoute = PrestationsRouteImport.update({
-  id: '/prestations',
-  path: '/prestations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaiementRoute = PaiementRouteImport.update({
-  id: '/paiement',
-  path: '/paiement',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OuvrirUnSalonRoute = OuvrirUnSalonRouteImport.update({
-  id: '/ouvrir-un-salon',
-  path: '/ouvrir-un-salon',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
-  id: '/mentions-legales',
-  path: '/mentions-legales',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GalerieRoute = GalerieRouteImport.update({
-  id: '/galerie',
-  path: '/galerie',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConfirmationRoute = ConfirmationRouteImport.update({
-  id: '/confirmation',
-  path: '/confirmation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
-  id: '/confidentialite',
-  path: '/confidentialite',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConditionsRoute = ConditionsRouteImport.update({
-  id: '/conditions',
-  path: '/conditions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AnnulationRoute = AnnulationRouteImport.update({
-  id: '/annulation',
-  path: '/annulation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AProposRoute = AProposRouteImport.update({
@@ -128,9 +44,99 @@ const AProposRoute = AProposRouteImport.update({
   path: '/a-propos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnnulationRoute = AnnulationRouteImport.update({
+  id: '/annulation',
+  path: '/annulation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConditionsRoute = ConditionsRouteImport.update({
+  id: '/conditions',
+  path: '/conditions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
+  id: '/confidentialite',
+  path: '/confidentialite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmationRoute = ConfirmationRouteImport.update({
+  id: '/confirmation',
+  path: '/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalerieRoute = GalerieRouteImport.update({
+  id: '/galerie',
+  path: '/galerie',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OuvrirUnSalonRoute = OuvrirUnSalonRouteImport.update({
+  id: '/ouvrir-un-salon',
+  path: '/ouvrir-un-salon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementRoute = PaiementRouteImport.update({
+  id: '/paiement',
+  path: '/paiement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrestationsRoute = PrestationsRouteImport.update({
+  id: '/prestations',
+  path: '/prestations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReservationRoute = ReservationRouteImport.update({
+  id: '/reservation',
+  path: '/reservation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReserverRoute = ReserverRouteImport.update({
+  id: '/reserver',
+  path: '/reserver',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecuriteRoute = SecuriteRouteImport.update({
+  id: '/securite',
+  path: '/securite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnglerieVilleRoute = OnglerieVilleRouteImport.update({
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
   '/annulation': typeof AnnulationRoute
+  '/app': typeof AppRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
   '/annulation': typeof AnnulationRoute
+  '/app': typeof AppRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRoute
   '/annulation': typeof AnnulationRoute
+  '/app': typeof AppRoute
   '/auth': typeof AuthRoute
   '/conditions': typeof ConditionsRoute
   '/confidentialite': typeof ConfidentialiteRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/admin'
     | '/annulation'
+    | '/app'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/admin'
     | '/annulation'
+    | '/app'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -283,6 +294,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/admin'
     | '/annulation'
+    | '/app'
     | '/auth'
     | '/conditions'
     | '/confidentialite'
@@ -309,6 +321,7 @@ export interface RootRouteChildren {
   AProposRoute: typeof AProposRoute
   AdminRoute: typeof AdminRoute
   AnnulationRoute: typeof AnnulationRoute
+  AppRoute: typeof AppRoute
   AuthRoute: typeof AuthRoute
   ConditionsRoute: typeof ConditionsRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
@@ -332,130 +345,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/securite': {
-      id: '/securite'
-      path: '/securite'
-      fullPath: '/securite'
-      preLoaderRoute: typeof SecuriteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reserver': {
-      id: '/reserver'
-      path: '/reserver'
-      fullPath: '/reserver'
-      preLoaderRoute: typeof ReserverRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reservation': {
-      id: '/reservation'
-      path: '/reservation'
-      fullPath: '/reservation'
-      preLoaderRoute: typeof ReservationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/prestations': {
-      id: '/prestations'
-      path: '/prestations'
-      fullPath: '/prestations'
-      preLoaderRoute: typeof PrestationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/paiement': {
-      id: '/paiement'
-      path: '/paiement'
-      fullPath: '/paiement'
-      preLoaderRoute: typeof PaiementRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ouvrir-un-salon': {
-      id: '/ouvrir-un-salon'
-      path: '/ouvrir-un-salon'
-      fullPath: '/ouvrir-un-salon'
-      preLoaderRoute: typeof OuvrirUnSalonRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mentions-legales': {
-      id: '/mentions-legales'
-      path: '/mentions-legales'
-      fullPath: '/mentions-legales'
-      preLoaderRoute: typeof MentionsLegalesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/galerie': {
-      id: '/galerie'
-      path: '/galerie'
-      fullPath: '/galerie'
-      preLoaderRoute: typeof GalerieRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/confirmation': {
-      id: '/confirmation'
-      path: '/confirmation'
-      fullPath: '/confirmation'
-      preLoaderRoute: typeof ConfirmationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/confidentialite': {
-      id: '/confidentialite'
-      path: '/confidentialite'
-      fullPath: '/confidentialite'
-      preLoaderRoute: typeof ConfidentialiteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/conditions': {
-      id: '/conditions'
-      path: '/conditions'
-      fullPath: '/conditions'
-      preLoaderRoute: typeof ConditionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/annulation': {
-      id: '/annulation'
-      path: '/annulation'
-      fullPath: '/annulation'
-      preLoaderRoute: typeof AnnulationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/a-propos': {
@@ -465,11 +359,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AProposRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/annulation': {
+      id: '/annulation'
+      path: '/annulation'
+      fullPath: '/annulation'
+      preLoaderRoute: typeof AnnulationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conditions': {
+      id: '/conditions'
+      path: '/conditions'
+      fullPath: '/conditions'
+      preLoaderRoute: typeof ConditionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confidentialite': {
+      id: '/confidentialite'
+      path: '/confidentialite'
+      fullPath: '/confidentialite'
+      preLoaderRoute: typeof ConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmation': {
+      id: '/confirmation'
+      path: '/confirmation'
+      fullPath: '/confirmation'
+      preLoaderRoute: typeof ConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/galerie': {
+      id: '/galerie'
+      path: '/galerie'
+      fullPath: '/galerie'
+      preLoaderRoute: typeof GalerieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ouvrir-un-salon': {
+      id: '/ouvrir-un-salon'
+      path: '/ouvrir-un-salon'
+      fullPath: '/ouvrir-un-salon'
+      preLoaderRoute: typeof OuvrirUnSalonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement': {
+      id: '/paiement'
+      path: '/paiement'
+      fullPath: '/paiement'
+      preLoaderRoute: typeof PaiementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prestations': {
+      id: '/prestations'
+      path: '/prestations'
+      fullPath: '/prestations'
+      preLoaderRoute: typeof PrestationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reservation': {
+      id: '/reservation'
+      path: '/reservation'
+      fullPath: '/reservation'
+      preLoaderRoute: typeof ReservationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reserver': {
+      id: '/reserver'
+      path: '/reserver'
+      fullPath: '/reserver'
+      preLoaderRoute: typeof ReserverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/securite': {
+      id: '/securite'
+      path: '/securite'
+      fullPath: '/securite'
+      preLoaderRoute: typeof SecuriteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onglerie/$ville': {
@@ -501,6 +521,7 @@ const rootRouteChildren: RootRouteChildren = {
   AProposRoute: AProposRoute,
   AdminRoute: AdminRoute,
   AnnulationRoute: AnnulationRoute,
+  AppRoute: AppRoute,
   AuthRoute: AuthRoute,
   ConditionsRoute: ConditionsRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,

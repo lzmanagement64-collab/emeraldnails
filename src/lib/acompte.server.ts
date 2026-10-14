@@ -339,7 +339,15 @@ export async function enregistrerAcomptePaye(
     .eq("id", id)
     .maybeSingle();
   const mail = versEmail((maj ?? row) as never);
-  await Promise.allSettled([emailAcomptePayeCliente(mail), emailNouvelleDemandeGerante(mail)]);
+  const { notifNouvelleReservation } = await import("./notifications.server");
+  await Promise.allSettled([
+    emailAcomptePayeCliente(mail),
+    emailNouvelleDemandeGerante(mail),
+    notifNouvelleReservation(admin, {
+      dateDebut: row.date_debut,
+      paiement: paiement.mode_paiement === "total" ? "total" : "acompte",
+    }),
+  ]);
 }
 
 /**

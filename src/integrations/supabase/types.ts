@@ -227,6 +227,72 @@ export type Database = {
         }
         Relationships: []
       }
+      push_abonnements: {
+        Row: {
+          appareil: string
+          auth: string
+          cree_le: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          appareil?: string
+          auth: string
+          cree_le?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          appareil?: string
+          auth?: string
+          cree_le?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_cles: {
+        Row: {
+          cle_privee_jwk: Json
+          cle_publique: string
+          cree_le: string
+          id: number
+        }
+        Insert: {
+          cle_privee_jwk: Json
+          cle_publique: string
+          cree_le?: string
+          id?: number
+        }
+        Update: {
+          cle_privee_jwk?: Json
+          cle_publique?: string
+          cree_le?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      push_envois_quotidiens: {
+        Row: {
+          envoye_le: string
+          jour: string
+        }
+        Insert: {
+          envoye_le?: string
+          jour: string
+        }
+        Update: {
+          envoye_le?: string
+          jour?: string
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           acompte_expire_le: string | null

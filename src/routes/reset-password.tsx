@@ -3,11 +3,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { business } from "@/config/business";
 import { toast } from "sonner";
+import { teteAppPro } from "@/lib/app-pro";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
   head: () => ({
+    ...teteAppPro(),
     meta: [
+      ...teteAppPro().meta,
       { title: "Nouveau mot de passe — Emerald Beauty" },
       { name: "robots", content: "noindex, nofollow" },
       {

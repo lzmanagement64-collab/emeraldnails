@@ -1,7 +1,9 @@
 // ============================================================
 // Rappels automatiques : à appeler une fois par heure (cron externe).
 // Sécurisé par un secret partagé (en-tête x-cron-secret).
-// Envoie un rappel aux clientes dont le RDV confirmé a lieu dans 24 à 25 h.
+// Envoie un rappel aux clientes dont le RDV confirmé a lieu dans 24 à 25 h,
+// et, le matin (une fois par jour), la liste des rendez-vous du jour à Maria
+// sur son app « Emerald Beauty Pro ».
 // ============================================================
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -19,6 +21,8 @@ export const Route = createFileRoute("/api/public/rappels")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { versEmail, SELECT_AVEC_PRESTATION } = await import("@/lib/reservation.server");
         const { emailRappelCliente } = await import("@/lib/emails.server");
+        const { rappelDuMatin } = await import("@/lib/notifications.server");
+        const matin = await rappelDuMatin(supabaseAdmin).catch(() => ({ envoye: false }));
 
         // Fenêtre d'une heure : appelé une fois par heure, chaque cliente reçoit un seul rappel.
         const debut = new Date(Date.now() + 24 * 3600_000).toISOString();
@@ -39,7 +43,7 @@ export const Route = createFileRoute("/api/public/rappels")({
         const envois = await Promise.allSettled(
           (data ?? []).map((row) => emailRappelCliente(versEmail(row as never))),
         );
-        return Response.json({ traites: envois.length });
+        return Response.json({ traites: envois.length, rappelDuMatin: matin.envoye });
       },
     },
   },

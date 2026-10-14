@@ -2,7 +2,22 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, Loader2, LogOut, Plus, Trash2, X } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Euro,
+  ExternalLink,
+  ListChecks,
+  Loader2,
+  LogOut,
+  Menu,
+  Plus,
+  Smartphone,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { business } from "@/config/business";
 import { cn } from "@/lib/utils";
@@ -42,6 +57,8 @@ import {
 } from "@/lib/selection";
 import { ORDRE_CATEGORIES } from "@/lib/categories";
 import { GalerieAdmin } from "@/components/admin/GalerieAdmin";
+import { NOM_APP, teteAppPro, VERT_APP } from "@/lib/app-pro";
+import { NotificationsPush } from "@/components/admin/NotificationsPush";
 import {
   formatDuree,
   formatEuros,
@@ -54,7 +71,9 @@ import {
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
   head: () => ({
+    ...teteAppPro(),
     meta: [
+      ...teteAppPro().meta,
       { title: "Administration — Emerald Beauty" },
       { name: "description", content: "Espace privé de gestion des rendez-vous Emerald Beauty." },
       { property: "og:title", content: "Administration — Emerald Beauty" },
@@ -251,6 +270,7 @@ const ONGLETS = [
   { id: "planning", label: "Planning" },
   { id: "reservations", label: "Réservations" },
   { id: "clientes", label: "Clientes" },
+  { id: "ca", label: "Chiffre d'affaires" },
   { id: "prestations", label: "Prestations" },
   { id: "galerie", label: "Galerie" },
   { id: "horaires", label: "Horaires" },
@@ -259,7 +279,16 @@ const ONGLETS = [
   { id: "emails", label: "E-mails & paiement" },
 ] as const;
 
-type Onglet = (typeof ONGLETS)[number]["id"];
+type Onglet = (typeof ONGLETS)[number]["id"] | "plus";
+
+/** Menu en bas de l'écran sur téléphone (app « Emerald Beauty Pro »). */
+const MENU_MOBILE = [
+  { id: "planning", label: "Planning", icone: CalendarDays },
+  { id: "reservations", label: "Rendez-vous", icone: ListChecks },
+  { id: "clientes", label: "Clientes", icone: Users },
+  { id: "ca", label: "Chiffre d'affaires", icone: Euro },
+  { id: "plus", label: "Plus", icone: Menu },
+] as const;
 
 const champ = "w-full rounded-xl border border-border bg-background px-3 py-2 text-sm";
 const btnPrimaire =
@@ -400,11 +429,18 @@ function AdminPage() {
   );
 
   if (!pret) {
+    // Écran de démarrage : logo sur fond émeraude, le temps de charger l'espace pro.
     return (
-      <div className="grid min-h-screen place-items-center text-taupe">
-        <p className="flex items-center gap-2">
-          <Loader2 className="size-4 animate-spin" /> Chargement…
-        </p>
+      <div
+        className="fixed inset-0 grid place-items-center"
+        style={{ backgroundColor: VERT_APP }}
+        role="status"
+        aria-label="Chargement de l'espace de gestion"
+      >
+        <div className="flex flex-col items-center gap-8">
+          <img src="/pro/logo-clair.webp" alt={NOM_APP} className="w-48 sm:w-56" />
+          <Loader2 className="size-5 animate-spin text-[#f0d9a3]" />
+        </div>
       </div>
     );
   }
@@ -428,13 +464,13 @@ function AdminPage() {
 
   return (
     <div className="min-h-screen bg-linen/30">
-      <header className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+      <header className="border-b border-border bg-background pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:py-4">
           <div>
             <p className="eyebrow">Administration</p>
             <p className="font-display text-xl">{business.name}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="hidden gap-2 lg:flex">
             <Link to="/" className={btnSecondaire}>
               Voir le site
             </Link>
@@ -449,8 +485,8 @@ function AdminPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mx-auto max-w-7xl px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 lg:py-10">
+        <div className="mb-6 hidden gap-4 lg:grid lg:grid-cols-5">
           {[
             { l: "À venir", v: aVenir.length },
             {
@@ -477,7 +513,7 @@ function AdminPage() {
           ))}
         </div>
 
-        <nav className="mb-5 flex flex-wrap gap-2">
+        <nav className="mb-5 hidden flex-wrap gap-2 lg:flex">
           {ONGLETS.map((t) => (
             <button
               key={t.id}
@@ -504,6 +540,15 @@ function AdminPage() {
           />
         )}
         {onglet === "clientes" && <Clientes reservations={reservations} />}
+        {onglet === "ca" && <ChiffreAffaires reservations={reservations} aVenir={aVenir} />}
+        {onglet === "plus" && (
+          <MenuPlus
+            onChoisir={setOnglet}
+            onDeconnexion={deconnexion}
+            aConfirmer={reservations.filter((r) => r.statut === "en_attente").length}
+            demandes={leads.length}
+          />
+        )}
         {onglet === "prestations" && (
           <Prestations prestations={prestations} onRefresh={rafraichir} />
         )}
@@ -513,11 +558,50 @@ function AdminPage() {
         {onglet === "leads" && <Demandes leads={leads} />}
         {onglet === "emails" && (
           <div className="space-y-6">
+            <NotificationsPush />
             <ReglagesPaiement />
             <ReglagesEmails />
           </div>
         )}
       </div>
+
+      {/* Menu du bas (téléphone) */}
+      <nav
+        aria-label="Menu de l'espace de gestion"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      >
+        <ul className="mx-auto grid max-w-lg grid-cols-5">
+          {MENU_MOBILE.map(({ id, label, icone: Icone }) => {
+            const actif =
+              onglet === id || (id === "plus" && !MENU_MOBILE.some((m) => m.id === onglet));
+            const badge = id === "planning" ? reservations.filter((r) => aValider(r)).length : 0;
+            return (
+              <li key={id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOnglet(id);
+                    window.scrollTo({ top: 0 });
+                  }}
+                  aria-current={actif ? "page" : undefined}
+                  className={cn(
+                    "relative flex h-full w-full flex-col items-center gap-1 px-0.5 py-2.5 text-center text-[11px] font-medium leading-tight",
+                    actif ? "text-emerald" : "text-taupe",
+                  )}
+                >
+                  <Icone className="size-6" strokeWidth={actif ? 2 : 1.6} />
+                  {label}
+                  {badge > 0 && (
+                    <span className="absolute right-[22%] top-1.5 grid min-w-5 place-items-center rounded-full bg-bordeaux px-1 text-[10px] font-semibold text-porcelain">
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
     </div>
   );
 }
@@ -598,7 +682,7 @@ function ValidationDemande({
           type="button"
           disabled={envoi}
           onClick={() => onStatut(r.id, "confirmee")}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald px-4 py-2 text-xs font-semibold text-porcelain transition-colors hover:bg-emerald-deep disabled:opacity-50"
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald px-5 py-3 text-sm font-semibold text-porcelain transition-colors hover:bg-emerald-deep disabled:opacity-50 lg:flex-none lg:px-4 lg:py-2 lg:text-xs"
         >
           <Check className="size-3.5" strokeWidth={2} /> Valider
         </button>
@@ -607,7 +691,7 @@ function ValidationDemande({
         type="button"
         disabled={envoi}
         onClick={lancerRefus}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-bordeaux/40 px-4 py-2 text-xs font-semibold text-bordeaux transition-colors hover:bg-bordeaux hover:text-porcelain disabled:opacity-50"
+        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-bordeaux/40 px-5 py-3 text-sm font-semibold text-bordeaux transition-colors hover:bg-bordeaux hover:text-porcelain disabled:opacity-50 lg:flex-none lg:px-4 lg:py-2 lg:text-xs"
       >
         {envoi ? (
           <Loader2 className="size-3.5 animate-spin" />
@@ -630,7 +714,7 @@ function SelectStatut({ statut, onChange }: { statut: Statut; onChange: (s: Stat
       value={statut}
       onChange={(e) => onChange(e.target.value as Statut)}
       aria-label="Changer le statut"
-      className="rounded-xl border border-border bg-background px-2 py-1 text-xs"
+      className="rounded-xl border border-border bg-background px-3 py-2 text-sm lg:px-2 lg:py-1 lg:text-xs"
     >
       {STATUTS.map((s) => (
         <option key={s} value={s}>
@@ -872,7 +956,42 @@ function Reservations({
         </form>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      {/* Téléphone : une carte par rendez-vous, actions rapides */}
+      <ul className="space-y-3 lg:hidden">
+        {liste.length === 0 && (
+          <li className={cn(carte, "text-center text-taupe")}>Aucune réservation.</li>
+        )}
+        {liste.map((r) => (
+          <li key={r.id} className={cn(carte, "space-y-3 p-4")}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-display text-lg text-ink">
+                  {parisLongDate(r.date_debut)} · {parisTime(r.date_debut)}
+                </p>
+                <p className="text-sm text-ink">
+                  {r.cliente_prenom} {r.cliente_nom}
+                </p>
+                <a href={`tel:${r.cliente_telephone}`} className="text-sm text-emerald underline">
+                  {r.cliente_telephone}
+                </a>
+              </div>
+              <BadgeStatut statut={r.statut} r={r} />
+            </div>
+            <div className="text-sm">
+              <DetailPrestations r={r} />
+            </div>
+            <InfoAcompte r={r} />
+            {r.commentaire && <p className="text-sm text-taupe">« {r.commentaire} »</p>}
+            <ValidationDemande r={r} onStatut={onStatut} onRefresh={onRefresh} />
+            <label className="flex items-center justify-between gap-3 text-sm text-taupe">
+              Statut
+              <SelectStatut statut={r.statut} onChange={(s) => onStatut(r.id, s)} />
+            </label>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-x-auto rounded-xl border border-border bg-card lg:block">
         {liste.length === 0 ? (
           <p className="p-10 text-center text-taupe">Aucune réservation.</p>
         ) : (
@@ -1674,5 +1793,217 @@ function ReglagesEmails() {
         </div>
       )}
     </section>
+  );
+}
+
+// ------------------------------------------------------------
+/** Chiffre d'affaires : déjà encaissé en ligne, reste à encaisser, mois par mois. */
+function ChiffreAffaires({
+  reservations,
+  aVenir,
+}: {
+  reservations: Reservation[];
+  aVenir: Reservation[];
+}) {
+  const moisCourant = todayParisISO().slice(0, 7);
+  const mois = useMemo(() => {
+    const [y, m] = moisCourant.split("-").map(Number);
+    return Array.from({ length: 6 }, (_, i) =>
+      new Date(Date.UTC(y, m - 1 - i, 1)).toISOString().slice(0, 7),
+    );
+  }, [moisCourant]);
+  const nomMois = (cle: string) =>
+    new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(
+      new Date(`${cle}-01T12:00:00Z`),
+    );
+  const bilan = (cle: string) => {
+    const liste = reservations.filter((r) => parisDateISO(r.date_debut).slice(0, 7) === cle);
+    return {
+      // Rendez-vous honorés + montants conservés (annulation tardive, absence)
+      realise: liste.reduce(
+        (s, r) =>
+          s +
+          (r.statut === "honoree"
+            ? totalRdv(r)
+            : r.statut === "annulee" || r.statut === "absente"
+              ? encaisseNet(r)
+              : 0),
+        0,
+      ),
+      enLigne: liste.reduce((s, r) => s + encaisseNet(r), 0),
+      prevu: liste
+        .filter((r) => r.statut === "confirmee" || aValider(r))
+        .reduce((s, r) => s + totalRdv(r), 0),
+      honores: liste.filter((r) => r.statut === "honoree").length,
+    };
+  };
+  // Réservations réellement prises (pas les paiements en cours)
+  const prises = aVenir.filter((r) => r.acompte_statut !== "en_attente");
+  const encaisse = prises.reduce((s, r) => s + encaisseNet(r), 0);
+  const reste = prises.reduce((s, r) => s + resteAEncaisser(r), 0);
+  const ceMois = bilan(moisCourant);
+
+  const Chiffre = ({ titre, valeur, aide }: { titre: string; valeur: number; aide: string }) => (
+    <div className={carte}>
+      <p className="eyebrow">{titre}</p>
+      <p className="mt-2 font-display text-3xl text-ink">{formatEuros(valeur)}</p>
+      <p className="mt-1 text-xs text-taupe">{aide}</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <h2 className="font-display text-xl text-ink">Rendez-vous à venir</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Chiffre
+            titre="Déjà encaissé en ligne"
+            valeur={encaisse}
+            aide="Acomptes et paiements complets"
+          />
+          <Chiffre
+            titre="Reste à encaisser"
+            valeur={reste}
+            aide="Sur place, hors prestations sur devis"
+          />
+          <Chiffre
+            titre="Total prévu"
+            valeur={encaisse + reste}
+            aide={`${prises.length} rendez-vous`}
+          />
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h2 className="font-display text-xl text-ink first-letter:uppercase">
+          {nomMois(moisCourant)}
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Chiffre
+            titre="Réalisé"
+            valeur={ceMois.realise}
+            aide={`${ceMois.honores} rendez-vous ${ceMois.honores > 1 ? "honorés" : "honoré"} (+ montants conservés)`}
+          />
+          <Chiffre
+            titre="Encaissé en ligne"
+            valeur={ceMois.enLigne}
+            aide="Remboursements déduits"
+          />
+          <Chiffre
+            titre="Encore prévu"
+            valeur={ceMois.prevu}
+            aide="Rendez-vous confirmés ou à valider"
+          />
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h2 className="font-display text-xl text-ink">Six derniers mois</h2>
+        <div className={cn(carte, "p-0")}>
+          <table className="w-full text-sm">
+            <thead className="text-left text-[10px] uppercase tracking-widest text-taupe">
+              <tr>
+                <th className="px-4 py-3">Mois</th>
+                <th className="px-4 py-3 text-right">Réalisé</th>
+                <th className="px-4 py-3 text-right">En ligne</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mois.map((m) => {
+                const b = bilan(m);
+                return (
+                  <tr key={m} className="border-t border-border">
+                    <td className="px-4 py-3 text-ink first-letter:uppercase">{nomMois(m)}</td>
+                    <td className="px-4 py-3 text-right text-ink">{formatEuros(b.realise)}</td>
+                    <td className="px-4 py-3 text-right text-taupe">{formatEuros(b.enLigne)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-taupe">
+          « Réalisé » : rendez-vous passés en « Honorée », plus ce qui a été conservé lors
+          d'annulations tardives ou d'absences. Pensez à passer les rendez-vous terminés en «
+          Honorée ».
+        </p>
+      </section>
+    </div>
+  );
+}
+
+/** Onglet « Plus » (téléphone) : autres réglages, notifications, déconnexion. */
+function MenuPlus({
+  onChoisir,
+  onDeconnexion,
+  aConfirmer,
+  demandes,
+}: {
+  onChoisir: (o: Onglet) => void;
+  onDeconnexion: () => void;
+  aConfirmer: number;
+  demandes: number;
+}) {
+  const liens: { id: Onglet; label: string; badge?: number }[] = [
+    { id: "prestations", label: "Prestations et tarifs" },
+    { id: "galerie", label: "Galerie photos" },
+    { id: "horaires", label: "Horaires d'ouverture" },
+    { id: "indispos", label: "Absences et congés" },
+    { id: "leads", label: "Demandes de contact", badge: demandes },
+    { id: "emails", label: "E-mails et paiement" },
+  ];
+  return (
+    <div className="space-y-5">
+      {aConfirmer > 0 && (
+        <button
+          type="button"
+          onClick={() => onChoisir("planning")}
+          className="w-full rounded-xl bg-amber-100 p-4 text-left text-sm font-semibold text-amber-950"
+        >
+          {aConfirmer} rendez-vous à valider → Planning
+        </button>
+      )}
+      <NotificationsPush />
+      <ul className={cn(carte, "divide-y divide-border p-0")}>
+        {liens.map((l) => (
+          <li key={l.id}>
+            <button
+              type="button"
+              onClick={() => {
+                onChoisir(l.id);
+                window.scrollTo({ top: 0 });
+              }}
+              className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left text-base text-ink"
+            >
+              {l.label}
+              <span className="flex items-center gap-2">
+                {!!l.badge && (
+                  <span className="rounded-full bg-ink px-2 py-0.5 text-xs text-porcelain">
+                    {l.badge}
+                  </span>
+                )}
+                <ChevronRight className="size-5 text-taupe" />
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className={cn(carte, "space-y-3")}>
+        <a href="/app" className="flex items-center gap-3 text-base text-ink">
+          <Smartphone className="size-5 text-emerald" /> Installer l'app sur un autre appareil
+        </a>
+        <Link to="/" className="flex items-center gap-3 text-base text-ink">
+          <ExternalLink className="size-5 text-emerald" /> Voir le site des clientes
+        </Link>
+      </div>
+      <button
+        type="button"
+        onClick={onDeconnexion}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-bordeaux/40 bg-bordeaux/5 px-5 py-4 text-base font-semibold text-bordeaux"
+      >
+        <LogOut className="size-5" strokeWidth={1.8} /> Se déconnecter
+      </button>
+      <p className="text-center text-xs text-taupe">
+        Vous restez connectée sur ce téléphone tant que vous ne vous déconnectez pas.
+      </p>
+    </div>
   );
 }
