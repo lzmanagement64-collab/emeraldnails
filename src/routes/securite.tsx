@@ -46,7 +46,7 @@ const CONTROLS = [
   {
     icon: CreditCard,
     title: "Aucune donnée bancaire chez nous",
-    body: "L'acompte est payé via Stripe, prestataire de paiement certifié : votre numéro de carte n'est jamais vu ni conservé par Emerald Beauty.",
+    body: "Le paiement en ligne (acompte ou totalité) passe par Stripe, prestataire de paiement certifié : votre numéro de carte n'est jamais vu ni conservé par Emerald Beauty.",
   },
   {
     icon: ShieldCheck,

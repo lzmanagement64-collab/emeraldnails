@@ -26,6 +26,13 @@ import {
 } from "@/lib/reservation.functions";
 import { STATUTS, STATUT_LABEL, type Statut } from "@/lib/reservation-schemas";
 import {
+  casAnnulation,
+  modeValide,
+  montantARembourser,
+  nomOption,
+  resteSurPlace,
+} from "@/lib/options-paiement";
+import {
   devisAFaire,
   lignesDuRendezVous,
   nomComplet,
@@ -74,15 +81,37 @@ type Reservation = {
   prix_total: number | null;
   prestations_detail: unknown;
   acompte_montant: number | null;
-  acompte_statut: "non_requis" | "en_attente" | "paye" | "rembourse" | "expire";
+  acompte_statut:
+    "non_requis" | "en_attente" | "paye" | "rembourse" | "rembourse_partiel" | "expire";
   acompte_expire_le: string | null;
   acompte_paye_le: string | null;
+  mode_paiement: string | null;
+  montant_paye: number | null;
+  montant_rembourse: number | null;
   prestations: { nom: string; duree_minutes: number; prix: number; couleur: string } | null;
 };
 
 /** Montant total d'un rendez-vous (toutes prestations comprises). */
 const totalRdv = (r: Reservation) =>
   Number(r.prix_total ?? totaux(lignesDuRendezVous(r)).prix ?? 0);
+
+/** Paiement en ligne reçu (et pas entièrement remboursé). */
+const paiementRecu = (r: Reservation) =>
+  r.acompte_statut === "paye" || r.acompte_statut === "rembourse_partiel";
+
+/** Montant payé en ligne (anciennes réservations : l'acompte). */
+const payeEnLigne = (r: Reservation) =>
+  ["paye", "rembourse", "rembourse_partiel"].includes(r.acompte_statut)
+    ? Number(r.montant_paye ?? r.acompte_montant ?? 0)
+    : 0;
+
+/** Encaissé en ligne, remboursements déduits. */
+const encaisseNet = (r: Reservation) =>
+  Math.max(0, payeEnLigne(r) - Number(r.montant_rembourse ?? 0));
+
+/** Reste à encaisser sur place (0 € si tout est payé ; hors prestations sur devis). */
+const resteAEncaisser = (r: Reservation) =>
+  r.statut === "annulee" || r.statut === "absente" ? 0 : resteSurPlace(totalRdv(r), payeEnLigne(r));
 
 /** Liste des prestations d'un rendez-vous, avec le prix de chacune et le total. */
 function DetailPrestations({ r }: { r: Reservation }) {
@@ -116,35 +145,50 @@ function DetailPrestations({ r }: { r: Reservation }) {
   );
 }
 
-/** Acompte d'un rendez-vous : payé ou non, montant payé, reste à payer sur place. */
+/** Paiement d'un rendez-vous : option payée, montant encaissé, reste à payer sur place. */
 function InfoAcompte({ r }: { r: Reservation }) {
   const prix = totalRdv(r);
   const acompte = Number(r.acompte_montant ?? 0);
+  const paye = payeEnLigne(r);
+  const rembourse = Number(r.montant_rembourse ?? 0);
+  const option = nomOption(modeValide(r.mode_paiement));
   switch (r.acompte_statut) {
     case "paye": {
-      // Annulation à moins de 72 h ou absence : l'acompte est conservé.
-      const conserve = r.statut === "absente" || r.statut === "annulee";
+      const fini = r.statut === "absente" || r.statut === "annulee";
       return (
         <p className="text-xs">
-          <span className="text-emerald">Acompte payé : {formatEuros(acompte)}</span>
+          <span className="font-semibold text-emerald">{option}</span>
           <span className="text-taupe">
-            {conserve
+            {" "}
+            · encaissé : {formatEuros(paye)}
+            {fini
               ? " · conservé"
-              : ` · reste à payer sur place : ${formatEuros(Math.max(0, prix - acompte))}`}
+              : ` · reste à payer sur place : ${formatEuros(resteSurPlace(prix, paye))}`}
           </span>
         </p>
       );
     }
+    case "rembourse_partiel":
+      return (
+        <p className="text-xs text-taupe">
+          {option} : {formatEuros(paye)} · remboursé : {formatEuros(rembourse)} · conservé :{" "}
+          {formatEuros(Math.max(0, paye - rembourse))}
+        </p>
+      );
     case "en_attente":
       return (
         <p className="text-xs text-amber-800">
-          Acompte non payé (réservation provisoire
+          Paiement en cours (réservation provisoire
           {r.acompte_expire_le ? ` jusqu'à ${parisTime(r.acompte_expire_le)}` : ""}) · à payer sur
           place si confirmé : {formatEuros(prix)}
         </p>
       );
     case "rembourse":
-      return <p className="text-xs text-taupe">Acompte remboursé : {formatEuros(acompte)}</p>;
+      return (
+        <p className="text-xs text-taupe">
+          {option} puis remboursé : {formatEuros(rembourse || paye || acompte)}
+        </p>
+      );
     case "expire":
       return <p className="text-xs text-taupe">Acompte non payé dans le délai (créneau libéré)</p>;
     default:
@@ -285,16 +329,54 @@ function AdminPage() {
   };
 
   const majStatut = async (id: string, statut: Statut) => {
-    setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, statut } : r)));
+    const r = reservations.find((x) => x.id === id);
+    // Annulation ou absence d'un rendez-vous payé : on annonce le remboursement automatique.
+    const fin = statut === "annulee" || statut === "absente";
+    const avecRemboursement =
+      !!r && fin && r.statut !== "annulee" && r.statut !== "absente" && paiementRecu(r);
+    if (r && avecRemboursement) {
+      const cas = statut === "absente" ? "absence" : casAnnulation(r.date_debut);
+      const paye = payeEnLigne(r);
+      const deja = Number(r.montant_rembourse ?? 0);
+      const rendu = montantARembourser({
+        paye,
+        dejaRembourse: deja,
+        acompte: Number(r.acompte_montant ?? 0),
+        cas,
+      });
+      const garde = Math.max(0, paye - deja - rendu);
+      const quoi =
+        cas === "absence"
+          ? "Absence"
+          : cas === "annulation_plus_72h"
+            ? "Annulation par la cliente plus de 72 h avant"
+            : "Annulation par la cliente moins de 72 h avant";
+      const message = `${quoi} : ${garde > 0 ? `vous gardez ${formatEuros(garde)}` : "vous ne gardez rien"}${rendu > 0 ? `, ${formatEuros(rendu)} seront remboursés automatiquement à ${r.cliente_prenom}` : ""}. ${r.cliente_prenom} recevra un e-mail.\n\nSi c'est vous qui annulez, choisissez plutôt « Annuler de mon côté » (tout est remboursé).\n\nContinuer ?`;
+      if (!window.confirm(message)) return;
+    }
+    setReservations((prev) => prev.map((x) => (x.id === id ? { ...x, statut } : x)));
     try {
-      await changerStatut({ data: { id, statut } });
-      toast.success(
-        statut === "confirmee"
-          ? "Rendez-vous validé : e-mail de confirmation envoyé à la cliente."
-          : "Statut mis à jour.",
-      );
+      const res = await changerStatut({ data: { id, statut } });
+      const rb = res.remboursement;
+      if (rb && rb.rendu === null) {
+        toast.error(
+          "Statut mis à jour, mais le remboursement automatique a échoué : remboursez la cliente depuis le tableau de bord Stripe.",
+        );
+      } else if (rb) {
+        toast.success(
+          `Statut mis à jour.${rb.rendu ? ` ${formatEuros(rb.rendu)} remboursés.` : ""}${rb.garde > 0 ? ` ${formatEuros(rb.garde)} conservés.` : ""}`,
+        );
+      } else {
+        toast.success(
+          statut === "confirmee"
+            ? "Rendez-vous validé : e-mail de confirmation envoyé à la cliente."
+            : "Statut mis à jour.",
+        );
+      }
+      if (avecRemboursement) await rafraichir();
     } catch (e) {
       toast.error((e as Error).message || "Mise à jour impossible");
+      await rafraichir().catch(() => undefined);
     }
   };
 
@@ -368,7 +450,7 @@ function AdminPage() {
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-6 grid gap-4 sm:grid-cols-4">
+        <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {[
             { l: "À venir", v: aVenir.length },
             {
@@ -376,14 +458,21 @@ function AdminPage() {
               v: reservations.filter((r) => r.statut === "en_attente").length,
             },
             {
-              l: "Chiffre à venir",
-              v: formatEuros(aVenir.reduce((s, r) => s + totalRdv(r), 0)),
+              l: "Déjà encaissé en ligne",
+              v: formatEuros(aVenir.reduce((s, r) => s + encaisseNet(r), 0)),
+              aide: "Rendez-vous à venir",
+            },
+            {
+              l: "Reste à encaisser",
+              v: formatEuros(aVenir.reduce((s, r) => s + resteAEncaisser(r), 0)),
+              aide: "Sur place, hors devis",
             },
             { l: "Demandes", v: leads.length },
           ].map((s) => (
             <div key={s.l} className={carte}>
               <p className="eyebrow">{s.l}</p>
               <p className="mt-2 font-display text-3xl text-ink">{s.v}</p>
+              {"aide" in s && <p className="mt-1 text-xs text-taupe">{s.aide}</p>}
             </div>
           ))}
         </div>
@@ -445,7 +534,9 @@ function BadgeStatut({ statut, r }: { statut: Statut; r?: Reservation }) {
         r && aValider(r) ? "bg-amber-200 text-amber-950" : STATUT_COULEUR[statut],
       )}
     >
-      {r && aValider(r) ? "Acompte payé – à valider" : STATUT_LABEL[statut]}
+      {r && aValider(r)
+        ? `${nomOption(modeValide(r.mode_paiement))} – à valider`
+        : STATUT_LABEL[statut]}
     </span>
   );
 }
@@ -462,25 +553,34 @@ function ValidationDemande({
 }) {
   const refuser = useServerFn(adminRefuserReservation);
   const [envoi, setEnvoi] = useState(false);
+  const paye = paiementRecu(r);
+  // Rendez-vous confirmé et payé : Maria peut l'annuler de son côté (tout est remboursé).
+  const annulationGerante = r.statut === "confirmee" && paye;
   // Réservation provisoire dont le paiement est en cours : rien à valider encore.
-  if (r.statut !== "en_attente" || r.acompte_statut === "en_attente") return null;
+  if (!annulationGerante && (r.statut !== "en_attente" || r.acompte_statut === "en_attente")) {
+    return null;
+  }
 
-  const paye = r.acompte_statut === "paye";
+  const montant = formatEuros(Math.max(0, payeEnLigne(r) - Number(r.montant_rembourse ?? 0)));
   const lancerRefus = async () => {
+    const action = annulationGerante
+      ? "Annuler ce rendez-vous de votre côté"
+      : "Refuser ce rendez-vous";
     const message = paye
-      ? `Refuser ce rendez-vous ? L'acompte de ${formatEuros(Number(r.acompte_montant ?? 0))} sera remboursé intégralement à ${r.cliente_prenom}, qui recevra un e-mail d'explication.`
-      : `Refuser ce rendez-vous ? ${r.cliente_prenom} recevra un e-mail d'explication.`;
+      ? `${action} ? Les ${montant} payés seront remboursés intégralement à ${r.cliente_prenom}, qui recevra un e-mail d'explication.`
+      : `${action} ? ${r.cliente_prenom} recevra un e-mail d'explication.`;
     if (!window.confirm(message)) return;
     setEnvoi(true);
     try {
       const res = await refuser({ data: { id: r.id } });
+      const fait = annulationGerante ? "Rendez-vous annulé" : "Rendez-vous refusé";
       if (res.acompteEtaitPaye && !res.rembourse) {
         toast.error(
-          "Rendez-vous refusé, mais le remboursement automatique a échoué : remboursez l'acompte depuis le tableau de bord Stripe.",
+          `${fait}, mais le remboursement automatique a échoué : remboursez la cliente depuis le tableau de bord Stripe.`,
         );
       } else {
         toast.success(
-          res.rembourse ? "Rendez-vous refusé, acompte remboursé." : "Rendez-vous refusé.",
+          res.rembourse ? `${fait}, ${formatEuros(res.montantPaye)} remboursés.` : `${fait}.`,
         );
       }
       await onRefresh();
@@ -493,14 +593,16 @@ function ValidationDemande({
 
   return (
     <div className="mt-2 flex w-full flex-wrap gap-2">
-      <button
-        type="button"
-        disabled={envoi}
-        onClick={() => onStatut(r.id, "confirmee")}
-        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald px-4 py-2 text-xs font-semibold text-porcelain transition-colors hover:bg-emerald-deep disabled:opacity-50"
-      >
-        <Check className="size-3.5" strokeWidth={2} /> Valider
-      </button>
+      {!annulationGerante && (
+        <button
+          type="button"
+          disabled={envoi}
+          onClick={() => onStatut(r.id, "confirmee")}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald px-4 py-2 text-xs font-semibold text-porcelain transition-colors hover:bg-emerald-deep disabled:opacity-50"
+        >
+          <Check className="size-3.5" strokeWidth={2} /> Valider
+        </button>
+      )}
       <button
         type="button"
         disabled={envoi}
@@ -512,7 +614,11 @@ function ValidationDemande({
         ) : (
           <X className="size-3.5" strokeWidth={2} />
         )}
-        {paye ? "Refuser et rembourser" : "Refuser"}
+        {annulationGerante
+          ? "Annuler de mon côté (tout rembourser)"
+          : paye
+            ? "Refuser et rembourser"
+            : "Refuser"}
       </button>
     </div>
   );

@@ -15,6 +15,7 @@ import { diagnosticSecrets, lireSecret, preparerSecrets } from "./secrets.server
 import { business } from "@/config/business";
 import { acompteFormate, POURCENT_ACOMPTE } from "./acompte";
 import { DELAI_ANNULATION_H } from "./annulation";
+import { montantConserve, resteSurPlace, type ModePaiement } from "./options-paiement";
 import { parisLongDate, parisTime, formatEuros, formatDuree } from "./tz";
 
 type Envoi = { to: string; subject: string; html: string };
@@ -121,6 +122,13 @@ export type ReservationEmail = {
   tokenAnnulation: string;
   acompteMontant?: number | null;
   acompteStatut?: string;
+  /** Option choisie à l'étape Paiement. */
+  modePaiement?: ModePaiement;
+  /** Montant encaissé en ligne et montant déjà remboursé. */
+  montantPaye?: number | null;
+  montantRembourse?: number;
+  /** Au moins une prestation sur devis (réglée sur place après devis). */
+  devis?: boolean;
 };
 
 /** Rend un texte saisi par une cliente inoffensif dans un e-mail (pas de balises ni de liens cachés). */
@@ -146,16 +154,27 @@ function sur(r: ReservationEmail): ReservationEmail {
   };
 }
 
-/** Ligne « acompte » du récapitulatif, selon l'état du paiement. */
+const DEVIS_LIGNE = " + prestation sur devis, réglée sur place après devis";
+
+/** Option payée, en toutes lettres. */
+const libelleMode = (r: ReservationEmail) =>
+  r.modePaiement === "total" ? "paiement de la totalité" : `acompte de ${POURCENT_ACOMPTE} %`;
+
+/** Lignes « paiement » du récapitulatif, selon l'état du paiement. */
 function ligneAcompte(r: ReservationEmail) {
-  if (r.acompteStatut === "paye" && r.acompteMontant != null) {
-    const reste = Math.max(0, Math.round((r.prix - r.acompteMontant) * 100) / 100);
-    return `Acompte réglé : ${formatEuros(r.acompteMontant)} · Reste à régler sur place : ${formatEuros(reste)}`;
+  const paye = r.montantPaye ?? r.acompteMontant ?? 0;
+  const rembourse = r.montantRembourse ?? 0;
+  const devis = r.devis ? DEVIS_LIGNE : "";
+  if (r.acompteStatut === "paye") {
+    return `Option choisie : ${libelleMode(r)}<br />Payé en ligne : ${formatEuros(paye)} · Reste à régler sur place : ${formatEuros(resteSurPlace(r.prix, paye))}${devis}`;
   }
-  if (r.acompteStatut === "rembourse" && r.acompteMontant != null) {
-    return `Acompte de ${formatEuros(r.acompteMontant)} remboursé`;
+  if (r.acompteStatut === "rembourse") {
+    return `Payé en ligne : ${formatEuros(paye)} · Remboursé : ${formatEuros(rembourse || paye)}`;
   }
-  return `Acompte pour valider le rendez-vous : ${acompteFormate(r.prix)} (${POURCENT_ACOMPTE} %)`;
+  if (r.acompteStatut === "rembourse_partiel") {
+    return `Payé en ligne : ${formatEuros(paye)} · Remboursé : ${formatEuros(rembourse)} · Conservé : ${formatEuros(montantConserve(paye, rembourse))}`;
+  }
+  return `À payer en ligne pour valider le rendez-vous : acompte de ${acompteFormate(r.prix)} (${POURCENT_ACOMPTE} %) ou totalité (${formatEuros(r.prix)})${devis}`;
 }
 
 function recap(r: ReservationEmail) {
@@ -172,7 +191,7 @@ const lienAnnulation = (r: ReservationEmail) =>
   `${siteUrl()}/annulation?token=${r.tokenAnnulation}`;
 
 const phraseAnnulation = (r: ReservationEmail) =>
-  `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? L'annulation est gratuite jusqu'à ${DELAI_ANNULATION_H} h avant le rendez-vous, et l'acompte est alors remboursé : <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. À moins de ${DELAI_ANNULATION_H} h, ou en cas d'absence, l'acompte est conservé ; merci de nous appeler au ${business.phoneDisplay}.</p>`;
+  `<p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? Jusqu'à ${DELAI_ANNULATION_H} h avant le rendez-vous, l'annulation est gratuite et tout ce que vous avez payé est remboursé : <a href="${lienAnnulation(r)}" style="color:${VERT};">annuler votre rendez-vous ici</a>. À moins de ${DELAI_ANNULATION_H} h, merci de nous appeler au ${business.phoneDisplay} : en cas d'annulation tardive ou d'absence, Maria garde l'équivalent de l'acompte (${POURCENT_ACOMPTE} % du total) et, si vous aviez tout payé, le reste vous est remboursé automatiquement.</p>`;
 
 export async function emailDemandeCliente(brut: ReservationEmail) {
   const r = sur(brut);
@@ -186,24 +205,27 @@ export async function emailDemandeCliente(brut: ReservationEmail) {
        <p style="font-size:15px;line-height:1.8;">Maria vous confirmera votre rendez-vous. Ce créneau vous est réservé en attendant.${
          brut.acompteMontant && brut.acompteMontant > 0
            ? ` Un acompte de ${POURCENT_ACOMPTE} % est demandé pour valider le rendez-vous.`
-           : " Le prix de la prestation sur devis sera fixé avec Maria."
+           : " Le prix de la prestation sur devis sera fixé avec Maria et réglé sur place."
        }</p>
        ${phraseAnnulation(r)}`,
     ),
   });
 }
 
-/** Après paiement de l'acompte : demande reçue, en attente de validation par Maria. */
+/** Après le paiement en ligne : demande reçue, en attente de validation par Maria. */
 export async function emailAcomptePayeCliente(brut: ReservationEmail) {
   const r = sur(brut);
+  const total = brut.modePaiement === "total";
   return envoyerEmail({
     to: brut.email,
-    subject: "Demande reçue, acompte payé",
+    subject: total ? "Demande reçue, paiement reçu" : "Demande reçue, acompte payé",
     html: gabarit(
-      `Merci ${r.prenom}, votre acompte est bien payé`,
-      `<p style="font-size:15px;line-height:1.8;">Votre demande de rendez-vous est bien reçue et votre acompte est réglé. Votre créneau est réservé.</p>
+      total
+        ? `Merci ${r.prenom}, votre paiement est bien reçu`
+        : `Merci ${r.prenom}, votre acompte est bien payé`,
+      `<p style="font-size:15px;line-height:1.8;">Votre demande de rendez-vous est bien reçue et votre ${total ? "paiement est réglé : vous n'aurez rien à régler sur place" : "acompte est réglé"}${total && brut.devis ? " (hors prestation sur devis)" : ""}. Votre créneau est réservé.</p>
        ${recap(r)}
-       <p style="font-size:15px;line-height:1.8;">Maria va maintenant valider votre rendez-vous : vous recevrez un e-mail de confirmation. Si elle ne pouvait pas vous recevoir, votre acompte vous serait remboursé intégralement.</p>
+       <p style="font-size:15px;line-height:1.8;">Maria va maintenant valider votre rendez-vous : vous recevrez un e-mail de confirmation. Si elle ne pouvait pas vous recevoir, tout ce que vous avez payé vous serait remboursé.</p>
        ${phraseAnnulation(r)}`,
     ),
   });
@@ -212,11 +234,12 @@ export async function emailAcomptePayeCliente(brut: ReservationEmail) {
 /** Rendez-vous refusé par Maria : explication et remboursement de l'acompte. */
 export async function emailRefusCliente(brut: ReservationEmail, rembourse: boolean) {
   const r = sur(brut);
+  const paye = brut.montantPaye ?? 0;
   const acompte =
-    brut.acompteMontant != null && brut.acompteMontant > 0
+    paye > 0
       ? rembourse
-        ? `<p style="font-size:15px;line-height:1.8;">Votre acompte de ${formatEuros(brut.acompteMontant)} vous est remboursé intégralement. Il apparaît en général sous 5 à 10 jours sur votre compte.</p>`
-        : `<p style="font-size:15px;line-height:1.8;">Votre acompte de ${formatEuros(brut.acompteMontant)} vous sera remboursé intégralement : Emerald Beauty s'en occupe.</p>`
+        ? `<p style="font-size:15px;line-height:1.8;">Les ${formatEuros(paye)} que vous avez payés vous sont remboursés intégralement. Ils apparaissent en général sous 5 à 10 jours sur votre compte.</p>`
+        : `<p style="font-size:15px;line-height:1.8;">Les ${formatEuros(paye)} que vous avez payés vous seront remboursés intégralement : Emerald Beauty s'en occupe.</p>`
       : "";
   return envoyerEmail({
     to: brut.email,
@@ -232,12 +255,16 @@ export async function emailRefusCliente(brut: ReservationEmail, rembourse: boole
   });
 }
 
-/** Confirmation d'une annulation faite par la cliente avec son lien (plus de 72 h avant). */
-export async function emailAnnulationCliente(brut: ReservationEmail, message: string) {
+/** Annulation (en ligne, ou notée par Maria) ou absence : message sur le remboursement. */
+export async function emailAnnulationCliente(
+  brut: ReservationEmail,
+  message: string,
+  sujet = "Votre rendez-vous est annulé",
+) {
   const r = sur(brut);
   return envoyerEmail({
     to: brut.email,
-    subject: "Votre rendez-vous est annulé",
+    subject: sujet,
     html: gabarit(
       `Bonjour ${r.prenom}`,
       `<p style="font-size:15px;line-height:1.8;">${message.replace(/</g, "&lt;")}</p>
@@ -272,7 +299,7 @@ export async function emailRappelCliente(brut: ReservationEmail) {
       `À demain, ${r.prenom}`,
       `<p style="font-size:15px;line-height:1.8;">Petit rappel de votre rendez-vous :</p>
        ${recap(r)}
-       <p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? Votre rendez-vous a lieu dans moins de ${DELAI_ANNULATION_H} h : merci de nous prévenir par téléphone au ${business.phoneDisplay}.</p>`,
+       <p style="font-size:14px;line-height:1.7;color:${TAUPE};">Un empêchement ? Votre rendez-vous a lieu dans moins de ${DELAI_ANNULATION_H} h : merci de nous prévenir par téléphone au ${business.phoneDisplay}. En cas d'annulation ou d'absence, Maria garde l'équivalent de l'acompte (${POURCENT_ACOMPTE} % du total) ; si vous aviez tout payé, le reste vous est remboursé.</p>`,
     ),
   });
 }
@@ -281,14 +308,14 @@ export async function emailNouvelleDemandeGerante(brut: ReservationEmail) {
   const r = sur(brut);
   return envoyerEmail({
     to: business.ownerEmail,
-    subject: `${brut.acompteStatut === "paye" ? "Acompte payé – à valider" : "Nouvelle demande de rendez-vous"} — ${brut.prenom} ${brut.nom}`,
+    subject: `${brut.acompteStatut === "paye" ? `${brut.modePaiement === "total" ? "Payé intégralement" : "Acompte payé"} – à valider` : "Nouvelle demande de rendez-vous"} — ${brut.prenom} ${brut.nom}`,
     html: gabarit(
       r.acompteStatut === "paye"
-        ? "Nouvelle demande : acompte payé, à valider"
+        ? `Nouvelle demande : ${brut.modePaiement === "total" ? "payée intégralement" : "acompte payé"}, à valider`
         : "Nouvelle demande de rendez-vous",
       `${
         r.acompteStatut === "paye"
-          ? `<p style="font-size:15px;line-height:1.8;">L'acompte est payé. Ouvrez le back-office pour <strong>valider</strong> le rendez-vous (la cliente reçoit sa confirmation) ou le <strong>refuser</strong> (l'acompte lui est remboursé intégralement).</p>`
+          ? `<p style="font-size:15px;line-height:1.8;">${brut.modePaiement === "total" ? "La cliente a tout payé en ligne" : "L'acompte est payé"}. Ouvrez le back-office pour <strong>valider</strong> le rendez-vous (la cliente reçoit sa confirmation) ou le <strong>refuser</strong> (tout ce qu'elle a payé lui est remboursé).</p>`
           : ""
       }
        ${recap(r)}

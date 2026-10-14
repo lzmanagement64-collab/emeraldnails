@@ -4,7 +4,9 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { ReservationEmail } from "./emails.server";
+import { modeValide } from "./options-paiement";
 import {
+  devisAFaire,
   lignesDuRendezVous,
   nomComplet,
   nomsPrestations,
@@ -75,13 +77,16 @@ type RowAvecPrestation = {
   prix_total: number | null;
   acompte_montant: number | null;
   acompte_statut: string;
+  mode_paiement?: string | null;
+  montant_paye?: number | null;
+  montant_rembourse?: number | null;
   prestation_id?: string;
   prestations_detail?: unknown;
   prestations: { nom: string; duree_minutes: number; prix: number } | null;
 };
 
 export const SELECT_AVEC_PRESTATION =
-  "id, prestation_id, date_debut, date_fin, statut, cliente_prenom, cliente_nom, cliente_telephone, cliente_email, commentaire, token_annulation, cree_le, prix_total, prestations_detail, acompte_montant, acompte_statut, acompte_expire_le, acompte_paye_le, stripe_session_id, stripe_payment_intent, prestations(nom, duree_minutes, prix, couleur)";
+  "id, prestation_id, date_debut, date_fin, statut, cliente_prenom, cliente_nom, cliente_telephone, cliente_email, commentaire, token_annulation, cree_le, prix_total, prestations_detail, acompte_montant, acompte_statut, acompte_expire_le, acompte_paye_le, mode_paiement, montant_paye, montant_rembourse, stripe_session_id, stripe_payment_intent, prestations(nom, duree_minutes, prix, couleur)";
 
 export function versEmail(row: RowAvecPrestation): ReservationEmail {
   return {
@@ -91,6 +96,16 @@ export function versEmail(row: RowAvecPrestation): ReservationEmail {
     prix: Number(row.prix_total ?? row.prestations?.prix ?? 0),
     acompteMontant: row.acompte_montant == null ? null : Number(row.acompte_montant),
     acompteStatut: row.acompte_statut,
+    modePaiement: modeValide(row.mode_paiement),
+    // Anciennes réservations : le montant payé était l'acompte.
+    montantPaye:
+      row.montant_paye != null
+        ? Number(row.montant_paye)
+        : ["paye", "rembourse"].includes(row.acompte_statut) && row.acompte_montant != null
+          ? Number(row.acompte_montant)
+          : null,
+    montantRembourse: Number(row.montant_rembourse ?? 0),
+    devis: devisAFaire(lignesDuRendezVous(row)),
     dateDebut: row.date_debut,
     prenom: row.cliente_prenom,
     nom: row.cliente_nom,

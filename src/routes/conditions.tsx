@@ -32,22 +32,27 @@ export const Route = createFileRoute("/conditions")({
         <p>
           La réservation se fait en ligne sur ce site, au plus tôt {REGLES.delaiMinHeures} h et au
           plus tard {REGLES.maxJoursAvance} jours à l'avance. La cliente choisit ses prestations et
-          son créneau, renseigne ses coordonnées puis règle l'acompte. La demande est ensuite
-          validée par {business.founder} : la cliente reçoit alors un e-mail de confirmation.
+          son créneau, renseigne ses coordonnées puis paie en ligne l'acompte ou la totalité. La
+          demande est ensuite validée par {business.founder} : la cliente reçoit alors un e-mail de
+          confirmation.
         </p>
 
-        <h2 className={titre}>3. Acompte de {POURCENT_ACOMPTE} %</h2>
+        <h2 className={titre}>
+          3. Paiement en ligne : acompte de {POURCENT_ACOMPTE} % ou totalité
+        </h2>
         <p>
-          Un acompte de {POURCENT_ACOMPTE} % du montant total du rendez-vous (prestations sur devis
-          exclues) est payé en ligne au moment de la réservation, par carte bancaire, Apple Pay ou
-          Google Pay. Le paiement est traité par la société Stripe ; aucune donnée bancaire n'est
-          conservée par {business.legal.nomCommercial}.
+          Au moment de la réservation, la cliente choisit de payer en ligne soit un acompte de{" "}
+          {POURCENT_ACOMPTE} % du montant total du rendez-vous, soit la totalité. Les prestations
+          sur devis ne sont pas comprises dans ce montant : elles se règlent sur place, après devis.
+          Le paiement se fait par carte bancaire, Apple Pay ou Google Pay ; il est traité par la
+          société Stripe et aucune donnée bancaire n'est conservée par{" "}
+          {business.legal.nomCommercial}.
         </p>
         <p>
           Pendant le paiement, le créneau est réservé 35 minutes ; sans paiement dans ce délai, il
-          est libéré. L'acompte est déduit du montant total le jour du rendez-vous ; le reste se
-          règle sur place. Si {business.founder} ne peut pas accepter la demande, l'acompte est
-          remboursé intégralement.
+          est libéré. Le montant payé est déduit du total le jour du rendez-vous ; le reste éventuel
+          se règle sur place. Si {business.founder} ne peut pas accepter la demande, tout ce qui a
+          été payé est remboursé intégralement.
         </p>
 
         <h2 className={titre}>4. Annulation et modification</h2>
@@ -63,7 +68,8 @@ export const Route = createFileRoute("/conditions")({
         <p>
           Au-delà de 15 minutes de retard, la prestation pourra être annulée. Selon les
           disponibilités et la durée restante, un supplément pourra également être demandé. En cas
-          d'absence sans prévenir, l'acompte est conservé.
+          d'absence, {business.founder} garde l'équivalent de l'acompte ({POURCENT_ACOMPTE} % du
+          total) ; si la cliente avait tout payé, le reste lui est remboursé automatiquement.
         </p>
 
         <h2 className={titre}>6. Santé et contre-indications</h2>
@@ -77,7 +83,7 @@ export const Route = createFileRoute("/conditions")({
         <p>
           Conformément à l'article L221-28 12° du Code de la consommation, le droit de rétractation
           ne s'applique pas aux prestations de services fournies à une date déterminée. Les règles
-          d'annulation ci-dessus (remboursement de l'acompte plus de {DELAI_ANNULATION_H} h avant le
+          d'annulation ci-dessus (remboursement intégral plus de {DELAI_ANNULATION_H} h avant le
           rendez-vous) s'appliquent.
         </p>
 
@@ -98,7 +104,7 @@ export const Route = createFileRoute("/conditions")({
       { title: "Conditions générales de vente — Emerald Beauty" },
       {
         name: "description",
-        content: `Conditions de réservation Emerald Beauty à Lons : acompte de ${POURCENT_ACOMPTE} %, annulation gratuite jusqu'à 72 h avant, retard, médiation.`,
+        content: `Conditions de réservation Emerald Beauty à Lons : acompte de ${POURCENT_ACOMPTE} % ou paiement total, annulation gratuite jusqu'à 72 h avant, retard, médiation.`,
       },
       { property: "og:url", content: `${SITE_URL}/conditions` },
     ],

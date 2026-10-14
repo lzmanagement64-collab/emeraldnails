@@ -10,6 +10,7 @@ import { etatAcompte, preparerPaiement } from "@/lib/reservation.functions";
 import { PaiementAcompte, type InfosPaiement } from "@/components/site/PaiementAcompte";
 import { formatEuros, parisLongDate, parisTime } from "@/lib/tz";
 import { ANNULATION_TEXTE } from "@/lib/annulation";
+import { nomOption, resteSurPlace } from "@/lib/options-paiement";
 
 // Page de retour après la page de paiement Stripe (payé ou abandonné).
 const searchSchema = z.object({
@@ -85,10 +86,12 @@ function PaiementPage() {
     }
   };
 
-  const reste = etat && etat.acompte != null ? Math.max(0, etat.prix - etat.acompte) : null;
+  // Montant réellement encaissé (anciennes réservations : l'acompte).
+  const paye = etat ? (etat.montantPaye ?? etat.acompte ?? 0) : 0;
+  const reste = etat ? resteSurPlace(etat.prix, paye) : 0;
 
   return (
-    <Section eyebrow="Réservation" title="Acompte de votre rendez-vous" as="h1">
+    <Section eyebrow="Réservation" title="Paiement de votre rendez-vous" as="h1">
       <div className="mx-auto max-w-xl space-y-6">
         {chargement && (
           <p className="flex items-center justify-center gap-2 py-16 text-sm text-taupe">
@@ -125,17 +128,18 @@ function PaiementPage() {
                 <p className="font-display text-2xl text-ink">
                   {etat.statut === "confirmee"
                     ? "Rendez-vous confirmé"
-                    : "Acompte payé, demande reçue"}
+                    : `${nomOption(etat.mode)}, demande reçue`}
                 </p>
                 <p className="text-sm text-taupe">
-                  Acompte réglé : {formatEuros(etat.acompte ?? 0)}. Reste à régler sur place :{" "}
-                  {formatEuros(reste ?? 0)}.
+                  {nomOption(etat.mode)} : {formatEuros(paye)}. Reste à régler sur place :{" "}
+                  {formatEuros(reste)}
+                  {etat.devis ? " + prestation sur devis" : ""}.
                 </p>
                 {etat.statut !== "confirmee" && (
                   <p className="text-sm text-ink">
                     Votre créneau est réservé. Maria va valider votre rendez-vous : vous recevrez un
-                    e-mail de confirmation. Si elle ne pouvait pas vous recevoir, votre acompte vous
-                    serait remboursé intégralement.
+                    e-mail de confirmation. Si elle ne pouvait pas vous recevoir, tout ce que vous
+                    avez payé vous serait remboursé.
                   </p>
                 )}
                 <p className="text-sm text-taupe">{ANNULATION_TEXTE}</p>
@@ -153,17 +157,19 @@ function PaiementPage() {
               etat.statut !== "annulee" &&
               retour !== "ok" && (
                 <div className="space-y-4 text-center">
-                  <p className="font-display text-xl text-ink">Acompte non réglé</p>
+                  <p className="font-display text-xl text-ink">Paiement non réglé</p>
                   <p className="text-sm text-taupe">
                     Votre créneau est réservé provisoirement
-                    {etat.expireLe ? ` jusqu'à ${parisTime(etat.expireLe)}` : ""}. Sans paiement de
-                    l'acompte ({formatEuros(etat.acompte ?? 0)}), il sera libéré automatiquement.
+                    {etat.expireLe ? ` jusqu'à ${parisTime(etat.expireLe)}` : ""}. Sans paiement
+                    (acompte de {formatEuros(etat.acompte ?? 0)} ou totalité), il sera libéré
+                    automatiquement.
                   </p>
                   {infos && reservation ? (
                     <div className="text-left">
                       <PaiementAcompte
                         infos={infos}
                         retourUrl={`${window.location.origin}/paiement?reservation=${reservation}&retour=ok`}
+                        avecDevis={etat.devis}
                         onPaye={async () => {
                           setInfos(null);
                           setChargement(true);
@@ -175,9 +181,7 @@ function PaiementPage() {
                   ) : (
                     <button type="button" onClick={payer} disabled={envoi} className="btn-primaire">
                       <Lock className="size-3.5" />
-                      {envoi
-                        ? "Ouverture du paiement…"
-                        : `Payer l'acompte de ${formatEuros(etat.acompte ?? 0)}`}
+                      {envoi ? "Ouverture du paiement…" : "Reprendre le paiement"}
                     </button>
                   )}
                 </div>
@@ -187,7 +191,7 @@ function PaiementPage() {
               <div className="space-y-3 text-center">
                 <p className="font-display text-xl text-ink">Créneau libéré</p>
                 <p className="text-sm text-taupe">
-                  L'acompte n'a pas été réglé dans le délai : la réservation n'a pas été validée.
+                  Le paiement n'a pas été fait dans le délai : la réservation n'a pas été validée.
                   Vous pouvez choisir un nouveau créneau.
                 </p>
                 <Link to="/reserver" className="btn-primaire">
@@ -198,7 +202,14 @@ function PaiementPage() {
 
             {etat.acompteStatut === "rembourse" && (
               <p className="text-center text-sm text-taupe">
-                Ce rendez-vous est annulé et l'acompte a été remboursé.
+                Ce rendez-vous est annulé : les {formatEuros(paye)} payés ont été remboursés.
+              </p>
+            )}
+            {etat.acompteStatut === "rembourse_partiel" && (
+              <p className="text-center text-sm text-taupe">
+                Ce rendez-vous est annulé : {formatEuros(etat.montantRembourse)} remboursés,{" "}
+                {formatEuros(Math.max(0, paye - etat.montantRembourse))} conservés (équivalent de
+                l'acompte).
               </p>
             )}
 

@@ -1,10 +1,13 @@
 // ============================================================
-// Paiement de l'acompte intégré à la page (Stripe Payment Element +
-// Express Checkout : carte bancaire, Apple Pay, Google Pay).
+// Paiement intégré à la page (Stripe Payment Element + Express Checkout :
+// carte bancaire, Apple Pay, Google Pay), avec le choix de la cliente :
+// acompte (30 %, par défaut) ou totalité. Le montant est recalculé par le
+// serveur ; la page n'envoie que l'option choisie.
 // Aucune clé secrète ici : seulement la clé publiable (pk_…) et la clé de
 // paiement de CE rendez-vous, fournies par le serveur.
 // ============================================================
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { loadStripe, type Appearance, type Stripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -13,14 +16,27 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import { Loader2, Lock, ShieldCheck } from "lucide-react";
+import { Check, Loader2, Lock, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 import { business } from "@/config/business";
 import { formatEuros } from "@/lib/tz";
+import { cn } from "@/lib/utils";
+import { choisirOptionPaiement } from "@/lib/reservation.functions";
+import {
+  DEVIS_TEXTE,
+  libelleOption,
+  montantAPayer,
+  optionsPaiement,
+  type ModePaiement,
+} from "@/lib/options-paiement";
 
 export type InfosPaiement = {
+  reservationId: string;
   clientSecret: string;
   clePublique: string;
-  acompte: number;
+  /** Total du rendez-vous (hors prestations sur devis), enregistré par le serveur. */
+  prix: number;
+  mode: ModePaiement;
   expireLe: string | null;
 };
 
@@ -69,31 +85,124 @@ export function PaiementAcompte({
   infos,
   retourUrl,
   onPaye,
+  onMode,
+  avecDevis = false,
 }: {
   infos: InfosPaiement;
   /** Adresse de retour si la banque demande une vérification sur une autre page (3-D Secure). */
   retourUrl: string;
-  /** Appelé une fois le paiement accepté par Stripe. */
-  onPaye: () => Promise<void> | void;
+  /** Appelé une fois le paiement accepté par Stripe, avec l'option payée. */
+  onPaye: (mode: ModePaiement) => Promise<void> | void;
+  /** Appelé quand la cliente change d'option (récapitulatif de la page). */
+  onMode?: (mode: ModePaiement) => void;
+  /** La réservation contient une prestation sur devis. */
+  avecDevis?: boolean;
 }) {
   const stripe = useMemo(() => stripeDe(infos.clePublique), [infos.clePublique]);
+  const changerOption = useServerFn(choisirOptionPaiement);
+  const [mode, setMode] = useState<ModePaiement>(infos.mode);
+  const [clientSecret, setClientSecret] = useState(infos.clientSecret);
+  // Change à chaque nouvelle option : le module Stripe est rechargé au bon montant.
+  const [version, setVersion] = useState(0);
+  const [changement, setChangement] = useState<ModePaiement | null>(null);
+  const [paiementEnCours, setPaiementEnCours] = useState(false);
+  const options = optionsPaiement(infos.prix);
+
+  const choisir = async (nouveau: ModePaiement) => {
+    if (nouveau === mode || changement || paiementEnCours) return;
+    setChangement(nouveau);
+    try {
+      const res = await changerOption({ data: { id: infos.reservationId, mode: nouveau } });
+      setMode(res.mode);
+      setClientSecret(res.clientSecret);
+      setVersion((v) => v + 1);
+      onMode?.(res.mode);
+    } catch (e) {
+      toast.error((e as Error).message.replace(/^Error:\s*/, "") || "Changement impossible.");
+    } finally {
+      setChangement(null);
+    }
+  };
+
   return (
-    <Elements
-      stripe={stripe}
-      options={{ clientSecret: infos.clientSecret, appearance: APPARENCE, locale: "fr" }}
-    >
-      <FormulairePaiement infos={infos} retourUrl={retourUrl} onPaye={onPaye} />
-    </Elements>
+    <div className="space-y-5">
+      {options.choixPossible && (
+        <fieldset className="space-y-2.5" disabled={!!changement || paiementEnCours}>
+          <legend className="mb-2 text-sm font-medium text-ink">Que souhaitez-vous payer ?</legend>
+          {(["acompte", "total"] as const).map((m) => {
+            const l = libelleOption(infos.prix, m);
+            const actif = mode === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                role="radio"
+                aria-checked={actif}
+                onClick={() => choisir(m)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition-colors",
+                  actif
+                    ? "border-emerald bg-sage-soft/60 ring-2 ring-emerald/30"
+                    : "border-border bg-card hover:border-emerald/50",
+                )}
+              >
+                <span
+                  className={cn(
+                    "grid size-5 shrink-0 place-items-center rounded-full border",
+                    actif ? "border-emerald bg-emerald text-porcelain" : "border-taupe/50",
+                  )}
+                >
+                  {changement === m ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    actif && <Check className="size-3" strokeWidth={3} />
+                  )}
+                </span>
+                <span>
+                  <span className="block font-semibold text-ink">{l.titre}</span>
+                  <span className="block text-sm text-taupe">{l.detail}</span>
+                </span>
+              </button>
+            );
+          })}
+        </fieldset>
+      )}
+      {avecDevis && <p className="text-sm text-ink">{DEVIS_TEXTE}</p>}
+
+      <Elements
+        key={version}
+        stripe={stripe}
+        options={{ clientSecret, appearance: APPARENCE, locale: "fr" }}
+      >
+        <FormulairePaiement
+          montant={montantAPayer(infos.prix, mode)}
+          mode={mode}
+          expireLe={infos.expireLe}
+          retourUrl={retourUrl}
+          bloque={!!changement}
+          onEnvoi={setPaiementEnCours}
+          onPaye={() => onPaye(mode)}
+        />
+      </Elements>
+    </div>
   );
 }
 
 function FormulairePaiement({
-  infos,
+  montant,
+  mode,
+  expireLe,
   retourUrl,
+  bloque,
+  onEnvoi,
   onPaye,
 }: {
-  infos: InfosPaiement;
+  montant: number;
+  mode: ModePaiement;
+  expireLe: string | null;
   retourUrl: string;
+  bloque: boolean;
+  onEnvoi: (enCours: boolean) => void;
   onPaye: () => Promise<void> | void;
 }) {
   const stripe = useStripe();
@@ -102,13 +211,14 @@ function FormulairePaiement({
   const [erreur, setErreur] = useState<string | null>(null);
   const [pret, setPret] = useState(false);
   const [express, setExpress] = useState(false);
-  const reste = useCompteARebours(infos.expireLe);
+  const reste = useCompteARebours(expireLe);
   const expire = reste === 0;
 
   /** `echecPortefeuille` : referme proprement la fenêtre Apple Pay / Google Pay en cas d'échec. */
   const payer = async (echecPortefeuille?: (p?: { reason?: "fail" }) => void) => {
-    if (!stripe || !elements || expire) return;
+    if (!stripe || !elements || expire || bloque) return;
     setEnvoi(true);
+    onEnvoi(true);
     setErreur(null);
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
@@ -124,12 +234,14 @@ function FormulairePaiement({
           : "Le paiement n'a pas pu aboutir. Merci de réessayer.",
       );
       setEnvoi(false);
+      onEnvoi(false);
       return;
     }
     if (paymentIntent && ["succeeded", "processing"].includes(paymentIntent.status)) {
       await onPaye();
     }
     setEnvoi(false);
+    onEnvoi(false);
   };
 
   return (
@@ -188,11 +300,15 @@ function FormulairePaiement({
       <button
         type="button"
         onClick={() => payer()}
-        disabled={!stripe || !pret || envoi || expire}
+        disabled={!stripe || !pret || envoi || expire || bloque}
         className="btn-primaire w-full"
       >
         {envoi ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />}
-        {envoi ? "Paiement en cours…" : `Payer l'acompte de ${formatEuros(infos.acompte)}`}
+        {envoi
+          ? "Paiement en cours…"
+          : mode === "total"
+            ? `Payer la totalité : ${formatEuros(montant)}`
+            : `Payer l'acompte de ${formatEuros(montant)}`}
       </button>
 
       <p className="flex items-center justify-center gap-2 text-xs text-taupe">
